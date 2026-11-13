@@ -22,7 +22,7 @@ En haut, choisissez votre **Sport** et votre **Langue**. Le sport détermine le 
 
 Chaque ligne a de petits boutons : **⇄** déplace un joueur entre le terrain et le banc, **↑** et **↓** changent l'ordre, **🗑** supprime le joueur (vous pouvez annuler pendant quelques secondes). Cochez **Utiliser les postes** si la voix doit aussi dire "Gardien" ou "Milieu".
 
-**🗣 Dis-le comme…** règle la prononciation d'un nom. Appuyez sur 🗣 sur une ligne et écrivez le nom comme il se prononce, par exemple `Kim Mooster`. Seule la voix utilise ce texte. La liste affiche toujours le vrai nom. Appuyez sur ▶ pour l'écouter. Le même bouton 🗣 se trouve à côté des noms d'équipe.
+**🗣 Dis-le comme…** règle la prononciation d'un nom. Appuyez sur 🗣 sur une ligne et écrivez le nom comme il se prononce, par exemple `Kim Mooster`. Seule la voix utilise ce texte. La liste affiche toujours le vrai nom. Appuyez sur ▶ pour l'écouter. Le même bouton 🗣 se trouve à côté des noms d'équipe. **✨ Suggérer** peut trouver une orthographe pour vous : choisissez la langue du nom, saisissez son orthographe d'origine (par exemple `Nguyễn`), et l'application propose jusqu'à trois graphies que la voix prononce proche de la vraie prononciation. Appuyez sur ▶ pour écouter chacune et sur **Utiliser** pour la retenir. Cela fonctionne hors ligne ; pour l'instant, c'est disponible pour les voix allemande et anglaise.
 
 **Astuce :** si votre club utilise fussball.de, ouvrez l'effectif de **votre propre équipe** sur ce site, copiez-le et collez-le dans la zone. Les numéros et les noms sont reconnus. Fanfare ne se connecte jamais à fussball.de. Voir "Vous venez de fussball.de ?" à l'étape 1.
 

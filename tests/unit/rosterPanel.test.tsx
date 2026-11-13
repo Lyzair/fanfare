@@ -3,6 +3,12 @@ import { resolve } from 'node:path';
 import { render, screen, within, act, waitFor } from '@testing-library/preact';
 import userEvent from '@testing-library/user-event';
 import { useReducer } from 'preact/hooks';
+// ✨ Suggest loads the real phonemizer (wasm) lazily; these tests replace it.
+vi.mock('../../src/tts/phonemize', async (orig) => ({
+  ...(await orig<typeof import('../../src/tts/phonemize')>()),
+  // the name's language gives the real IPA; the voice language reads the spelling letter by letter
+  phonemize: async (text: string, voice: string) => (voice === 'pl' ? ['v', 'ˈ', 'ɔ', 'j', 't', 'ɕ', 'ɛ', 'x'] : [...text.toLowerCase()]),
+}));
 import RosterPanel from '../../src/ui/RosterPanel';
 import { initialState, reducer, currentRoster } from '../../src/state/reducer';
 import type { AppState, Lang } from '../../src/domain/model';
@@ -332,5 +338,35 @@ describe('guest team tab', () => {
     render(<Harness lang="de" />);
     expect(screen.getByRole('tab', { name: 'Gäste (0)' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Unser Team (0)' })).toBeInTheDocument();
+  });
+});
+
+describe('✨ Suggest in the roster', () => {
+  test('Use this fills the player hint (shown in the input) and the original spelling is saved on the player', async () => {
+    const { services } = makeServices();
+    render(<WithServices services={services} init={s => reducer(s, { type: 'addPlayers', text: 'Wojciech', onField: true })} />);
+    await userEvent.click(screen.getAllByRole('button', { name: 'Pronunciation' }).at(-1)!);
+    await userEvent.click(screen.getByRole('button', { name: '✨ Suggest' }));
+    await userEvent.selectOptions(screen.getByLabelText("Name's language"), 'pl');
+    expect(currentRoster(latest).players[0].nameLang).toBe('pl');
+    await userEvent.type(screen.getByLabelText('Original spelling'), 'x');
+    expect(currentRoster(latest).players[0].origSpelling).toBe('Wojciechx');
+    await userEvent.click(screen.getByRole('button', { name: 'Find suggestions' }));
+    await userEvent.click((await screen.findAllByRole('button', { name: /^Use this: Voy/ }, { timeout: 2000 }))[0]);
+    expect(currentRoster(latest).players[0].sayAs).toMatch(/^Voy/);
+    expect(screen.getByLabelText('Say it like…')).toHaveValue(currentRoster(latest).players[0].sayAs);
+  });
+
+  test('the opponent has its own ✨ and stores language and spelling on the roster', async () => {
+    const { services } = makeServices();
+    render(<WithServices services={services} init={s => reducer(s, { type: 'setMatch', opponent: 'Wojciech United' })} />);
+    await userEvent.click(screen.getAllByRole('button', { name: 'Pronunciation' })[1]);
+    await userEvent.click(screen.getByRole('button', { name: '✨ Suggest' }));
+    await userEvent.selectOptions(screen.getByLabelText("Name's language"), 'pl');
+    expect(currentRoster(latest).opponentNameLang).toBe('pl');
+    expect(currentRoster(latest).homeNameLang).toBe('');
+    await userEvent.click(screen.getByRole('button', { name: 'Find suggestions' }));
+    await userEvent.click((await screen.findAllByRole('button', { name: /^Use this: Voy/ }, { timeout: 2000 }))[0]);
+    expect(currentRoster(latest).opponentSayAs).toMatch(/^Voy/);
   });
 });

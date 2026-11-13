@@ -87,10 +87,12 @@ export function parsePlayer(v: unknown): Player {
   if (typeof name !== 'string' || typeof number !== 'string' || typeof position !== 'string') throw bad();
   if (typeof onField !== 'boolean') throw bad();
   if (customText !== null && typeof customText !== 'string') throw bad();
-  if (v.sayAs !== undefined && typeof v.sayAs !== 'string') throw bad();
+  for (const k of ['sayAs', 'origSpelling', 'nameLang'] as const) if (v[k] !== undefined && typeof v[k] !== 'string') throw bad();
   return {
     id: typeof id === 'string' && id ? id : crypto.randomUUID(), name, number, position, onField, customText,
     sayAs: typeof v.sayAs === 'string' ? v.sayAs : '',
+    origSpelling: typeof v.origSpelling === 'string' ? v.origSpelling : '',
+    nameLang: typeof v.nameLang === 'string' ? v.nameLang : '',
   };
 }
 
@@ -118,8 +120,12 @@ function parseRoster(v: unknown, sport: SportId, lang: Lang): Roster {
   return {
     homeTeam: str(v.homeTeam),
     homeSayAs: str(v.homeSayAs),
+    homeOrigSpelling: str(v.homeOrigSpelling),
+    homeNameLang: str(v.homeNameLang),
     opponent: str(v.opponent),
     opponentSayAs: str(v.opponentSayAs),
+    opponentOrigSpelling: str(v.opponentOrigSpelling),
+    opponentNameLang: str(v.opponentNameLang),
     showPositions: v.showPositions === true,
     players: v.players.map(parsePlayer),
     guestPlayers: Array.isArray(v.guestPlayers) ? v.guestPlayers.map(parsePlayer) : [],

@@ -20,7 +20,7 @@ Trage in Schritt 1 **Heimmannschaft** und **Gegner** ein. Füge dann deine Spiel
 
 Jede Zeile hat kleine Knöpfe: **⇄** schiebt einen Spieler zwischen Feld und Bank, **↑** und **↓** ändern die Reihenfolge, **🗑** entfernt den Spieler (für ein paar Sekunden kannst du das rückgängig machen). Setze den Haken bei **Positionen verwenden**, wenn der Sprecher auch "Torwart" oder "Mittelfeld" sagen soll.
 
-Mit **🗣 Sag es so…** legst du fest, wie ein Name ausgesprochen wird. Tippe in einer Zeile auf 🗣 und schreibe den Namen so, wie er klingt, zum Beispiel `Kim Mooster`. Nur die Stimme nutzt diesen Text. In der Liste steht weiter der echte Name. Mit ▶ hörst du das Ergebnis. Derselbe 🗣-Knopf steht auch neben den Mannschaftsnamen.
+Mit **🗣 Sag es so…** legst du fest, wie ein Name ausgesprochen wird. Tippe in einer Zeile auf 🗣 und schreibe den Namen so, wie er klingt, zum Beispiel `Kim Mooster`. Nur die Stimme nutzt diesen Text. In der Liste steht weiter der echte Name. Mit ▶ hörst du das Ergebnis. Derselbe 🗣-Knopf steht auch neben den Mannschaftsnamen. **✨ Vorschlagen** findet eine Schreibweise für dich: Wähle die Sprache des Namens, gib die Originalschreibweise ein (zum Beispiel `Nguyễn`), und die App schlägt bis zu drei Schreibweisen vor, die die Stimme dem echten Klang nahe aussprechen. Mit ▶ hörst du jede an, mit **Übernehmen** übernimmst du sie. Das funktioniert offline; im Moment gibt es das für deutsche und englische Stimmen.
 
 **Tipp:** Wenn dein Verein fussball.de nutzt, öffne dort den Kader **deiner eigenen Mannschaft**, kopiere ihn und füge ihn in das Feld ein. Rückennummern und Namen werden erkannt. Fanfare verbindet sich nie mit fussball.de. Mehr dazu unter "Daten von fussball.de?" in Schritt 1.
 

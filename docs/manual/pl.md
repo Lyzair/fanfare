@@ -22,7 +22,7 @@ W kroku 1 wpisz **Drużyna gospodarzy** i **Rywal**. Potem wklej zawodników w p
 
 Każdy wiersz ma małe przyciski: **⇄** przenosi zawodnika między boiskiem a ławką, **↑** i **↓** zmieniają kolejność, **🗑** usuwa zawodnika (przez kilka sekund możesz cofnąć). Zaznacz **Używaj pozycji**, jeśli spiker ma też mówić "Bramkarz" lub "Pomocnik".
 
-**🗣 Powiedz to jak…** ustala, jak wymawiane jest nazwisko. Naciśnij 🗣 w wierszu i zapisz nazwisko tak, jak brzmi, na przykład `Kim Mooster`. Tylko głos korzysta z tego tekstu. Lista nadal pokazuje prawdziwe nazwisko. Naciśnij ▶, aby posłuchać. Ten sam przycisk 🗣 jest obok nazw drużyn.
+**🗣 Powiedz to jak…** ustala, jak wymawiane jest nazwisko. Naciśnij 🗣 w wierszu i zapisz nazwisko tak, jak brzmi, na przykład `Kim Mooster`. Tylko głos korzysta z tego tekstu. Lista nadal pokazuje prawdziwe nazwisko. Naciśnij ▶, aby posłuchać. Ten sam przycisk 🗣 jest obok nazw drużyn. **✨ Podpowiedz** może znaleźć pisownię za Ciebie: wybierz język nazwiska, wpisz jego oryginalną pisownię (na przykład `Nguyễn`), a aplikacja zaproponuje do trzech zapisów, które głos wymawia blisko prawdziwej wymowy. Naciśnij ▶, aby posłuchać każdego, i **Użyj**, aby go wybrać. Działa offline; na razie jest dostępne dla głosów niemieckiego i angielskiego.
 
 **Wskazówka:** jeśli Twój klub korzysta z fussball.de, otwórz tam skład **własnej drużyny**, skopiuj go i wklej w pole. Numery i nazwiska są rozpoznawane. Fanfare nigdy nie łączy się z fussball.de. Więcej w "Dane z fussball.de?" w kroku 1.
 

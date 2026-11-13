@@ -22,7 +22,7 @@ Vul in stap 1 **Thuisploeg** en **Tegenstander** in. Plak daarna je spelers in h
 
 Elke rij heeft kleine knoppen: **⇄** verplaatst een speler tussen veld en bank, **↑** en **↓** wijzigen de volgorde, **🗑** verwijdert de speler (een paar seconden kun je dat ongedaan maken). Vink **Posities gebruiken** aan als de omroeper ook "Keeper" of "Middenveld" moet zeggen.
 
-Met **🗣 Zeg het als…** bepaal je hoe een naam wordt uitgesproken. Druk in een rij op 🗣 en schrijf de naam zoals hij klinkt, bijvoorbeeld `Kim Mooster`. Alleen de stem gebruikt deze tekst. De lijst toont nog steeds de echte naam. Druk op ▶ om het te horen. Dezelfde 🗣-knop staat naast de teamnamen.
+Met **🗣 Zeg het als…** bepaal je hoe een naam wordt uitgesproken. Druk in een rij op 🗣 en schrijf de naam zoals hij klinkt, bijvoorbeeld `Kim Mooster`. Alleen de stem gebruikt deze tekst. De lijst toont nog steeds de echte naam. Druk op ▶ om het te horen. Dezelfde 🗣-knop staat naast de teamnamen. **✨ Suggereren** kan een spelling voor je zoeken: kies de taal van de naam, voer de oorspronkelijke spelling in (bijvoorbeeld `Nguyễn`) en de app stelt maximaal drie spellingen voor die de stem dicht bij de echte uitspraak zegt. Druk op ▶ om ze te horen en op **Gebruiken** om er een te kiezen. Dit werkt offline; op dit moment is het beschikbaar voor Duitse en Engelse stemmen.
 
 **Tip:** als je club fussball.de gebruikt, open daar de selectie van **je eigen team**, kopieer die en plak hem in het vak. Rugnummers en namen worden herkend. Fanfare maakt nooit verbinding met fussball.de. Meer onder "Kom je van fussball.de?" in stap 1.
 

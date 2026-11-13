@@ -22,7 +22,7 @@ En el paso 1, rellena **Equipo local** y **Rival**. Después pega tus jugadores 
 
 Cada fila tiene botones pequeños: **⇄** mueve a un jugador entre el campo y el banquillo, **↑** y **↓** cambian el orden, **🗑** quita al jugador (puedes deshacerlo unos segundos). Marca **Usar posiciones** si el locutor también debe decir "Portero" o "Centrocampista".
 
-**🗣 Dilo como…** fija cómo se pronuncia un nombre. Pulsa 🗣 en una fila y escribe el nombre tal como suena, por ejemplo `Kim Mooster`. Solo la voz usa este texto. La lista sigue mostrando el nombre real. Pulsa ▶ para oírlo. El mismo botón 🗣 está junto a los nombres de los equipos.
+**🗣 Dilo como…** fija cómo se pronuncia un nombre. Pulsa 🗣 en una fila y escribe el nombre tal como suena, por ejemplo `Kim Mooster`. Solo la voz usa este texto. La lista sigue mostrando el nombre real. Pulsa ▶ para oírlo. El mismo botón 🗣 está junto a los nombres de los equipos. **✨ Sugerir** puede encontrar una ortografía por ti: elige el idioma del nombre, escribe su ortografía original (por ejemplo `Nguyễn`) y la aplicación propone hasta tres grafías que la voz pronuncia cerca de la pronunciación real. Pulsa ▶ para oír cada una y **Usar** para quedarte con ella. Funciona sin conexión; por ahora está disponible para las voces alemana e inglesa.
 
 **Consejo:** si tu club usa fussball.de, abre allí la plantilla de **tu propio equipo**, cópiala y pégala en el cuadro. Se reconocen dorsales y nombres. Fanfare nunca se conecta a fussball.de. Más información en "¿Vienes de fussball.de?" en el paso 1.
 

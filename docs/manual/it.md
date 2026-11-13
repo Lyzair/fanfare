@@ -22,7 +22,7 @@ Nel passaggio 1 compila **Squadra di casa** e **Avversario**. Poi incolla i gioc
 
 Ogni riga ha piccoli pulsanti: **⇄** sposta un giocatore tra campo e panchina, **↑** e **↓** cambiano l'ordine, **🗑** rimuove il giocatore (puoi annullare per qualche secondo). Spunta **Usa i ruoli** se lo speaker deve dire anche "Portiere" o "Centrocampo".
 
-**🗣 Dillo come…** stabilisce come si pronuncia un nome. Premi 🗣 su una riga e scrivi il nome come suona, per esempio `Kim Mooster`. Solo la voce usa questo testo. L'elenco continua a mostrare il nome vero. Premi ▶ per ascoltarlo. Lo stesso pulsante 🗣 è accanto ai nomi delle squadre.
+**🗣 Dillo come…** stabilisce come si pronuncia un nome. Premi 🗣 su una riga e scrivi il nome come suona, per esempio `Kim Mooster`. Solo la voce usa questo testo. L'elenco continua a mostrare il nome vero. Premi ▶ per ascoltarlo. Lo stesso pulsante 🗣 è accanto ai nomi delle squadre. **✨ Suggerisci** può trovare una grafia per te: scegli la lingua del nome, inserisci la sua ortografia originale (per esempio `Nguyễn`) e l'app propone fino a tre grafie che la voce pronuncia vicino alla pronuncia reale. Premi ▶ per ascoltarle e **Usa** per sceglierne una. Funziona offline; per ora è disponibile per le voci tedesca e inglese.
 
 **Consiglio:** se la tua società usa fussball.de, apri lì la rosa della **tua squadra**, copiala e incollala nel campo. Numeri e nomi vengono riconosciuti. Fanfare non si collega mai a fussball.de. Maggiori dettagli in "Vieni da fussball.de?" nel passaggio 1.
 

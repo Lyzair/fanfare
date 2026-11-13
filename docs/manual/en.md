@@ -20,7 +20,7 @@ In step 1, fill in **Home team** and **Opponent**. Then paste your players into 
 
 Each row has small buttons: **⇄** moves a player between the field and the bench, **↑** and **↓** change the order, **🗑** removes the player (you can undo for a few seconds). Tick **Use positions** if the announcer should also say "Goalkeeper" or "Midfield".
 
-**🗣 Say it like…** fixes how a name is pronounced. Press 🗣 on a row and write the name the way it sounds, for example `Kim Mooster`. Only the voice uses this text. The list still shows the real name. Press ▶ to hear it. The same 🗣 button sits next to the team names.
+**🗣 Say it like…** fixes how a name is pronounced. Press 🗣 on a row and write the name the way it sounds, for example `Kim Mooster`. Only the voice uses this text. The list still shows the real name. Press ▶ to hear it. The same 🗣 button sits next to the team names. **✨ Suggest** can find a spelling for you: choose the language of the name, enter its original spelling (for example `Nguyễn`), and the app proposes up to three respellings that the voice says close to the real pronunciation. Press ▶ to hear each one and **Use this** to take it. This works offline; at the moment it is available for German and English voices.
 
 **Tip:** if your club uses fussball.de, open **your own team's** squad there, copy it and paste it into the box. Shirt numbers and names are recognised. Fanfare never connects to fussball.de. Open "Coming from fussball.de?" in step 1 for details.
 

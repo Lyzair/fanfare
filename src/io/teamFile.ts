@@ -6,6 +6,9 @@ import { dateStamp } from './download';
 
 export const MAX_TEAM_FILE_BYTES = 1024 * 1024;
 export const MAX_TEAM_PLAYERS = 100;
+/** Caps for the Suggest fields: the original spelling like a hint input, the language code short. */
+export const MAX_ORIG_SPELLING = 80;
+export const MAX_NAME_LANG = 20;
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 const bad = () => new ImportError('invalid-data');
@@ -22,7 +25,11 @@ export function exportTeamFile(state: AppState): TeamFile {
   const r = currentRoster(state);
   return {
     fanfareTeam: 1, sport: state.sport, teamName: r.homeTeam, teamSayAs: r.homeSayAs,
-    players: r.players.map(p => ({ name: p.name, number: p.number, position: p.position, onField: p.onField, sayAs: p.sayAs })),
+    teamOrigSpelling: r.homeOrigSpelling, teamNameLang: r.homeNameLang,
+    players: r.players.map(p => ({
+      name: p.name, number: p.number, position: p.position, onField: p.onField, sayAs: p.sayAs,
+      origSpelling: p.origSpelling, nameLang: p.nameLang,
+    })),
   };
 }
 
@@ -37,9 +44,11 @@ export function parseTeamFile(json: unknown): TeamFile {
     if (!isObj(v) || typeof v.name !== 'string' || typeof v.onField !== 'boolean') throw bad();
     const name = v.name.trim().slice(0, 60);
     if (name === '') throw bad();
-    return { name, number: str(v.number, 3), position: str(v.position, 60), onField: v.onField, sayAs: str(v.sayAs, 80) };
+    return { name, number: str(v.number, 3), position: str(v.position, 60), onField: v.onField, sayAs: str(v.sayAs, 80),
+      origSpelling: str(v.origSpelling, MAX_ORIG_SPELLING), nameLang: str(v.nameLang, MAX_NAME_LANG) };
   });
-  return { fanfareTeam: 1, sport: json.sport as SportId, teamName: str(json.teamName, 80), teamSayAs: str(json.teamSayAs, 80), players };
+  return { fanfareTeam: 1, sport: json.sport as SportId, teamName: str(json.teamName, 80), teamSayAs: str(json.teamSayAs, 80),
+    teamOrigSpelling: str(json.teamOrigSpelling, MAX_ORIG_SPELLING), teamNameLang: str(json.teamNameLang, MAX_NAME_LANG), players };
 }
 
 function slug(s: string): string {

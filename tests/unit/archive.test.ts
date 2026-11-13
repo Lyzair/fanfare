@@ -13,9 +13,9 @@ function state(): AppState {
     version: 1, sport: 'football', lang: 'en', voiceId: 'v1', soundsEnabled: true,
     rosters: {
       football: {
-        homeTeam: 'A', homeSayAs: 'Ay', opponent: 'B', opponentSayAs: 'Bee', showPositions: true,
-        players: [{ id: 'p1', name: 'Ann', number: '7', position: 'FW', onField: true, customText: null, sayAs: 'An' }],
-        guestPlayers: [{ id: 'g1', name: 'Gus', number: '3', position: '', onField: false, customText: null, sayAs: 'Goose' }],
+        homeTeam: 'A', homeSayAs: 'Ay', homeOrigSpelling: 'Эй', homeNameLang: 'ru', opponent: 'B', opponentSayAs: 'Bee', opponentOrigSpelling: '', opponentNameLang: '', showPositions: true,
+        players: [{ id: 'p1', name: 'Ann', number: '7', position: 'FW', onField: true, customText: null, sayAs: 'An', origSpelling: 'Анна', nameLang: 'ru' }],
+        guestPlayers: [{ id: 'g1', name: 'Gus', number: '3', position: '', onField: false, customText: null, sayAs: 'Goose', origSpelling: '', nameLang: '' }],
         templates: defaultTemplates('football', 'en'),
       },
     },
@@ -103,6 +103,7 @@ describe('archive', () => {
     expect(r.homeSayAs).toBe('');
     expect(r.opponentSayAs).toBe('');
     expect(r.players[0].sayAs).toBe('');
+    expect([r.players[0].origSpelling, r.players[0].nameLang, r.homeOrigSpelling, r.opponentNameLang]).toEqual(['', '', '', '']);
     expect(r.showPositions).toBe(false);
     expect(r.templates).toEqual(defaultTemplates('handball', 'de'));
     expect(r.guestPlayers).toEqual([]);

@@ -40,7 +40,7 @@ test('guest coach shares the team file, the home side imports it and announces g
   await download.saveAs(file);
   const shared = JSON.parse(readFileSync(file, 'utf8'));
   expect(shared).toMatchObject({ fanfareTeam: 1, sport: 'football', teamName: 'SV Sample' });
-  expect(Object.keys(shared).sort()).toEqual(['fanfareTeam', 'players', 'sport', 'teamName', 'teamSayAs']);
+  expect(Object.keys(shared).sort()).toEqual(['fanfareTeam', 'players', 'sport', 'teamName', 'teamNameLang', 'teamOrigSpelling', 'teamSayAs']);
 
   // Context B: the home side, a fresh browser profile
   const home = await openApp(browser, baseURL!, foreign);

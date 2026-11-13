@@ -14,13 +14,21 @@ export interface Player {
   customText: string | null;
   /** How the voice should say the name (empty = say the name itself). */
   sayAs: string;
+  /** The name in its own spelling/script, for Suggest ('' = the display name). */
+  origSpelling: string;
+  /** eSpeak voice code of the name's language ('' = the team language). */
+  nameLang: string;
 }
 
 export interface Roster {
   homeTeam: string;
   homeSayAs: string;
+  homeOrigSpelling: string;
+  homeNameLang: string;
   opponent: string;
   opponentSayAs: string;
+  opponentOrigSpelling: string;
+  opponentNameLang: string;
   showPositions: boolean;
   players: Player[];
   /** The visiting team, announced before ours. Empty = no guests. */
@@ -35,7 +43,9 @@ export interface TeamFile {
   sport: SportId;
   teamName: string;
   teamSayAs: string;
-  players: Array<Pick<Player, 'name' | 'number' | 'position' | 'onField' | 'sayAs'>>;
+  teamOrigSpelling: string;
+  teamNameLang: string;
+  players: Array<Pick<Player, 'name' | 'number' | 'position' | 'onField' | 'sayAs' | 'origSpelling' | 'nameLang'>>;
 }
 
 export interface CustomSound {

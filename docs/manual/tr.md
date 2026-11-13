@@ -22,7 +22,7 @@ Fanfare'in alt alta beş adımı vardır: **1 Maç ve oyuncular**, **2 Anonslar*
 
 Her satırda küçük düğmeler vardır: **⇄** oyuncuyu saha ile yedekler arasında taşır, **↑** ve **↓** sırayı değiştirir, **🗑** oyuncuyu siler (birkaç saniye geri alabilirsiniz). Spikerin "Kaleci" veya "Orta saha" da söylemesini istiyorsanız **Mevkileri kullan** kutusunu işaretleyin.
 
-**🗣 Şöyle söyle…** bir ismin nasıl okunacağını belirler. Bir satırda 🗣 düğmesine basın ve ismi okunduğu gibi yazın, örneğin `Kim Mooster`. Bu metni yalnızca ses kullanır. Liste gerçek ismi göstermeye devam eder. Dinlemek için ▶ düğmesine basın. Aynı 🗣 düğmesi takım adlarının yanında da vardır.
+**🗣 Şöyle söyle…** bir ismin nasıl okunacağını belirler. Bir satırda 🗣 düğmesine basın ve ismi okunduğu gibi yazın, örneğin `Kim Mooster`. Bu metni yalnızca ses kullanır. Liste gerçek ismi göstermeye devam eder. Dinlemek için ▶ düğmesine basın. Aynı 🗣 düğmesi takım adlarının yanında da vardır. **✨ Öner** sizin için bir yazım bulabilir: ismin dilini seçin, özgün yazımını girin (örneğin `Nguyễn`); uygulama, sesin gerçek okunuşa yakın söylediği en fazla üç yazım önerir. Her birini dinlemek için ▶, seçmek için **Kullan** düğmesine basın. Çevrimdışı çalışır; şu anda Almanca ve İngilizce sesler için kullanılabilir.
 
 **İpucu:** kulübünüz fussball.de kullanıyorsa orada **kendi takımınızın** kadrosunu açın, kopyalayın ve kutuya yapıştırın. Forma numaraları ve isimler tanınır. Fanfare fussball.de'ye asla bağlanmaz. Ayrıntılar için 1. adımdaki "fussball.de'den mi geliyorsunuz?" bölümüne bakın.
 

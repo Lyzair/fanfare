@@ -7,6 +7,7 @@ import { MAX_TEAM_FILE_BYTES, parseTeamFile } from '../io/teamFile';
 import { currentRoster } from '../state/reducer';
 import PlayerEditor, { fill } from './PlayerEditor';
 import { useSayAs } from './useSayAs';
+import SuggestPanel from './SuggestPanel';
 import type { PanelProps } from './types';
 
 type Message = { kind: 'ok' | 'error'; text: string } | null;
@@ -74,8 +75,8 @@ export default function RosterPanel({ state, dispatch }: PanelProps) {
       <fieldset class="match-card">
         <legend>{tr('matchTitle')}</legend>
         {([
-          { key: 'home', label: 'homeTeam', value: roster.homeTeam, sayAs: roster.homeSayAs },
-          { key: 'opponent', label: 'opponent', value: roster.opponent, sayAs: roster.opponentSayAs },
+          { key: 'home', label: 'homeTeam', value: roster.homeTeam, sayAs: roster.homeSayAs, orig: roster.homeOrigSpelling, nameLang: roster.homeNameLang },
+          { key: 'opponent', label: 'opponent', value: roster.opponent, sayAs: roster.opponentSayAs, orig: roster.opponentOrigSpelling, nameLang: roster.opponentNameLang },
         ] as const).map(f => (
           <div class="match-field" key={f.key}>
             <label for={`match-${f.key}`}>{tr(f.label)}</label>
@@ -89,6 +90,11 @@ export default function RosterPanel({ state, dispatch }: PanelProps) {
                   onInput={e => dispatch({ type: 'setMatch', [f.key === 'home' ? 'homeSayAs' : 'opponentSayAs']: e.currentTarget.value })} />
                 {sayAs.hearButton(f.value, f.sayAs)}
                 <p class="hint">{tr('sayAsHint')}</p>
+                <SuggestPanel lang={lang} voiceId={state.voiceId} name={f.value} origSpelling={f.orig} nameLang={f.nameLang}
+                  onFields={patch => dispatch({ type: 'setMatch', ...(f.key === 'home'
+                    ? { homeOrigSpelling: patch.origSpelling, homeNameLang: patch.nameLang }
+                    : { opponentOrigSpelling: patch.origSpelling, opponentNameLang: patch.nameLang }) })}
+                  onUse={text => dispatch({ type: 'setMatch', [f.key === 'home' ? 'homeSayAs' : 'opponentSayAs']: text })} />
               </div>
             )}
           </div>

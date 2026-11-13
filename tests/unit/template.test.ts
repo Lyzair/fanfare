@@ -2,9 +2,9 @@ import { renderTemplate, calloutText, scoreText, introText, speechText, guestInt
 import { defaultTemplates } from '../../src/i18n';
 import type { Player, Roster } from '../../src/domain/model';
 
-const player: Player = { id: 'p1', name: 'Lea', number: '', position: '', onField: true, customText: null, sayAs: '' };
+const player: Player = { id: 'p1', name: 'Lea', number: '', position: '', onField: true, customText: null, sayAs: '', origSpelling: '', nameLang: '' };
 const roster: Roster = {
-  homeTeam: '', homeSayAs: '', opponent: '', opponentSayAs: '', showPositions: true, players: [], guestPlayers: [],
+  homeTeam: '', homeSayAs: '', homeOrigSpelling: '', homeNameLang: '', opponent: '', opponentSayAs: '', opponentOrigSpelling: '', opponentNameLang: '', showPositions: true, players: [], guestPlayers: [],
   templates: defaultTemplates('football', 'en'),
 };
 

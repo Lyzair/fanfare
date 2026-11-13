@@ -3,8 +3,11 @@ import { ImportError } from '../../src/io/archive';
 import { initialState, reducer, currentRoster } from '../../src/state/reducer';
 
 const valid = {
-  fanfareTeam: 1, sport: 'football', teamName: 'SV Sample', teamSayAs: 'Ess Fau',
-  players: [{ name: 'Pat Gast', number: '3', position: 'Defence', onField: true, sayAs: 'Pat Guest' }, { name: 'Mika', number: '8', position: '', onField: false, sayAs: '' }],
+  fanfareTeam: 1, sport: 'football', teamName: 'SV Sample', teamSayAs: 'Ess Fau', teamOrigSpelling: 'Эс Фау', teamNameLang: 'ru',
+  players: [
+    { name: 'Pat Gast', number: '3', position: 'Defence', onField: true, sayAs: 'Pat Guest', origSpelling: '', nameLang: '' },
+    { name: 'Mika', number: '8', position: '', onField: false, sayAs: '', origSpelling: 'Мика', nameLang: 'ru' },
+  ],
 };
 const code = (fn: () => unknown) => { try { fn(); } catch (e) { return (e as ImportError).code; } return 'no error'; };
 
@@ -30,13 +33,22 @@ describe('parseTeamFile', () => {
     expect(code(() => parseTeamFile({ ...valid, players: p }))).toBe('invalid-data');
     expect(parseTeamFile({ ...valid, players: p.slice(0, 100) }).players).toHaveLength(100);
   });
+  test('origSpelling and nameLang travel, are validated and capped', () => {
+    const out = parseTeamFile({ ...valid, teamOrigSpelling: 'O'.repeat(200), teamNameLang: 'l'.repeat(50),
+      players: [{ name: 'A', onField: true, origSpelling: 'Микола', nameLang: 'uk' }] });
+    expect(out.players[0]).toMatchObject({ origSpelling: 'Микола', nameLang: 'uk' });
+    expect(out.teamOrigSpelling).toHaveLength(80);
+    expect(out.teamNameLang).toHaveLength(20);
+    expect(code(() => parseTeamFile({ ...valid, players: [{ name: 'A', onField: true, nameLang: 5 }] }))).toBe('invalid-data');
+    expect(code(() => parseTeamFile({ ...valid, teamOrigSpelling: 5 }))).toBe('invalid-data');
+  });
   test('extra fields are dropped, missing optional fields default, strings are capped', () => {
     const out = parseTeamFile({
       ...valid, secret: 1, clips: 'x', teamName: 'N'.repeat(200),
       players: [{ name: 'A'.repeat(100), number: '1234', onField: true, customText: 'hi', id: 'zzz' }],
     });
     expect(out).not.toHaveProperty('secret');
-    expect(out.players[0]).toEqual({ name: 'A'.repeat(60), number: '123', position: '', onField: true, sayAs: '' });
+    expect(out.players[0]).toEqual({ name: 'A'.repeat(60), number: '123', position: '', onField: true, sayAs: '', origSpelling: '', nameLang: '' });
     expect(out.teamName).toHaveLength(80);
     expect(out.teamSayAs).toBe('Ess Fau');
   });
@@ -50,10 +62,10 @@ describe('exportTeamFile', () => {
     s = reducer(s, { type: 'updatePlayer', id: currentRoster(s).players[0].id, patch: { sayAs: 'Lee-ah', customText: 'secret' } });
     const f = exportTeamFile(s);
     expect(f).toEqual({
-      fanfareTeam: 1, sport: 'football', teamName: 'FC Example', teamSayAs: 'F C Example',
+      fanfareTeam: 1, sport: 'football', teamName: 'FC Example', teamSayAs: 'F C Example', teamOrigSpelling: '', teamNameLang: '',
       players: [
-        { name: 'Lea', number: '7', position: '', onField: true, sayAs: 'Lee-ah' },
-        { name: 'Tom', number: '12', position: '', onField: false, sayAs: '' },
+        { name: 'Lea', number: '7', position: '', onField: true, sayAs: 'Lee-ah', origSpelling: '', nameLang: '' },
+        { name: 'Tom', number: '12', position: '', onField: false, sayAs: '', origSpelling: '', nameLang: '' },
       ],
     });
     expect(JSON.stringify(f)).not.toContain('secret');

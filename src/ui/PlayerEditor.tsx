@@ -6,6 +6,7 @@ import { getPack, t } from '../i18n';
 import type { UiStrings } from '../i18n';
 import { currentRoster } from '../state/reducer';
 import { useSayAs } from './useSayAs';
+import SuggestPanel from './SuggestPanel';
 import type { PanelProps } from './types';
 
 const UNDO_MS = 5000;
@@ -92,10 +93,12 @@ export default function PlayerEditor({ state, dispatch, side }: PanelProps & { s
             </span>
             {sayAs.isOpen(p.id) && (
               <div class="say-as">
-                <input aria-label={tr('sayAsLabel')} placeholder={tr('sayAsPlaceholder')} defaultValue={p.sayAs} maxLength={80}
+                <input aria-label={tr('sayAsLabel')} placeholder={tr('sayAsPlaceholder')} value={p.sayAs} maxLength={80}
                   onInput={e => update(p.id, { sayAs: e.currentTarget.value })} />
                 {sayAs.hearButton(p.name, p.sayAs)}
                 <p class="hint">{tr('sayAsHint')}</p>
+                <SuggestPanel lang={lang} voiceId={state.voiceId} name={p.name} origSpelling={p.origSpelling} nameLang={p.nameLang}
+                  onFields={patch => update(p.id, patch)} onUse={text => update(p.id, { sayAs: text })} />
               </div>
             )}
           </li>

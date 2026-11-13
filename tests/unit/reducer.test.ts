@@ -92,10 +92,10 @@ test('sayAs round-trips through updatePlayer and setMatch', () => {
 
 describe('guest team', () => {
   const team = {
-    fanfareTeam: 1 as const, sport: 'football' as const, teamName: 'SV Sample', teamSayAs: 'Ess Fau',
+    fanfareTeam: 1 as const, sport: 'football' as const, teamName: 'SV Sample', teamSayAs: 'Ess Fau', teamOrigSpelling: 'Эс Фау', teamNameLang: 'ru',
     players: [
-      { name: 'Pat Gast', number: '3', position: '', onField: true, sayAs: '' },
-      { name: 'Mika Besuch', number: '8', position: '', onField: false, sayAs: 'Mee-ka' },
+      { name: 'Pat Gast', number: '3', position: '', onField: true, sayAs: '', origSpelling: '', nameLang: '' },
+      { name: 'Mika Besuch', number: '8', position: '', onField: false, sayAs: 'Mee-ka', origSpelling: 'Мика', nameLang: 'ru' },
     ],
   };
   test('initial roster has no guests', () => expect(currentRoster(initialState('en')).guestPlayers).toEqual([]));
@@ -128,6 +128,8 @@ describe('guest team', () => {
     expect(new Set(r.guestPlayers.map(p => p.id)).size).toBe(2);
     expect(r.opponent).toBe('SV Sample');
     expect(r.opponentSayAs).toBe('Ess Fau');
+    expect([r.opponentOrigSpelling, r.opponentNameLang]).toEqual(['Эс Фау', 'ru']);
+    expect([r.guestPlayers[1].origSpelling, r.guestPlayers[1].nameLang]).toEqual(['Мика', 'ru']);
     const again = currentRoster(reducer(s, { type: 'importGuestTeam', team }));
     expect(again.guestPlayers[0].id).not.toBe(r.guestPlayers[0].id);
   });
