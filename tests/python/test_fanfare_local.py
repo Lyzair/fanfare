@@ -1,6 +1,7 @@
 """Unit tests for scripts/fanfare-local.py (stdlib unittest, Python >= 3.9)."""
 import http.client
 import importlib.util
+import ipaddress
 import os
 import re
 import socket
@@ -19,7 +20,7 @@ sys.modules['fanfare_local'] = fl
 _spec.loader.exec_module(fl)
 
 LAN_IP = '192.168.1.23'
-HOSTS = ['localhost', 'testhost', 'testhost.local']
+HOSTS = ['localhost', 'testhost.local']
 
 
 def index_csp():
@@ -192,7 +193,7 @@ class HttpServerTests(TempDirCase):
 
     def test_only_get_and_head(self):
         r = self.run_server('--port', '0')
-        for m in ['POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']:
+        for m in ['POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'PROPFIND', 'FOO']:
             resp, _ = self.get(r, '/a.txt', method=m)
             self.assertEqual(resp.status, 405, m)
             self.assertEqual(resp.getheader('Allow'), 'GET, HEAD')
@@ -288,6 +289,76 @@ class CertTests(TempDirCase):
                                  capture_output=True, text=True, check=True).stdout
             self.assertIn('IP Address:' + LAN_IP, out, name)
             self.assertIn('DNS:testhost.local', out, name)
+
+    def test_validity_within_apple_limit_for_every_backend(self):
+        for name in BACKENDS:
+            with self.subTest(backend=name):
+                certs = fl.ensure_certs(Path(self._tmp.name) / ('v-' + name), [LAN_IP], HOSTS, backend=name)
+                info = ssl._ssl._test_decode_cert(str(certs.server_cert))
+                nb, na = ssl.cert_time_to_seconds(info['notBefore']), ssl.cert_time_to_seconds(info['notAfter'])
+                days = (na - nb) / 86400
+                self.assertLessEqual(days, 825)
+                self.assertGreater(days, 800)
+                import time
+                self.assertLess(nb, time.time() - 3600, 'notBefore should be backdated for skewed phone clocks'
+                                if name == 'cryptography' else 'notBefore not in the future')
+
+    def test_ca_has_critical_name_constraints_for_every_backend(self):
+        want_ips = {'10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16', '100.64.0.0/10', '127.0.0.0/8'}
+        want_dns = {'localhost', 'local'}
+        for name in BACKENDS:
+            with self.subTest(backend=name):
+                certs = fl.ensure_certs(Path(self._tmp.name) / ('n-' + name), [LAN_IP], HOSTS, backend=name)
+                try:
+                    from cryptography import x509
+                    cert = x509.load_pem_x509_certificate(certs.ca_cert.read_bytes())
+                    ext = cert.extensions.get_extension_for_class(x509.NameConstraints)
+                    self.assertTrue(ext.critical)
+                    self.assertIsNone(ext.value.excluded_subtrees)
+                    got_ips = {str(t.value) for t in ext.value.permitted_subtrees if isinstance(t, x509.IPAddress)}
+                    got_dns = {t.value for t in ext.value.permitted_subtrees if isinstance(t, x509.DNSName)}
+                except ImportError:
+                    import subprocess
+                    out = subprocess.run(['openssl', 'x509', '-in', str(certs.ca_cert), '-noout', '-text'],
+                                         capture_output=True, text=True, check=True).stdout
+                    self.assertIn('Name Constraints: critical', out)
+                    permitted = out.split('Permitted:')[1]
+                    got_ips = {str(ipaddress.IPv4Network(m.replace('/', '/'), strict=False)) for m in
+                               re.findall(r'IP:(\S+)', permitted)}
+                    got_dns = set(re.findall(r'DNS:(\S+)', permitted))
+                self.assertEqual(got_ips, want_ips)
+                self.assertEqual(got_dns, want_dns)
+
+    def test_public_and_out_of_range_sans_are_skipped(self):
+        for name in BACKENDS:
+            with self.subTest(backend=name):
+                cfg = Path(self._tmp.name) / ('s-' + name)
+                certs = fl.ensure_certs(cfg, [LAN_IP, '8.8.8.8', '172.32.0.1', '100.64.0.4'],
+                                        HOSTS + ['testhost', 'example.com'], backend=name)
+                self.assertEqual(set(certs.skipped), {'8.8.8.8', '172.32.0.1', 'testhost', 'example.com'})
+                for ok in (LAN_IP, '100.64.0.4', 'localhost', 'testhost.local'):
+                    self.handshake(certs, ok)
+                with self.assertRaises(ssl.SSLCertVerificationError):
+                    self.handshake(certs, '8.8.8.8')
+                with self.assertRaises(ssl.SSLCertVerificationError):
+                    self.handshake(certs, 'testhost')
+
+    def test_host_names_has_no_bare_hostname(self):
+        with mock.patch.object(socket, 'gethostname', return_value='MyLaptop'):
+            self.assertEqual(fl.host_names(), ['localhost', 'mylaptop.local'])
+
+    def test_unconstrained_old_ca_is_replaced_once_with_notice(self):
+        name = BACKENDS[0]
+        certs = fl.ensure_certs(self.cfg, [LAN_IP], HOSTS, backend=name)
+        old_fp = certs.fingerprint
+        (self.cfg / 'ca.marker').unlink()  # what a CA from before the constraint looks like
+        new = fl.ensure_certs(self.cfg, [LAN_IP], HOSTS, backend=name)
+        self.assertNotEqual(new.fingerprint, old_fp)
+        self.assertTrue(any('trust' in n for n in new.notices))
+        self.handshake(new, LAN_IP)
+        again = fl.ensure_certs(self.cfg, [LAN_IP], HOSTS, backend=name)
+        self.assertEqual(again.fingerprint, new.fingerprint)
+        self.assertEqual(again.notices, ())
 
     def test_server_cert_regenerated_when_ip_changes_but_ca_kept(self):
         if not BACKENDS:

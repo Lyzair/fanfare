@@ -148,9 +148,8 @@ def host_names():
     names = ['localhost']
     host = socket.gethostname().strip().lower()
     if re.fullmatch(r'[a-z0-9]([a-z0-9.-]*[a-z0-9])?', host or ''):
-        names.append(host)
-        if not host.endswith('.local'):
-            names.append(host + '.local')
+        # only <host>.local: the CA is name-constrained and may not vouch for other names
+        names.append(host if host.endswith('.local') else host.split('.')[0] + '.local')
     return list(dict.fromkeys(names))
 
 
@@ -175,6 +174,23 @@ class Certs:
     server_cert: Path
     server_key: Path
     fingerprint: str
+    skipped: tuple = ()   # addresses/names left out because the CA may not vouch for them
+    notices: tuple = ()   # things the user should know (e.g. CA replaced: phones must re-trust)
+
+# The local CA is name-constrained (RFC 5280): even a stolen CA key can only vouch for
+# private-network addresses, localhost and *.local.
+PERMITTED_NETS = ['10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16', '100.64.0.0/10', '127.0.0.0/8']
+PERMITTED_DNS = ['localhost', 'local']
+CA_MARKER = 'ca-name-constrained-v1'
+
+
+def _permitted_ip(ip):
+    a = ipaddress.IPv4Address(ip)
+    return any(a in ipaddress.IPv4Network(n) for n in PERMITTED_NETS)
+
+
+def _permitted_dns(name):
+    return any(name == d or name.endswith('.' + d) for d in PERMITTED_DNS)
 
 
 def fingerprint_of(cert_path):
@@ -208,7 +224,36 @@ def _write_private(path, data):
 
 
 def _sans(ips, names):
-    return [str(ipaddress.IPv4Address(i)) for i in ips], [n for n in names if re.fullmatch(r'[A-Za-z0-9.-]+', n)]
+    """Split into (ips, names, skipped): only what the name-constrained CA is allowed to cover."""
+    keep_ips, keep_names, skipped = [], [], []
+    for i in ips:
+        ip = str(ipaddress.IPv4Address(i))
+        (keep_ips if _permitted_ip(ip) else skipped).append(ip)
+    for n in names:
+        n = n.lower()
+        ok = re.fullmatch(r'[a-z0-9.-]+', n) and _permitted_dns(n)
+        (keep_names if ok else skipped).append(n)
+    return keep_ips, keep_names, skipped
+
+
+def _nc_openssl():
+    return 'nameConstraints=critical,' + ','.join(
+        ['permitted;IP:%s/%s' % (str(n.network_address), str(n.netmask))
+         for n in map(ipaddress.IPv4Network, PERMITTED_NETS)] + ['permitted;DNS:%s' % d for d in PERMITTED_DNS])
+
+
+def _openssl_dates(days):
+    """Extra x509 arguments: notBefore one day back (clock skew) with total validity <= days.
+    Needs OpenSSL 3.4+; older versions just start now."""
+    try:
+        helptext = subprocess.run(['openssl', 'x509', '-help'], capture_output=True, text=True, timeout=20)
+        if '-not_before' not in helptext.stdout + helptext.stderr:
+            return ['-days', str(days)]
+    except (OSError, subprocess.SubprocessError):
+        return ['-days', str(days)]
+    start = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=1)
+    fmt = '%Y%m%d%H%M%SZ'
+    return ['-not_before', start.strftime(fmt), '-not_after', (start + datetime.timedelta(days=days)).strftime(fmt)]
 
 
 def _run_openssl(args, cwd):
@@ -223,7 +268,7 @@ def _openssl_ca(cfg):
     conf = cfg / 'ca.tmp.cnf'
     conf.write_text('[req]\ndistinguished_name=dn\nprompt=no\nx509_extensions=v3_ca\n'
                     '[dn]\nCN=%s\n[v3_ca]\nbasicConstraints=critical,CA:TRUE,pathlen:0\n'
-                    'keyUsage=critical,keyCertSign,cRLSign\nsubjectKeyIdentifier=hash\n' % CA_NAME)
+                    'keyUsage=critical,keyCertSign,cRLSign\nsubjectKeyIdentifier=hash\n%s\n' % (CA_NAME, _nc_openssl()))
     try:
         _run_openssl(['genrsa', '-out', 'ca.key', '2048'], cfg)
         _private(cfg / 'ca.key')
@@ -247,7 +292,7 @@ def _openssl_server(cfg, ips, names):
         _private(cfg / 'server.key')
         _run_openssl(['req', '-new', '-key', 'server.key', '-config', conf.name, '-out', 'server.tmp.csr'], cfg)
         _run_openssl(['x509', '-req', '-in', 'server.tmp.csr', '-CA', 'ca.crt', '-CAkey', 'ca.key',
-                      '-CAcreateserial', '-CAserial', 'ca.tmp.srl', '-days', str(SERVER_DAYS), '-sha256',
+                      '-CAcreateserial', '-CAserial', 'ca.tmp.srl'] + _openssl_dates(SERVER_DAYS) + ['-sha256',
                       '-extfile', conf.name, '-extensions', 'v3_srv', '-out', 'server.crt'], cfg)
     finally:
         for name in (conf.name, 'server.tmp.csr', 'ca.tmp.srl'):
@@ -271,6 +316,9 @@ def _crypto_ca(cfg):
                                          data_encipherment=False, key_agreement=False, key_cert_sign=True,
                                          crl_sign=True, encipher_only=False, decipher_only=False), critical=True)
             .add_extension(x509.SubjectKeyIdentifier.from_public_key(key.public_key()), critical=False)
+            .add_extension(x509.NameConstraints(
+                permitted_subtrees=[x509.IPAddress(ipaddress.IPv4Network(n)) for n in PERMITTED_NETS]
+                + [x509.DNSName(d) for d in PERMITTED_DNS], excluded_subtrees=None), critical=True)
             .sign(key, hashes.SHA256()))
     _write_private(cfg / 'ca.key', key.private_bytes(
         serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8, serialization.NoEncryption()))
@@ -285,14 +333,14 @@ def _crypto_server(cfg, ips, names):
     ca_cert = x509.load_pem_x509_certificate((cfg / 'ca.crt').read_bytes())
     ca_key = serialization.load_pem_private_key((cfg / 'ca.key').read_bytes(), password=None)
     key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-    now = datetime.datetime.now(datetime.timezone.utc)
+    not_before = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=1)
     sans = [x509.DNSName(n) for n in names] + [x509.IPAddress(ipaddress.IPv4Address(i)) for i in ips]
     cert = (x509.CertificateBuilder()
             .subject_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, 'fanfare-local server')]))
             .issuer_name(ca_cert.subject).public_key(key.public_key())
             .serial_number(x509.random_serial_number())
-            .not_valid_before(now - datetime.timedelta(days=1))
-            .not_valid_after(now + datetime.timedelta(days=SERVER_DAYS))
+            .not_valid_before(not_before)
+            .not_valid_after(not_before + datetime.timedelta(days=SERVER_DAYS))  # Apple: <= 825 days in total
             .add_extension(x509.BasicConstraints(ca=False, path_length=None), critical=True)
             .add_extension(x509.KeyUsage(digital_signature=True, content_commitment=False, key_encipherment=True,
                                          data_encipherment=False, key_agreement=False, key_cert_sign=False,
@@ -327,16 +375,25 @@ def ensure_certs(cfg, ips, names, backend=None):
         backend = found[0]
     make_ca, make_server = BACKENDS[backend]
     cfg = Path(cfg)
-    ips, names = _sans(ips, names)
+    ips, names, skipped = _sans(ips, names)
+    notices = []
     old_umask = os.umask(0o077) if os.name != 'nt' else None
     try:
         cfg.mkdir(parents=True, exist_ok=True)
         if os.name != 'nt':
             os.chmod(cfg, 0o700)
         ca_crt, ca_key = cfg / 'ca.crt', cfg / 'ca.key'
-        new_ca = not (ca_crt.exists() and ca_key.exists()) or _age_days(ca_crt) > CA_DAYS - 365
+        marker = cfg / 'ca.marker'
+        had_ca = ca_crt.exists() and ca_key.exists()
+        unconstrained = had_ca and (not marker.exists() or marker.read_text().strip() != CA_MARKER)
+        new_ca = not had_ca or unconstrained or _age_days(ca_crt) > CA_DAYS - 365
         if new_ca:
             make_ca(cfg)
+            marker.write_text(CA_MARKER + '\n')
+            if had_ca:
+                notices.append('The local CA was replaced (%s). Phones must open /trust.html again to trust the new one; '
+                               'remove the old "fanfare-local CA" from their settings.'
+                               % ('it had no name constraints' if unconstrained else 'it was about to expire'))
         wanted = '\n'.join(['ip:' + i for i in ips] + ['dns:' + n for n in names]) + '\n'
         san_file, srv_crt, srv_key = cfg / 'san.txt', cfg / 'server.crt', cfg / 'server.key'
         stale = (new_ca or not (srv_crt.exists() and srv_key.exists()) or not san_file.exists()
@@ -347,7 +404,7 @@ def ensure_certs(cfg, ips, names, backend=None):
     finally:
         if old_umask is not None:
             os.umask(old_umask)
-    return Certs(ca_crt, ca_key, srv_crt, srv_key, fingerprint_of(ca_crt))
+    return Certs(ca_crt, ca_key, srv_crt, srv_key, fingerprint_of(ca_crt), tuple(skipped), tuple(notices))
 
 
 # ----------------------------------------------------------------------------- trust page
@@ -448,7 +505,11 @@ class Handler(BaseHTTPRequestHandler):
     def _method_not_allowed(self):
         self._reply(405, b'Method not allowed\n', headers=[('Allow', 'GET, HEAD')])
 
-    do_POST = do_PUT = do_DELETE = do_PATCH = do_OPTIONS = do_TRACE = do_CONNECT = _method_not_allowed
+    def __getattr__(self, name):
+        # every method other than GET/HEAD (even unknown ones like PROPFIND) -> 405, not the base class's 501
+        if name.startswith('do_'):
+            return self._method_not_allowed
+        raise AttributeError(name)
 
     def do_GET(self):
         self._serve(head=False)
@@ -607,6 +668,11 @@ def start(argv, out=say):
             https = False
         else:
             certs = ensure_certs(cfg, ips, host_names())
+            for note in certs.notices:
+                out('NOTICE: ' + note)
+            if certs.skipped:
+                out('Left out of the certificate (outside private/local ranges, which the local CA is limited to): '
+                    + ', '.join(certs.skipped))
     first, last = (HTTPS_PORTS if https else HTTP_PORTS)[0], (HTTPS_PORTS if https else HTTP_PORTS)[-1]
     port = pick_port(host, args.port, first, last)
 
