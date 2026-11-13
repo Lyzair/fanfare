@@ -7,3 +7,5 @@ public/ort
 public/piper
 test-results
 playwright-report
+__pycache__/
+release

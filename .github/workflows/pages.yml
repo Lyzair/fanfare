@@ -28,10 +28,21 @@ jobs:
         with:
           path: public/voices
           key: voices-${{ hashFiles('src/tts/voices.json', 'scripts/fetch-assets.mjs') }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
       - run: npm ci
       - run: npm test
+      - run: python -m unittest discover -s tests/python
       - run: npm run build
       - run: npm run check:dist
+      - run: npm run package:local
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fanfare-local
+          path: release/fanfare-local-*.zip
+          if-no-files-found: error
+          compression-level: 0
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

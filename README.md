@@ -38,6 +38,24 @@ Copy `dist/` to any static host, including a sub-path. Run `npm run check:dist` 
 
 The first run downloads about 660 MB of voices; later runs reuse a cache. As with any web host, GitHub sees ordinary page-request logs; the app itself never sends names, sounds or settings anywhere.
 
+## Run Fanfare on your own computer
+
+No internet at all? Fanfare also runs from a laptop with a tiny local server (Python 3.9 or newer, nothing else to install):
+
+```sh
+npm run build && npm run serve:local        # http://localhost:8080 (8081..8099 if busy)
+npm run serve:local -- --lan                # phones on the same Wi-Fi, over HTTPS
+npm run package:local                       # release/fanfare-local-<version>.zip for people without Node
+```
+
+The zip contains the built site, `fanfare-local.py`, `start-fanfare.sh` / `.command` / `.bat` and a `README-local.txt` (English and German). Unzip, double-click the start file, done.
+
+- Default is `127.0.0.1:8080`. If the port is busy the next free one (up to 8099) is used and printed; an explicit `--port N` never falls back.
+- `--lan` binds all interfaces and serves **HTTPS** (default port 8443, then 8444..8463). Phones need HTTPS for offline mode and the microphone. On first run a private local CA and a server certificate are created in `~/.config/fanfare-local/` (`%APPDATA%\fanfare-local\` on Windows, `~/Library/Application Support/fanfare-local/` on macOS), never in the served folder or the zip, using the `openssl` command or the Python `cryptography` package. Without either, it falls back to plain http and says how to get HTTPS. `--lan --http` forces plain http.
+- Phones open `https://<laptop-ip>:8443/trust.html` once to install the CA (Android and iOS steps, with the SHA-256 fingerprint to compare with the terminal). Only `/fanfare-ca.crt` (certificate, never a key) and `/trust.html` are served for this, and only over HTTPS.
+- The server answers GET and HEAD only, never lists folders, rejects path traversal, sends the same Content-Security-Policy as the page, contacts no other host, and logs only `METHOD /path STATUS`.
+- Tests: `npm run test:py` (Python), `npm run build && npm run test:e2e:local` (the e2e suite against `fanfare-local.py`).
+
 ## Third-party licences
 
 - **Project code:** MIT, provided as is, without warranty (see `LICENSE`).
