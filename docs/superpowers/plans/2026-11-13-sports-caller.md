@@ -951,3 +951,22 @@ Reducer + archive tests: `sayAs` round-trips; old archives without the fields im
 - [ ] **Step 4: Panel tests:** toggling 🗣 shows the input; typing a hint dispatches; ▶ calls `speech.get` with the hint; CalloutPanel's Announce/▶ send `speechText` (hint) while the textarea still shows the real name; editing a hint changes the speech cache key (Ready badge disappears for that row).
 - [ ] **Step 5:** Run `npm test && npx tsc --noEmit && npm run build && npm run test:e2e` — Expected: all PASS.
 - [ ] **Step 6: Commit** — `feat: "say it like" pronunciation hints for names and teams`
+
+---
+
+### Task 18 addendum: "Your club's own announcer voice"
+
+Extends Task 18 (same dispatch). Requires Fanfare Studio round 3 (reference-voice endpoints).
+
+**Protocol additions** (`docs/local-voice-server.md`):
+- `POST /references` — `multipart/form-data`: `audio` (wav/webm/ogg, ≤ 60 s, ≤ 10 MB), `name` (≤ 40 chars), `lang` (code from LANGS), `consent` (must be `"true"`, else 400). → `201 application/json` `{ "id": "club-…", "lang": "de", "label": "…" }`; the new voice then appears in `GET /voices`.
+- `DELETE /references/{id}` → `204`. Removes the stored recording and the derived voice.
+- Server keeps recordings only on its own disk, never returns the raw audio, never logs it.
+
+**Fanfare UI (SoundsPanel, local-server section, only when connected):**
+- [ ] **🎙 Record club voice** opens a dialog: reading text (≈ 15 s, friendly announcer copy per language, e.g. en: "Hello everyone and welcome! Today's lineup: number seven, Lea! On the bench, ready to jump in: Tom! Have a fair and fun game!"), Record/Stop with a visible 20 s countdown (auto-stop at 20 s), playback ▶ to check it, name field, language select (default current), and a required consent checkbox — en: `I am the speaker, or the speaker agreed that this voice may be used for our club's announcements.` / de: `Ich bin die sprechende Person, oder sie hat zugestimmt, dass diese Stimme für die Ansagen unseres Vereins genutzt wird.` Save is disabled until consent is ticked and a recording exists.
+- [ ] Recording uses `navigator.mediaDevices.getUserMedia({audio:true})` + `MediaRecorder` only after the user clicks Record; the stream is stopped right after recording; the blob is sent only to the configured `isLocalUrl` server and discarded from memory afterwards (never persisted in IndexedDB, never in the export zip).
+- [ ] Club voices show in the voice select's "On this computer" group with a 🗑 (calls DELETE after confirm).
+- [ ] Readable errors: microphone denied, no microphone, server rejected (show server message).
+- [ ] Tests: unit (mock `getUserMedia`/`MediaRecorder`/fetch): Save disabled without consent; upload goes only to the local URL with `consent=true`; stream tracks stopped after recording; recording not written to persist; delete flow. e2e: extend `mockVoiceServer.ts` with `/references` and run record → save → voice appears (Chromium fake media: `--use-fake-device-for-media-stream --use-fake-ui-for-media-stream`).
+- [ ] Manual (Task 17 already done by then → update section 5 in all languages): one paragraph on club voices incl. consent and "don't imitate famous voices".
