@@ -1028,3 +1028,28 @@ Guest players use the existing `field`/`bench` templates.
 - [ ] Commit — `feat: guest team sharing and two-team announcements`
 
 **Task 19 addition — docs freshness (after Step 3, before Step 4):** rerun `npm run build && npm run docs:media` so every screenshot/GIF shows the final UI; the Step 1 reviewer also checks that each manual (all 10) and the in-app help (Task 21) describe every shipped feature (guest team, Say it like…, local voice server, club voice, privacy/export) and nothing that no longer exists; mismatches are must-fix.
+
+---
+
+### Task 23: "✨ Suggest" — automatic pronunciation suggestions (browser, offline)
+
+**Execution order:** after Task 22, before Task 18. **Basis:** spike `.superpowers/sdd/2026-11-13-sports-caller/say-as-spike.md` (the shipped `piper_phonemize.data` contains all 123 eSpeak NG dictionaries; the phonemizer wasm can be called directly; round-trip ranking works without ASR).
+
+**Goal:** next to "Say it like…", a **✨ Suggest** button proposes up to 3 respellings that the current voice will pronounce close to the name's real pronunciation; the user hears each (▶) and picks one.
+
+**How it works (all in the browser, no new dependencies):**
+1. The user picks the **name's language** (select with the eSpeak voices that have dictionaries, shown by native name; default = team language) and may enter the **name in its own spelling/script** (optional field "Original spelling", e.g. `Nguyễn`, `Микола` — needed because eSpeak needs native orthography; prefilled with the display name).
+2. `phonemize(text, espeakVoice) → string[]` (IPA segments) via the shipped `piper_phonemize` wasm (`createPiperPhonemize(...).callMain(["-l", voice, "--input", json, "--espeak_data", "/espeak-ng-data"])`, one cached module instance, serialized calls; unknown voice → readable error, never abort the page).
+3. `respell(ipa: string[], target: Lang) → string[]` with hand-written rule tables per **target** language — implement **de** and **en** now (≈ 60 entries each, from the spike's prototype); other target languages show "Suggestions are not available for this voice language yet" (tables can be added by contributors later; document how in CONTRIBUTING.md).
+4. Rank candidates by round trip: phonemize each candidate with the target language's eSpeak voice, weighted phoneme edit distance to the source IPA, dedupe candidates with identical back-IPA, keep the best 3, always include the plain display name as a baseline for comparison.
+5. UI: a small panel under the hint field lists candidates with ▶ (spoken through the normal `speech.get` path with the current voice), a closeness indicator (●●● / ●●○ / ●○○, with an accessible text), and **Use this** which fills `sayAs`. Works for players, Home team and Opponent.
+
+**Files:** Create `src/tts/phonemize.ts`, `src/domain/respell/{index,de,en}.ts`, `src/domain/respell/distance.ts`, `src/ui/SuggestPanel.tsx`, tests `tests/unit/{phonemize,respell,distance,suggestPanel}.test.ts(x)`; modify `src/ui/RosterPanel.tsx`, `src/domain/model.ts` (`Player.origSpelling: string`, `Player.nameLang: string` — default `''`; same for home/opponent), reducer, archive, all `src/i18n/*.ts`, CONTRIBUTING.md.
+
+**Tests:** phonemize in Node against the shipped wasm (the spike's names: Nguyễn/vi, Zoë/fr, Joaquín/es, Wojciech/pl, Özdemir/tr, Микола/uk produce the spike's IPA); distance (identical → 0, feature-close < far); respell de/en for the spike's names returns the spike's winners among the top 3 (e.g. Wojciech → contains "Wojtschech"-like candidate for de); suggest panel: Use this sets sayAs, ▶ calls speech.get with the candidate, unsupported target shows the message; e2e: Suggest for "Wojciech" (pl) on a German voice shows ≥ 2 candidates and no foreign requests.
+
+- [ ] TDD each module; then `npm test && npx tsc --noEmit && npm run build && npm run check:dist && npm run test:e2e` — all PASS.
+- [ ] Manuals (all 10): add ✨ Suggest to the "Say it like…" paragraph in section 2.
+- [ ] Commit — `feat: automatic pronunciation suggestions`
+
+**Not in this task (follow-ups):** direct-IPA synthesis for Piper voices (spike effort S; needs a way to store phoneme hints), measured ranking via Fanfare Studio (phoneme recognizer, round 4), respelling tables for fr/es/it/nl/pl/tr/uk/ar.
