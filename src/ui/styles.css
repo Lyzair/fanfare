@@ -108,7 +108,7 @@ button, input, textarea { min-height: 44px; font: inherit; }
 
 /* Game + sounds panels */
 .game-panel, .sounds-panel { display: grid; gap: 12px; }
-.game-panel button, .sounds-panel button, .sounds-panel select, .file-button { min-height: 44px; }
+.game-panel button, .sounds-panel button, .data-panel button, .sounds-panel select, .file-button { min-height: 44px; }
 .game-panel .score-button { flex: 1 1 200px; min-height: 120px; font-size: 1.6rem; font-weight: 700; color: #fff; background: var(--accent); border-color: var(--accent); }
 .game-panel .stop { color: #fff; background: #b91c1c; border-color: #b91c1c; }
 .game-panel .chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
@@ -117,3 +117,7 @@ button, input, textarea { min-height: 44px; font: inherit; }
 .sound-name { color: var(--muted); overflow-wrap: anywhere; }
 .file-button { display: inline-flex; align-items: center; padding-inline: 12px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; position: relative; }
 .file-button input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+
+.data-panel .row-actions { flex-wrap: wrap; }
+.data-panel .file-button { min-height: 44px; }
+.privacy-note { margin-block: 12px 0; }

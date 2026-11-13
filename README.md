@@ -4,6 +4,10 @@ Sports Caller is a single static web page where a sports club enters its players
 
 **Privacy promise:** everything runs in your browser. Player data never leaves your device, and the page makes no requests to any origin other than its own: no CDNs, no analytics, no cloud text-to-speech.
 
+## Privacy
+
+Everything stays on this device. Names and sounds are stored only in this browser and are never sent to any server, not even to the website that hosts this page. Use Export to move your team to another device.
+
 ## Build
 
 ```sh

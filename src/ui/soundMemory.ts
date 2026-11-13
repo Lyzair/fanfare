@@ -12,6 +12,8 @@ export const rememberSound = (slot: SoundSlot, blob: Blob | null) => {
   if (blob) memory.set(slot, blob); else memory.delete(slot);
 };
 
+export const recalledSound = (slot: SoundSlot): Blob | undefined => memory.get(slot);
+
 /**
  * The user's custom blob for a slot, or null (use the default). Reloads whenever
  * the CustomSound object changes (the reducer makes a new one on every upload).

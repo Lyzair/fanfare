@@ -51,6 +51,12 @@ export class SpeechCache {
     return new Map(this.mem);
   }
 
+  /** Forget all in-memory clips (stored ones are removed by clearAll). */
+  clear(): void {
+    this.mem.clear();
+    this.pending.clear();
+  }
+
   load(entries: Map<string, Blob>): void {
     for (const [k, b] of entries) {
       this.mem.set(k, b);

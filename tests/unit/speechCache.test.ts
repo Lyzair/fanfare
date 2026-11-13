@@ -157,3 +157,11 @@ test('every voice is known to the piper library and has a licence', () => {
     expect(v.license).not.toBe('unverified');
   }
 });
+
+test('clear forgets in-memory clips', () => {
+  const c = new SpeechCache({ synthesize: async () => new Blob(['x']) } as unknown as TtsEngine, { save: async () => {}, load: async () => null });
+  c.load(new Map([['v|a', new Blob(['x'])]]));
+  expect(c.entries().size).toBe(1);
+  c.clear();
+  expect(c.entries().size).toBe(0);
+});
