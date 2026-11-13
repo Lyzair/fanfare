@@ -88,6 +88,7 @@ export const ar = {
     resetTemplates: "استعادة النصوص الافتراضية",
     insertPlaceholder: "إدراج {placeholder}",
     noPlayersYet: "أضف لاعبين في الخطوة 1 لتسمعهم يُعلَن عنهم.",
+    prepareDone: "جميع الأصوات جاهزة ✓",
   },
   sports,
   staffHeadings: ['المدرب', 'مساعد المدرب', 'الطاقم', 'مسؤولو الفريق'],

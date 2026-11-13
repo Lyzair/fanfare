@@ -88,6 +88,7 @@ export const nl = {
     resetTemplates: "Standaardteksten herstellen",
     insertPlaceholder: "{placeholder} invoegen",
     noPlayersYet: "Voeg in stap 1 spelers toe om ze te horen omroepen.",
+    prepareDone: "Alle stemmen zijn klaar ✓",
   },
   sports,
   staffHeadings: ['Trainer', 'Assistent-trainer', 'Staf', 'Teamofficials'],

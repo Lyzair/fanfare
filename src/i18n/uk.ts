@@ -88,6 +88,7 @@ export const uk = {
     resetTemplates: "Відновити стандартні тексти",
     insertPlaceholder: "Вставити {placeholder}",
     noPlayersYet: "Додай гравців на кроці 1, щоб почути їхні оголошення.",
+    prepareDone: "Усі голоси готові ✓",
   },
   sports,
   staffHeadings: ['Тренер', 'Асистент тренера', 'Персонал', 'Офіційні особи команди'],

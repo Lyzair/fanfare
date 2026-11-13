@@ -112,13 +112,20 @@ test('"Announce lineup" unlocks then plays the sequence', async () => {
   expect(queue.play.mock.calls[0][0]).toHaveLength(5);
 });
 
-test('"Prepare voices" shows progress "3 / 5" and a ready badge per row', async () => {
-  const { services } = makeServices();
+test('"Prepare voices" shows progress "3 / 4" and a ready badge per row', async () => {
+  const { services, speech } = makeServices();
+  let release!: () => void;
+  speech.prepare.mockImplementationOnce(async (v, texts, onProgress) => {
+    texts.forEach(x => speech.get(v, x));
+    onProgress(3, 4);
+    await new Promise<void>(r => { release = r; });
+  });
   render(<Harness services={services} init={setup} />);
   expect(screen.queryByText('Ready')).toBeNull();
   await userEvent.click(screen.getByRole('button', { name: /Prepare voices/ }));
-  expect(await screen.findByText('4 / 4')).toBeInTheDocument();
-  expect(screen.getAllByText('Ready').length).toBeGreaterThanOrEqual(3);
+  expect(await screen.findByText('3 / 4')).toBeInTheDocument();
+  release();
+  await waitFor(() => expect(screen.getAllByText('Ready').length).toBeGreaterThanOrEqual(3));
 });
 
 test('TTS failure shows a readable error and leaves the page usable', async () => {
@@ -165,4 +172,37 @@ test('Stop button visible only while playing', async () => {
   await waitFor(() => expect(screen.getByRole('button', { name: 'Stop' })).toBeInTheDocument());
   await userEvent.click(screen.getByRole('button', { name: 'Stop' }));
   expect(queue.stop).toHaveBeenCalled();
+});
+
+test('Prepare voices: second click while preparing does not start another prepare; done message on success', async () => {
+  const { services, speech } = makeServices();
+  let release!: () => void;
+  speech.prepare.mockImplementationOnce(async (_v, _t, onProgress) => {
+    await new Promise<void>(r => { release = r; });
+    onProgress(4, 4);
+  });
+  render(<Harness services={services} init={setup} />);
+  const btn = screen.getByRole('button', { name: /Prepare voices/ });
+  await userEvent.click(btn);
+  expect(btn).toBeDisabled();
+  await userEvent.click(btn);
+  expect(speech.prepare).toHaveBeenCalledTimes(1);
+  release();
+  expect(await screen.findByText('All voices ready ✓')).toBeInTheDocument();
+  expect(btn).toBeEnabled();
+  expect(screen.queryByText(/^\d+ \/ \d+$/)).toBeNull();
+});
+
+test('Prepare voices failure clears progress, re-enables the button and shows the alert', async () => {
+  const { services, speech } = makeServices();
+  speech.prepare.mockImplementationOnce(async (_v, _t, onProgress) => {
+    onProgress(1, 4);
+    throw new TtsUnavailableError('nope');
+  });
+  render(<Harness services={services} init={setup} />);
+  await userEvent.click(screen.getByRole('button', { name: /Prepare voices/ }));
+  expect(await screen.findByRole('alert')).toHaveTextContent('The voice could not be loaded');
+  expect(screen.queryByText(/^\d+ \/ \d+$/)).toBeNull();
+  expect(screen.queryByText('All voices ready ✓')).toBeNull();
+  expect(screen.getByRole('button', { name: /Prepare voices/ })).toBeEnabled();
 });

@@ -88,6 +88,7 @@ export const fr = {
     resetTemplates: "Rétablir les textes standard",
     insertPlaceholder: "Insérer {placeholder}",
     noPlayersYet: "Ajoute des joueurs à l'étape 1 pour les entendre annoncés.",
+    prepareDone: "Toutes les voix sont prêtes ✓",
   },
   sports,
   staffHeadings: ['Entraîneur', 'Entraîneur adjoint', 'Encadrement', "Officiels de l'équipe"],

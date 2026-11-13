@@ -88,6 +88,7 @@ export const it = {
     resetTemplates: "Ripristina i testi standard",
     insertPlaceholder: "Inserisci {placeholder}",
     noPlayersYet: "Aggiungi giocatori nel passo 1 per sentirli annunciare.",
+    prepareDone: "Tutte le voci sono pronte ✓",
   },
   sports,
   staffHeadings: ['Allenatore', 'Vice allenatore', 'Staff', 'Dirigenti della squadra'],

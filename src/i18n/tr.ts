@@ -88,6 +88,7 @@ export const tr = {
     resetTemplates: "Standart metinleri geri yükle",
     insertPlaceholder: "{placeholder} ekle",
     noPlayersYet: "Anons edildiklerini duymak için 1. adımda oyuncu ekle.",
+    prepareDone: "Tüm sesler hazır ✓",
   },
   sports,
   staffHeadings: ['Antrenör', 'Yardımcı antrenör', 'Ekip', 'Takım yetkilileri'],

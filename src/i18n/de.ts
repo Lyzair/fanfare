@@ -87,6 +87,7 @@ export const de = {
     resetTemplates: "Standardtexte wiederherstellen",
     insertPlaceholder: "{placeholder} einfügen",
     noPlayersYet: "Füge in Schritt 1 Spieler hinzu, um sie ansagen zu lassen.",
+    prepareDone: "Alle Stimmen bereit ✓",
   },
   sports,
   staffHeadings: ['Trainer', 'Co-Trainer', 'Betreuer', 'Teamoffizielle'],

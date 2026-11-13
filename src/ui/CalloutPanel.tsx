@@ -55,6 +55,10 @@ export default function CalloutPanel({ state, dispatch }: PanelProps) {
   const [playing, setPlaying] = useState(false);
   const [error, setError] = useState(false);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+  const [preparing, setPreparing] = useState(false);
+  const [doneKey, setDoneKey] = useState<string | null>(null);
+  const mounted = useRef(true);
+  useEffect(() => () => { mounted.current = false; }, []);
   const [, setTick] = useState(0);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [introBlob, setIntroBlob] = useState<Blob | null>(null);
@@ -102,13 +106,19 @@ export default function CalloutPanel({ state, dispatch }: PanelProps) {
     }
   }]);
   const announce = () => playItems(lineupSequence(state, speech, introBlob, reportError));
+  const prepareTexts = [intro, ...players.map(p => calloutText(p, roster))].filter(x => x.trim());
+  const prepareKey = `${state.voiceId}\n${prepareTexts.map(x => x.trim()).join('\n')}`;
   const prepare = () => {
-    const texts = [intro, ...players.map(p => calloutText(p, roster))].filter(x => x.trim());
+    if (preparing) return;
+    const key = prepareKey;
+    const safe = (fn: () => void) => { if (mounted.current) fn(); };
     setError(false);
-    setProgress({ done: 0, total: new Set(texts.map(x => x.trim())).size });
-    speech.prepare(state.voiceId, texts, (done, total) => { setProgress({ done, total }); refresh(); })
-      .catch(reportError)
-      .finally(refresh);
+    setDoneKey(null);
+    setPreparing(true);
+    setProgress({ done: 0, total: new Set(prepareTexts.map(x => x.trim())).size });
+    speech.prepare(state.voiceId, prepareTexts, (done, total) => safe(() => { setProgress({ done, total }); refresh(); }))
+      .then(() => safe(() => setDoneKey(key)), () => safe(reportError))
+      .finally(() => safe(() => { setPreparing(false); setProgress(null); refresh(); }));
   };
 
   const insertChip = (name: string) => {
@@ -158,8 +168,9 @@ export default function CalloutPanel({ state, dispatch }: PanelProps) {
         <button type="button" class="primary big" onClick={announce}>{tr('announceLineup')}</button>
         {playing && <button type="button" class="stop" onClick={() => queue.stop()}>{tr('stopPlaying')}</button>}
       </div>
-      <button type="button" onClick={prepare}>{tr('prepareVoices')}</button>
-      {progress && <p role="status" class="progress">{fill(tr('prepareProgress'), progress)}</p>}
+      <button type="button" disabled={preparing} onClick={prepare}>{tr('prepareVoices')}</button>
+      {preparing && progress && <p role="status" class="progress">{fill(tr('prepareProgress'), progress)}</p>}
+      {!preparing && doneKey === prepareKey && <p role="status" class="progress">{tr('prepareDone')}</p>}
       {error && <p role="alert" class="error">{tr('ttsError')}</p>}
       {!hasPlayers && <p class="hint">{tr('noPlayersYet')}</p>}
 

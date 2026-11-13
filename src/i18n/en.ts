@@ -86,6 +86,7 @@ export const en = {
     resetTemplates: "Restore standard texts",
     insertPlaceholder: "Insert {placeholder}",
     noPlayersYet: "Add players in step 1 to hear them announced.",
+    prepareDone: "All voices ready ✓",
   },
   sports,
   staffHeadings: ['Coach', 'Assistant coach', 'Staff', 'Team officials'],
