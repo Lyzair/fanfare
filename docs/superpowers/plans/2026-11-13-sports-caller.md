@@ -1118,3 +1118,21 @@ Guest players use the existing `field`/`bench` templates.
 - [ ] TDD; then all suites incl. Python tests pass.
 - [ ] Manuals (all 10) section 4: "Phone as remote" paragraph + screenshot of the remote (`docs:media` extended).
 - [ ] Commit — `feat: phone remote control via local server`
+
+---
+
+### Task 27: Docker and Compose for simple self-hosting
+
+**Execution order:** after Task 18, before Task 19. (Fanfare Studio gets its own Dockerfile in its repo — Studio round 6.)
+
+**Files:** `Dockerfile`, `.dockerignore`, `docker/Caddyfile`, `compose.yaml`, `compose.studio.yaml` (optional override), `docs/self-hosting.md`, README section; tests `tests/docker/smoke.sh` (+ CI job).
+
+- [ ] **Dockerfile (multi-stage):** stage 1 `node:<current LTS>-bookworm-slim` (pinned version) → `npm ci` (runs the patch with `--error-on-fail`) → `npm run build` (prebuild downloads voices; use a BuildKit cache mount for `public/voices` so rebuilds don't re-download) → `npm run check:dist`. Stage 2 `caddy:<pinned version>-alpine` serving `/srv` = dist, non-root user, read-only root filesystem compatible, `HEALTHCHECK` on `/`. No Node in the final image. Image labels: source, licence MIT, description.
+- [ ] **docker/Caddyfile:** correct MIME (`.mjs`, `.wasm`, `.onnx`, `.data`, `.webmanifest`), the same CSP as `index.html` also sent as an HTTP header, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, `Permissions-Policy: camera=(), geolocation=()` (microphone allowed for self only), long-cache headers for hashed `assets/*`, `no-cache` for `index.html` and `sw.js`; **access logging off** (no visitor IPs stored — GDPR); `encode zstd gzip` except for already-compressed media.
+- [ ] **HTTPS:** default site on `:8080` HTTP for localhost; env `FANFARE_HOST` (e.g. `fanfare.lan` or the LAN IP) switches on Caddy `tls internal` (local CA, same idea as Task 25) on `:8443`; document how to download Caddy's root CA (`/data/caddy/pki/authorities/local/root.crt` via `docker compose cp`) and trust it on phones (link to the trust steps from Task 25). A real domain with Let's Encrypt works by setting `FANFARE_HOST` to it and opening 80/443 — documented, not default.
+- [ ] **compose.yaml:** service `fanfare` (build: ., ports `127.0.0.1:8080:8080` by default; commented LAN variant `8443:8443`), named volume for Caddy data (certs), `restart: unless-stopped`, `read_only: true` + tmpfs where Caddy needs it, `cap_drop: [ALL]`, `security_opt: [no-new-privileges:true]`.
+- [ ] **compose.studio.yaml** (override, optional): service `fanfare-studio` built from `${FANFARE_STUDIO_DIR:-../fanfare-studio}` (its own Dockerfile), published only on `127.0.0.1:5123`, env allowing origin `http://localhost:8080` (and `https://${FANFARE_HOST}:8443` if set), model cache volume, CPU (ONNX 4-bit) by default; documented GPU variants (ROCm devices `/dev/kfd` `/dev/dri`, NVIDIA `gpus: all`) marked untested except ROCm-on-host notes. Usage: `docker compose -f compose.yaml -f compose.studio.yaml up -d`.
+- [ ] **Remote (Task 26):** the phone remote relay lives in `fanfare-local.py`, not in Caddy — document that the Docker setup serves the app only; phone remote requires `fanfare-local` (or a later relay container — out of scope).
+- [ ] **Tests:** `tests/docker/smoke.sh`: `docker build`, `docker compose up -d`, wait healthy, `curl` checks (200 for `/`, CSP header equals the meta CSP, `content-type: application/wasm` for an ORT file, no `server`/version leak beyond Caddy default, no access-log lines written after a request), `docker compose down -v`. CI job in the Pages workflow repo file (separate job, runs on push to main; does not publish images). Locally run once and paste output in the report.
+- [ ] **Docs:** `docs/self-hosting.md` (Docker quick start in 3 commands, HTTPS on the LAN, with Fanfare Studio, updating, removing incl. volumes, privacy: no logs); README links it; manuals section 7 one sentence ("IT-savvy club members can also run Fanfare with Docker — see docs/self-hosting.md" — relative link per R31 → since manuals have no external links, name the file only).
+- [ ] Commit — `feat: Docker image and compose for self-hosting`
