@@ -1026,3 +1026,5 @@ Guest players use the existing `field`/`bench` templates.
 - [ ] TDD each part; then `npm test && npx tsc --noEmit && npm run build && npm run check:dist && npm run test:e2e` — all PASS.
 - [ ] Update manuals (all 10): section 2 paragraph "Playing against another Fanfare club? Swap team files" and section 3 mention of guests-first announcement; rerun `npm run docs:media` so screenshots show the Guests tab; media budgets still pass.
 - [ ] Commit — `feat: guest team sharing and two-team announcements`
+
+**Task 19 addition — docs freshness (after Step 3, before Step 4):** rerun `npm run build && npm run docs:media` so every screenshot/GIF shows the final UI; the Step 1 reviewer also checks that each manual (all 10) and the in-app help (Task 21) describe every shipped feature (guest team, Say it like…, local voice server, club voice, privacy/export) and nothing that no longer exists; mismatches are must-fix.
