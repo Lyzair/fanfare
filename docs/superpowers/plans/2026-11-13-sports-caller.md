@@ -895,3 +895,19 @@ test('setLocalTts ignores non-local URLs; archive round-trips localTts and rejec
 - [ ] **Step 7: Docs.** Write `docs/local-voice-server.md` (protocol above + workflow + note that most high-quality GPU voice models have licence restrictions, check the model's licence before sharing generated audio). Add one short paragraph about the local voice server to section 5 of every `docs/manual/<code>.md` (keeps the 7-section structure).
 - [ ] **Step 8:** Run `npm test && npx tsc --noEmit && npm run build && npm run check:dist && npm run test:e2e` — Expected: all PASS.
 - [ ] **Step 9: Commit** — `feat: optional local voice server for prepare-at-home voices`
+
+---
+
+### Task 19: Final whole-project review and simplification (Fable)
+
+**Runs after Task 18. Replaces the standard final review; all agents in this task use model `fable`.**
+
+**Inputs:** the whole branch (`main..feat/sports-caller`), the spec, this plan, the ledger's `minor (deferred)`, `RECOMMEND FIX BEFORE MERGE`, `parked` and `Ruling:` lines.
+
+- [ ] **Step 1: Review (read-only, Fable).** One reviewer reads the full branch diff package and the spec and reports, ranked:
+  1. *Must fix before merge* — correctness, privacy (any path to a foreign origin), GPL/licence compliance (Ruling R18), data loss (incl. ledger items marked RECOMMEND FIX BEFORE MERGE), accessibility blockers, spec gaps.
+  2. *Simplifications* — concrete, behaviour-preserving proposals for maintainability and readability: duplicated logic across panels (play helper, sound-blob preloading, `onChange` subscriptions, error alerts) pulled into one place; overly clever code made plain; dead code, unused exports, leftover provisional comments removed; long components split along clear responsibilities; consistent naming; types tightened where they remove runtime checks. Each proposal names files, the target shape, and why it is simpler — no new features, no new dependencies, no public behaviour change.
+  3. *Triage of deferred minors* — fix now / leave (with one-line reason).
+- [ ] **Step 2: Apply (Fable implementer, one dispatch).** Apply every must-fix and the accepted simplifications in small commits (`refactor: …`, `fix: …`), each keeping the suite green. Constraints: no behaviour change except must-fixes; tests are only changed where an internal API they target was simplified (never weakened); file structure from the plan may change only where the review justified it, and the README/plan file map is updated accordingly.
+- [ ] **Step 3: Verify.** Run `npm test && npx tsc --noEmit && npm run build && npm run check:dist && npm run test:e2e` — Expected: all PASS. Report line counts before/after (`git diff --stat main..HEAD -- src`) and the number of exported symbols before/after.
+- [ ] **Step 4: Scoped re-review (Fable).** Verdict each must-fix and each applied simplification (ADDRESSED / NOT ADDRESSED / BEHAVIOUR CHANGED); residuals are adjudicated by the controller and listed for the user.
