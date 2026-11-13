@@ -8,6 +8,7 @@ import { loadState, saveState } from '../state/persist';
 import { PiperEngine } from '../tts/engine';
 import { SpeechCache } from '../tts/speechCache';
 import { Header } from './Header';
+import CalloutPanel from './CalloutPanel';
 import RosterPanel from './RosterPanel';
 import { ServicesContext } from './types';
 import type { PanelProps, Services } from './types';
@@ -68,7 +69,7 @@ export function App() {
             <section class="card" key={n} aria-labelledby={`step${n}-title`}>
               <h2 id={`step${n}-title`}>{n} {t(state.lang, `step${n}Title` as keyof UiStrings)}</h2>
               <p class="hint">{t(state.lang, `step${n}Hint` as keyof UiStrings)}</p>
-              <div class="panel-body">{n === 1 && <RosterPanel state={state} dispatch={dispatch} />}</div>
+              <div class="panel-body">{n === 1 && <RosterPanel state={state} dispatch={dispatch} />}{n === 2 && <CalloutPanel state={state} dispatch={dispatch} />}</div>
             </section>
           ))}
         </main>

@@ -82,3 +82,26 @@ button, input, textarea { min-height: 44px; font: inherit; }
   background: var(--fg); color: var(--bg); display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
 }
 .undo-bar button { color: var(--bg); background: transparent; border-color: currentColor; }
+
+/* Callout panel */
+.callout-panel { display: grid; gap: 12px; }
+.callout-panel button {
+  min-width: 44px; min-height: 44px; padding-inline: 12px; color: var(--fg); background: var(--card);
+  border: 1px solid var(--border); border-radius: 8px; cursor: pointer;
+}
+.callout-panel textarea {
+  width: 100%; min-width: 0; padding: 8px 10px; color: var(--fg); background: var(--card);
+  border: 1px solid var(--border); border-radius: 8px;
+}
+.callout-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.callout-panel .primary.big { flex: 1 1 200px; min-height: 56px; font-size: 1.15rem; font-weight: 700; color: #fff; background: var(--accent); border-color: var(--accent); }
+.callout-panel .stop { color: #fff; background: #b91c1c; border-color: #b91c1c; }
+.callout-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.callout-row { display: grid; gap: 6px; padding: 8px; border: 1px solid var(--border); border-radius: 8px; }
+.callout-num { font-weight: 700; color: var(--muted); }
+.intro-text { margin: 0; }
+.ready-badge { align-self: center; color: #15803d; font-weight: 600; }
+.progress { margin: 0; color: var(--muted); }
+.error { margin: 0; padding: 8px 12px; border-radius: 8px; color: #7f1d1d; background: #fee2e2; border: 1px solid #b91c1c; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-block: 8px; }
+.templates .stack { margin-block-end: 8px; }
