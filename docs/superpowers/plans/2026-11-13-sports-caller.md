@@ -1055,3 +1055,32 @@ Guest players use the existing `field`/`bench` templates.
 **Not in this task (follow-ups):** direct-IPA synthesis for Piper voices (spike effort S; needs a way to store phoneme hints), measured ranking via Fanfare Studio (phoneme recognizer, round 4), respelling tables for fr/es/it/nl/pl/tr/uk/ar.
 
 **Task 18 protocol amendment (security, from Fanfare Studio round 4):** the server no longer answers `Access-Control-Allow-Origin: *`. It echoes only allow-listed origins (default `http://localhost:*`, `http://127.0.0.1:*`; others via `fanfare-studio allow <origin>` or a first-use terminal prompt) and returns 403 to unknown origins. Fanfare must therefore: send `X-Fanfare: 1` on every request to the local server (forces a preflight); on 403 or a CORS failure show a readable message that includes the page's own origin and the exact command `fanfare-studio allow <origin>` (copy button); `docs/local-voice-server.md` documents the allow-list, the header, and that unknown websites cannot use the server. `mockVoiceServer.ts` implements the same rules; add an e2e where the mock does not allow the origin → the message with the command appears.
+
+---
+
+### Task 24: Offline at the pitch (installable PWA)
+
+**Execution order:** after Task 23, before Task 25. **Goal:** after one visit at home, Fanfare opens and works with no internet (GitHub demo or any host).
+
+- [ ] `public/manifest.webmanifest` (name "Fanfare", icons generated from an SVG trumpet icon in-repo, `display: standalone`, relative `start_url: "./"`, theme colour from the default accent); linked from `index.html`.
+- [ ] `src/sw.ts` built to `dist/sw.js` (Vite build entry, no Workbox/CDN): precache the app shell (index.html, JS/CSS bundles, ORT/phonemizer wasm, manual pages) using a build-generated manifest of hashed file names + a version; runtime cache-first for `./voices/**` files when requested (so the voice the user actually used is kept; never precache all ~660 MB); network-first for `index.html` with cache fallback; delete old caches on activate; never cache cross-origin or non-GET requests; scope `./`.
+- [ ] Registration in `main.tsx` only in production builds and secure contexts; a small non-blocking banner when a new version is ready ("Update available — reload"), strings in all 10 packs; an "Offline ready ✓" status line in step 5 once the shell and the current voice are cached.
+- [ ] CSP stays as is (`worker-src 'self' blob:` already allows it); `check-dist` accepts `sw.js`.
+- [ ] Tests: unit tests for the precache-list generator and cache-strategy routing (pure functions); e2e: load, prepare voices, then `context.setOffline(true)`, reload → app renders, Announce lineup works with prepared clips, zero network requests succeed (all served by SW/IndexedDB).
+- [ ] Manuals (all 10): section 3 "Prepare at home: open Fanfare once with Wi-Fi, prepare voices — at the pitch it works offline; add it to your home screen"; section 7 troubleshooting for "offline not ready".
+- [ ] Commit — `feat: offline-ready installable app`
+
+---
+
+### Task 25: Host Fanfare yourself (local / no internet)
+
+**Execution order:** after Task 24, before Task 18.
+
+- [ ] `scripts/fanfare-local.py` (Python ≥ 3.9 stdlib only): serves a folder (default: the folder it is in) with correct MIME types (`.mjs`/`.js` text/javascript, `.wasm` application/wasm, `.onnx`/`.data` application/octet-stream, `.webmanifest`), default bind `127.0.0.1:8080`, `--port`, `--lan` (binds 0.0.0.0 and prints the LAN URL + a note that phones can't use offline mode over plain http), `--open` opens the browser; no directory listing; no logging of anything but method/path/status.
+- [ ] Wrappers: `start-fanfare.sh` (Linux/macOS, also as `start-fanfare.command`), `start-fanfare.bat` (Windows; explains how to install Python if missing).
+- [ ] `npm run serve:local` → builds if needed and runs the script on `dist/`.
+- [ ] `npm run package:local` → `release/fanfare-local-<version>.zip` = dist + the three start files + a short `README-local.txt` (en + de). CI (Task 16 workflow) uploads it as a build artifact; publishing GitHub Releases stays a manual maintainer step.
+- [ ] Fanfare Studio note (separate repo, separate change): `fanfare-studio --app <folder>` serves the Fanfare app on the same origin (then it is allowed automatically). Record as a follow-up for the Studio project; not part of this repo's task.
+- [ ] Tests: Python unit tests (`python -m unittest`) for MIME mapping, bind address, no listing, path traversal rejected (`/../`); e2e: run the e2e smoke suite once against `fanfare-local.py` instead of `vite preview` (Playwright `webServer` alternative project) — passes, no foreign requests.
+- [ ] README: "Run Fanfare on your own computer" section; manuals (all 10) section 7: one paragraph "No internet at all? Run Fanfare from your laptop".
+- [ ] Commit — `feat: self-hosting script and local release package`
