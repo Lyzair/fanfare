@@ -42,6 +42,7 @@ export const tr = {
     step4Hint: 'Bir ses ve eğlenceli efektler seç.',
     step5Title: 'Kaydet ve gizlilik',
     step5Hint: 'Verilerin bu cihazda kalır.',
+    saveUnavailable: "Bu cihazda kaydetme kullanılamıyor — takımını saklamak için Dışa aktar'ı kullan.",
   },
   sports,
   staffHeadings: ['Antrenör', 'Yardımcı antrenör', 'Ekip', 'Takım yetkilileri'],

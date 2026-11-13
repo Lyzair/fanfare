@@ -41,6 +41,7 @@ export const de = {
     step4Hint: 'Wähle eine Stimme und lustige Klänge.',
     step5Title: 'Speichern & Datenschutz',
     step5Hint: 'Deine Daten bleiben auf diesem Gerät.',
+    saveUnavailable: "Speichern auf diesem Gerät ist nicht möglich – nutze „Exportieren“, um dein Team zu behalten.",
   },
   sports,
   staffHeadings: ['Trainer', 'Co-Trainer', 'Betreuer', 'Teamoffizielle'],

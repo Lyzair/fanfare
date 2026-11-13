@@ -42,6 +42,7 @@ export const fr = {
     step4Hint: 'Choisis une voix et des sons amusants.',
     step5Title: 'Sauvegarde et confidentialité',
     step5Hint: 'Tes données restent sur cet appareil.',
+    saveUnavailable: "L'enregistrement sur cet appareil n'est pas disponible — utilise Exporter pour garder ton équipe.",
   },
   sports,
   staffHeadings: ['Entraîneur', 'Entraîneur adjoint', 'Encadrement', "Officiels de l'équipe"],

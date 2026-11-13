@@ -42,6 +42,7 @@ export const nl = {
     step4Hint: 'Kies een stem en leuke geluiden.',
     step5Title: 'Opslaan en privacy',
     step5Hint: 'Je gegevens blijven op dit apparaat.',
+    saveUnavailable: "Opslaan op dit apparaat is niet mogelijk — gebruik Exporteren om je team te bewaren.",
   },
   sports,
   staffHeadings: ['Trainer', 'Assistent-trainer', 'Staf', 'Teamofficials'],

@@ -42,6 +42,7 @@ export const pl = {
     step4Hint: 'Wybierz głos i wesołe dźwięki.',
     step5Title: 'Zapis i prywatność',
     step5Hint: 'Twoje dane zostają na tym urządzeniu.',
+    saveUnavailable: "Zapisywanie na tym urządzeniu jest niedostępne — użyj Eksportu, aby zachować swoją drużynę.",
   },
   sports,
   staffHeadings: ['Trener', 'Asystent trenera', 'Obsługa', 'Działacze drużyny'],

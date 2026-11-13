@@ -40,6 +40,7 @@ export const en = {
     step4Hint: 'Pick a voice and fun sounds.',
     step5Title: 'Save & privacy',
     step5Hint: 'Your data stays on this device.',
+    saveUnavailable: "Saving on this device isn't available — use Export to keep your team.",
   },
   sports,
   staffHeadings: ['Coach', 'Assistant coach', 'Staff', 'Team officials'],
