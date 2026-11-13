@@ -772,3 +772,23 @@ test('mobile viewport has no horizontal scroll', async ({ page }) => {
 - [ ] **Step 2:** Run `npm run build && npm run test:e2e` — Expected: PASS (fix any defects found in the owning task's files; add a unit test there for each).
 - [ ] **Step 3:** Run full suite `npm test && npm run test:e2e` — Expected: all PASS. Manually check on one phone (iOS or Android) that the first tap on "Announce lineup" makes sound.
 - [ ] **Step 4: Commit** — `test: add game-day e2e flow and on-origin privacy check`
+
+---
+
+### Task 16: GitHub Pages demo deployment
+
+**Files:**
+- Create: `.github/workflows/pages.yml`
+- Modify: `README.md` (live-demo link + one-time setup note), `package.json` (`"check:dist"` script)
+- Create: `scripts/check-dist.mjs`
+
+**Interfaces:**
+- Consumes: `npm ci`, `npm run build` (whose `prebuild` runs `scripts/fetch-assets.mjs` from Task 9)
+- Produces: a workflow that publishes `dist/` to `https://<user>.github.io/<repo>/` on every push to `main` and on manual dispatch.
+
+- [ ] **Step 1: Write `scripts/check-dist.mjs`** — exits non-zero, naming the file, if any of these hold: `dist/index.html` missing or without the CSP meta tag; any `dist/**/*.{html,js,css}` contains `src="/`, `href="/` or an `http(s)://` URL other than inside comments/licence headers (catches absolute paths that break under `/<repo>/` and third-party URLs); any file in `dist/` larger than 100 MB; total `dist/` size over 1 GB. Add `"check:dist": "node scripts/check-dist.mjs"`.
+- [ ] **Step 2:** Run `npm run build && npm run check:dist` — Expected: PASS. Then temporarily add `<script src="/x.js">` to a copy of `dist/index.html` and confirm it FAILS naming that file; remove the copy.
+- [ ] **Step 3: Write `.github/workflows/pages.yml`**: triggers `push: branches [main]` and `workflow_dispatch`; `permissions: { contents: read, pages: write, id-token: write }`; `concurrency: { group: pages, cancel-in-progress: true }`. Job `build`: `actions/checkout`, `actions/setup-node` (Node LTS, npm cache), `actions/cache` for `public/voices` keyed on `hashFiles('src/tts/voices.ts')`, `npm ci`, `npm test`, `npm run build`, `npm run check:dist`, `actions/upload-pages-artifact` with `path: dist`. Job `deploy` (needs build, `environment: github-pages`): `actions/deploy-pages`. Pin each action to its current major version.
+- [ ] **Step 4:** Validate with `npx --yes @action-validator/cli .github/workflows/pages.yml` — Expected: no errors.
+- [ ] **Step 5: README:** add a "Live demo" link placeholder `https://<user>.github.io/<repo>/` and a "Publish your own copy" section: fork → Settings → Pages → Source: **GitHub Actions** → push to `main`. Add one privacy sentence: the host (GitHub) sees ordinary page-request logs like any web host; the app itself never sends names, sounds or settings anywhere.
+- [ ] **Step 6: Commit** — `ci: deploy demo to GitHub Pages`
