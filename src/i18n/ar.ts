@@ -29,7 +29,7 @@ export const ar = {
   nativeName: 'العربية',
   dir: 'rtl',
   ui: {
-    appTitle: 'Sports Caller',
+    appTitle: 'Fanfare',
     sportLabel: 'الرياضة',
     languageLabel: 'اللغة',
     step1Title: 'المباراة واللاعبون',
@@ -48,7 +48,7 @@ export const ar = {
     "importConfirm": "سيستبدل الاستيراد فريقك وإعداداتك وأصواتك الحالية على هذا الجهاز. هل تريد المتابعة؟",
     "deleteConfirm": "سيؤدي هذا إلى حذف كل بياناتك على هذا الجهاز نهائيًا. هل تريد المتابعة؟",
     "import.not-zip": "هذا الملف ليس أرشيف zip ولا يمكن استيراده.",
-    "import.missing-json": "لا يحتوي ملف zip هذا على sports-caller.json، فهو ليس تصديرًا من Sports Caller.",
+    "import.missing-json": "لا يحتوي ملف zip هذا على fanfare.json، فهو ليس تصديرًا من Fanfare.",
     "import.bad-version": "إصدار هذا التصدير غير مدعوم ولا يمكن استيراده.",
     "import.invalid-data": "البيانات في هذا الملف غير صالحة أو تالفة ولا يمكن استيرادها.",
     "import.too-large": "حجم هذا الملف أكبر من 200 ميغابايت ولا يمكن استيراده.",

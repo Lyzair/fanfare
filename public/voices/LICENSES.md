@@ -1,6 +1,6 @@
 # Voice and speech-runtime licences
 
-Sports Caller's own code is MIT-licensed. The files below are third-party works
+Fanfare's own code is MIT-licensed. The files below are third-party works
 that `scripts/fetch-assets.mjs` downloads or copies into `public/` at build time
 (they are not committed to the repository) and that the published site serves
 from its own origin. The page never contacts any other server.

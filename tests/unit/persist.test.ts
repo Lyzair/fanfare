@@ -33,7 +33,7 @@ describe('persist', () => {
     expect(await loadState()).toBeNull();
   });
   it('loads garbage as null', async () => {
-    await set('state', 'garbage', createStore('sports-caller', 'kv'));
+    await set('state', 'garbage', createStore('fanfare', 'kv'));
     expect(await loadState()).toBeNull();
   });
   it('round-trips and deletes sound blobs', async () => {

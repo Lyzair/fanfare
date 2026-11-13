@@ -29,7 +29,7 @@ export const pl = {
   nativeName: 'Polski',
   dir: 'ltr',
   ui: {
-    appTitle: 'Sports Caller',
+    appTitle: 'Fanfare',
     sportLabel: 'Dyscyplina',
     languageLabel: 'Język',
     step1Title: 'Mecz i zawodnicy',
@@ -48,7 +48,7 @@ export const pl = {
     "importConfirm": "Import zastąpi Twoją obecną drużynę, ustawienia i dźwięki na tym urządzeniu. Kontynuować?",
     "deleteConfirm": "To trwale usunie wszystkie Twoje dane z tego urządzenia. Kontynuować?",
     "import.not-zip": "Ten plik nie jest archiwum zip i nie można go zaimportować.",
-    "import.missing-json": "Ten zip nie zawiera pliku sports-caller.json, więc nie jest eksportem Sports Caller.",
+    "import.missing-json": "Ten zip nie zawiera pliku fanfare.json, więc nie jest eksportem Fanfare.",
     "import.bad-version": "Ten eksport ma nieobsługiwaną wersję i nie można go zaimportować.",
     "import.invalid-data": "Dane w tym pliku są nieprawidłowe lub uszkodzone i nie można ich zaimportować.",
     "import.too-large": "Ten plik jest większy niż 200 MB i nie można go zaimportować.",

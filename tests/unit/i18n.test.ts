@@ -31,7 +31,7 @@ test('default score template uses the sport score word', () => {
 test('staff headings and t()', () => {
   expect(getPack('de').staffHeadings).toEqual(expect.arrayContaining(['Trainer', 'Co-Trainer', 'Betreuer', 'Teamoffizielle']));
   expect(getPack('en').staffHeadings).toEqual(expect.arrayContaining(['Coach', 'Assistant coach', 'Staff', 'Team officials']));
-  expect(t('en', 'appTitle')).toBe('Sports Caller');
+  expect(t('en', 'appTitle')).toBe('Fanfare');
 });
 test('accent colours have 4.5:1 contrast against white', () => {
   const lum = (hex: string) => {

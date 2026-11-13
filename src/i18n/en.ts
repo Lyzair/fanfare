@@ -27,7 +27,7 @@ export const en = {
   nativeName: 'English',
   dir: 'ltr',
   ui: {
-    appTitle: 'Sports Caller',
+    appTitle: 'Fanfare',
     sportLabel: 'Sport',
     languageLabel: 'Language',
     step1Title: 'Match & players',
@@ -46,7 +46,7 @@ export const en = {
     "importConfirm": "Importing replaces your current team, settings and sounds on this device. Continue?",
     "deleteConfirm": "This permanently deletes all your data on this device. Continue?",
     "import.not-zip": "This file is not a zip archive, so it cannot be imported.",
-    "import.missing-json": "This zip does not contain sports-caller.json, so it is not a Sports Caller export.",
+    "import.missing-json": "This zip does not contain fanfare.json, so it is not a Fanfare export.",
     "import.bad-version": "This export has an unsupported version and cannot be imported.",
     "import.invalid-data": "The data in this file is invalid or damaged and cannot be imported.",
     "import.too-large": "This file is larger than 200 MB and cannot be imported.",

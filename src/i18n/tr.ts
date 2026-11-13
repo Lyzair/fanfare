@@ -29,7 +29,7 @@ export const tr = {
   nativeName: 'Türkçe',
   dir: 'ltr',
   ui: {
-    appTitle: 'Sports Caller',
+    appTitle: 'Fanfare',
     sportLabel: 'Spor',
     languageLabel: 'Dil',
     step1Title: 'Maç ve oyuncular',
@@ -48,7 +48,7 @@ export const tr = {
     "importConfirm": "İçe aktarma, bu cihazdaki mevcut takımını, ayarlarını ve seslerini değiştirir. Devam edilsin mi?",
     "deleteConfirm": "Bu işlem bu cihazdaki tüm verilerini kalıcı olarak siler. Devam edilsin mi?",
     "import.not-zip": "Bu dosya bir zip arşivi değil, içe aktarılamaz.",
-    "import.missing-json": "Bu zip sports-caller.json içermiyor, yani bir Sports Caller dışa aktarımı değil.",
+    "import.missing-json": "Bu zip fanfare.json içermiyor, yani bir Fanfare dışa aktarımı değil.",
     "import.bad-version": "Bu dışa aktarımın sürümü desteklenmiyor, içe aktarılamaz.",
     "import.invalid-data": "Bu dosyadaki veriler geçersiz veya bozuk, içe aktarılamaz.",
     "import.too-large": "Bu dosya 200 MB'tan büyük, içe aktarılamaz.",

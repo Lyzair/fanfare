@@ -72,7 +72,7 @@ export async function exportArchive(c: ArchiveContent): Promise<Blob> {
     files[`speech/${n}.wav`] = new Uint8Array(await blobBytes(blob));
     n++;
   }
-  files['sports-caller.json'] = strToU8(JSON.stringify({ ...c.state, customSounds, speechIndex }));
+  files['fanfare.json'] = strToU8(JSON.stringify({ ...c.state, customSounds, speechIndex }));
   const data = await zipAsync(files);
   return new Blob([data as BlobPart], { type: 'application/zip' });
 }
@@ -156,7 +156,7 @@ export async function importArchive(file: Blob): Promise<ArchiveContent> {
   } catch {
     throw new ImportError('not-zip');
   }
-  const jsonBytes = files['sports-caller.json'];
+  const jsonBytes = files['fanfare.json'];
   if (!jsonBytes) throw new ImportError('missing-json');
   let raw: unknown;
   try {

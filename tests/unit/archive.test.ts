@@ -22,7 +22,7 @@ function state(): AppState {
   };
 }
 const zipJson = (j: unknown, extra: Record<string, Uint8Array> = {}) =>
-  new Blob([zipSync({ 'sports-caller.json': strToU8(JSON.stringify(j)), ...extra }) as BlobPart]);
+  new Blob([zipSync({ 'fanfare.json': strToU8(JSON.stringify(j)), ...extra }) as BlobPart]);
 
 describe('archive', () => {
   test('round-trips state, custom sounds and speech clips', async () => {
@@ -54,7 +54,7 @@ describe('archive', () => {
     await expect(importArchive(zipJson({ ...state(), version: 2 }))).rejects.toMatchObject({ code: 'bad-version' });
   });
   test('rejects bad json', async () => {
-    const b = new Blob([zipSync({ 'sports-caller.json': strToU8('{nope') }) as BlobPart]);
+    const b = new Blob([zipSync({ 'fanfare.json': strToU8('{nope') }) as BlobPart]);
     await expect(importArchive(b)).rejects.toMatchObject({ code: 'invalid-data' });
   });
   test('rejects unknown sport id / players not an array', async () => {

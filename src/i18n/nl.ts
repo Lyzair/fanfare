@@ -29,7 +29,7 @@ export const nl = {
   nativeName: 'Nederlands',
   dir: 'ltr',
   ui: {
-    appTitle: 'Sports Caller',
+    appTitle: 'Fanfare',
     sportLabel: 'Sport',
     languageLabel: 'Taal',
     step1Title: 'Wedstrijd en spelers',
@@ -48,7 +48,7 @@ export const nl = {
     "importConfirm": "Importeren vervangt je huidige team, instellingen en geluiden op dit apparaat. Doorgaan?",
     "deleteConfirm": "Hiermee verwijder je al je gegevens op dit apparaat definitief. Doorgaan?",
     "import.not-zip": "Dit bestand is geen zip-archief en kan niet worden geïmporteerd.",
-    "import.missing-json": "Deze zip bevat geen sports-caller.json en is dus geen Sports Caller-export.",
+    "import.missing-json": "Deze zip bevat geen fanfare.json en is dus geen Fanfare-export.",
     "import.bad-version": "Deze export heeft een niet-ondersteunde versie en kan niet worden geïmporteerd.",
     "import.invalid-data": "De gegevens in dit bestand zijn ongeldig of beschadigd en kunnen niet worden geïmporteerd.",
     "import.too-large": "Dit bestand is groter dan 200 MB en kan niet worden geïmporteerd.",

@@ -1,7 +1,7 @@
 import { clear, createStore, del, get, keys, set } from 'idb-keyval';
 import type { AppState, SoundSlot } from '../domain/model';
 
-const store = createStore('sports-caller', 'kv');
+const store = createStore('fanfare', 'kv');
 
 // Blobs are stored as { type, bytes } because structured clone of Blob is
 // unreliable in some environments; the public API still uses Blob.

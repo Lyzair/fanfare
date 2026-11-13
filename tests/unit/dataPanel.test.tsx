@@ -44,7 +44,7 @@ beforeEach(() => {
   vi.restoreAllMocks();
 });
 
-test('export downloads sports-caller-YYYY-MM-DD.zip', async () => {
+test('export downloads fanfare-YYYY-MM-DD.zip', async () => {
   setup('en', withPlayer);
   const create = vi.fn(() => 'blob:x'); const revoke = vi.fn();
   URL.createObjectURL = create; URL.revokeObjectURL = revoke;
@@ -55,7 +55,7 @@ test('export downloads sports-caller-YYYY-MM-DD.zip', async () => {
   expect(revoke).not.toHaveBeenCalled();
   await waitFor(() => expect(revoke).toHaveBeenCalledWith('blob:x'), { timeout: 3000 });
   const d = new Date(); const p = (n: number) => String(n).padStart(2, '0');
-  expect(download).toBe(`sports-caller-${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}.zip`);
+  expect(download).toBe(`fanfare-${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}.zip`);
   expect(create).toHaveBeenCalledTimes(1);
 });
 

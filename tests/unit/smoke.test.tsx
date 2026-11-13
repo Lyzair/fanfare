@@ -3,5 +3,5 @@ import App from '../../src/ui/App';
 
 test('App renders the product name', () => {
   render(<App />);
-  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Sports Caller');
+  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Fanfare');
 });

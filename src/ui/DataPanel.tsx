@@ -41,7 +41,7 @@ export default function DataPanel({ state, dispatch }: PanelProps) {
       const url = URL.createObjectURL(zip);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `sports-caller-${todayStamp()}.zip`;
+      a.download = `fanfare-${todayStamp()}.zip`;
       a.style.display = 'none';
       document.body.appendChild(a);
       a.click();

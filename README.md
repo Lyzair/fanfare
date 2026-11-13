@@ -1,6 +1,6 @@
-# Sports Caller
+# Fanfare
 
-Sports Caller is a single static web page where a sports club enters its players and an in-browser AI voice announces the lineup, like a stadium announcer.
+Fanfare is a single static web page where a sports club enters its players and an in-browser AI voice announces the lineup, like a stadium announcer.
 
 **Privacy promise:** everything runs in your browser. Player data never leaves your device, and the page makes no requests to any origin other than its own: no CDNs, no analytics, no cloud text-to-speech.
 
