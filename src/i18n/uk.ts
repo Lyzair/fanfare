@@ -121,6 +121,7 @@ export const uk = {
     defaultSoundName: "Стандартний звук",
     errorNotAudio: "Це не аудіофайл. Виберіть звуковий файл.",
     errorTooLarge: "Файл завеликий (максимум 10 МБ).",
+    manualLink: "Посібник",
   },
   sports,
   staffHeadings: ['Тренер', 'Асистент тренера', 'Персонал', 'Офіційні особи команди'],

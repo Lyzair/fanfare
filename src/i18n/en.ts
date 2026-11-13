@@ -119,6 +119,7 @@ export const en = {
     defaultSoundName: "Default sound",
     errorNotAudio: "That is not an audio file. Please choose a sound file.",
     errorTooLarge: "That file is too large (maximum 10 MB).",
+    manualLink: "Manual",
   },
   sports,
   staffHeadings: ['Coach', 'Assistant coach', 'Staff', 'Team officials'],

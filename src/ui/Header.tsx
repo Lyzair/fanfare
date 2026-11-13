@@ -29,6 +29,7 @@ export function Header({ state, dispatch }: PanelProps) {
             </select>
           </span>
         </label>
+        <a class="manual-link" href={`./manual/${lang}.html`}>📖 {t(lang, 'manualLink')}</a>
       </div>
     </header>
   );

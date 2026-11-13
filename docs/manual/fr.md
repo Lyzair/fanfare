@@ -1,0 +1,82 @@
+<!-- Translation: machine-assisted — native speakers, please review. -->
+
+# Fanfare : prise en main
+
+Fanfare est une page web qui présente votre équipe comme un speaker de stade. Vous saisissez vos joueurs une seule fois. Une voix lit ensuite la composition et annonce le buteur après chaque but. Tout fonctionne dans le navigateur, sans compte et gratuitement.
+
+## 1. Qu'est-ce que Fanfare ?
+
+Fanfare compte cinq étapes l'une sous l'autre : **1 Match et joueurs**, **2 Annonces**, **3 Match en direct**, **4 Sons et voix** et **5 Sauvegarde et confidentialité**. Ouvrez la page sur un téléphone ou une tablette, travaillez de haut en bas et placez l'appareil près du haut-parleur. Tout reste sur votre appareil. Il n'y a ni inscription ni serveur qui reçoit vos données.
+
+![Les cinq étapes de Fanfare sur un écran d'ordinateur](media/fr/01-overview.png)
+
+## 2. Avant le premier match
+
+En haut, choisissez votre **Sport** et votre **Langue**. Le sport détermine le mot du bouton de score (But, Panier, Point) et les postes proposés.
+
+À l'étape 1, remplissez **Équipe à domicile** et **Adversaire**. Collez ensuite vos joueurs dans la zone **Collez ou saisissez une liste de joueurs**, un par ligne, le numéro de maillot d'abord, par exemple `7 Kim Muster`. Avec **Ajouter**, les joueurs apparaissent dans la liste **Sur le terrain**. Avec **Ajouter au banc**, les remplaçants vont sur le banc. Pour un seul nom, utilisez **Ajouter un joueur** puis Entrée.
+
+![Coller une liste de joueurs et les ajouter](media/fr/add-players.gif)
+
+![La liste des joueurs, avec l'aide à la prononciation ouverte pour un nom](media/fr/02-players.png)
+
+Chaque ligne a de petits boutons : **⇄** déplace un joueur entre le terrain et le banc, **↑** et **↓** changent l'ordre, **🗑** supprime le joueur (vous pouvez annuler pendant quelques secondes). Cochez **Utiliser les postes** si la voix doit aussi dire "Gardien" ou "Milieu".
+
+**🗣 Dis-le comme…** règle la prononciation d'un nom. Appuyez sur 🗣 sur une ligne et écrivez le nom comme il se prononce, par exemple `Kim Mooster`. Seule la voix utilise ce texte. La liste affiche toujours le vrai nom. Appuyez sur ▶ pour l'écouter. Le même bouton 🗣 se trouve à côté des noms d'équipe.
+
+**Astuce :** si votre club utilise fussball.de, ouvrez l'effectif de **votre propre équipe** sur ce site, copiez-le et collez-le dans la zone. Les numéros et les noms sont reconnus. Fanfare ne se connecte jamais à fussball.de. Voir "Vous venez de fussball.de ?" à l'étape 1.
+
+## 3. Le jour du match
+
+1. À l'étape 1, saisissez l'**Adversaire**. C'est généralement la seule chose qui change d'un match à l'autre.
+
+2. Ouvrez l'étape 2 **Annonces**. Chaque joueur a un texte que vous pouvez lire, modifier et écouter avec ▶. La ligne **Introduction** est le texte de bienvenue. Rarement utile : "Modifier les textes standard" en bas change tous les textes d'un coup.
+
+3. Appuyez sur **Préparer les voix (recommandé avant le match)** tant que vous avez du Wi-Fi. La première fois, la voix est téléchargée sur votre appareil, ce qui prend un moment. Un compteur comme `3 / 6` montre la progression. Attendez **Toutes les voix sont prêtes ✓**. Ensuite, le speaker fonctionne aussi sans internet.
+
+4. Quand les équipes entrent, appuyez sur **📣 Annoncer la composition**. Le son d'introduction joue, puis la voix lit la composition. **Arrêter** y met fin à tout moment.
+
+![Préparer les voix, annoncer la composition, arrêter](media/fr/announce.gif)
+
+![L'étape 2 une fois les voix préparées](media/fr/03-announcements.png)
+
+## 4. Pendant le match
+
+Ouvrez l'étape 3 **Match en direct**. Le grand bouton, par exemple **⚽ But !**, joue le son de but et la voix annonce le but.
+
+Pour citer le buteur, touchez d'abord le joueur sous le bouton, par exemple **7 Kim Muster**. Son nom fait alors partie de l'annonce. Touchez-le à nouveau pour annuler, ou touchez **Notre équipe** pour un but sans nom. **Arrêter** coupe le son plus tôt.
+
+![Choisir un buteur et appuyer sur le bouton de score](media/fr/score.gif)
+
+![Le bouton de score et les boutons des buteurs](media/fr/04-game.png)
+
+## 5. Vos propres sons et votre voix
+
+Ouvrez l'étape 4 **Sons et voix**. Vous pouvez :
+
+- choisir la **Voix** (une ou plusieurs par langue),
+- activer ou désactiver **Jouer les sons**,
+- charger votre propre son pour **Son de but** ou **Intro de la composition** avec **Choisir un fichier son**. ▶ permet de l'essayer et **Rétablir par défaut** ramène le son d'origine. Les fichiers peuvent atteindre 10 Mo.
+
+![Réglages de la voix et des sons](media/fr/05-sounds.png)
+
+## 6. Sauvegarder, changer d'appareil, supprimer
+
+Ouvrez l'étape 5 **Sauvegarde et confidentialité**.
+
+- **Exporter (zip)** enregistre votre équipe, vos réglages et vos sons dans un fichier nommé par exemple `fanfare-2026-11-13.zip`.
+- **Importer (zip)** charge un tel fichier sur un autre appareil ou après une réinitialisation. Il remplace ce qui se trouve sur l'appareil.
+- **Supprimer toutes les données de cet appareil** efface tout définitivement.
+- Exportez de temps en temps, comme sauvegarde.
+
+![Exporter, importer et supprimer](media/fr/06-save.png)
+
+**La confidentialité en clair :** votre équipe, les noms et les sons restent dans ce navigateur, sur cet appareil. Ils ne sont envoyés à aucun serveur, pas même au site qui héberge Fanfare. Il n'y a ni suivi ni compte. La page ne communique qu'avec sa propre adresse.
+
+## 7. Dépannage
+
+- **Pas de son sur iPhone ou iPad :** vérifiez que le commutateur silencieux est désactivé et le volume monté. Touchez une fois la page ou le bouton, puis appuyez à nouveau. Le premier son après l'ouverture de la page demande un toucher.
+- **Le téléchargement de la voix est lent :** la voix n'est téléchargée qu'une fois. Appuyez sur **Préparer les voix** chez vous, avec un bon Wi-Fi, pas au stade.
+- **L'équipe a disparu à la réouverture :** une fenêtre privée ne peut rien enregistrer. Utilisez une fenêtre normale ou **Exporter (zip)** avant de la fermer.
+- **Le haut-parleur :** connectez une enceinte Bluetooth ou un câble à l'appareil et testez avec ▶ avant le match. Désactivez le mode "Ne pas déranger".
+- **Navigateurs :** Chrome, Edge ou Firefox récents, et Safari ou iOS 16.4 ou plus récent.

@@ -120,6 +120,7 @@ export const de = {
     defaultSoundName: "Standardsound",
     errorNotAudio: "Das ist keine Audiodatei. Bitte wähle eine Sounddatei.",
     errorTooLarge: "Die Datei ist zu groß (maximal 10 MB).",
+    manualLink: "Anleitung",
   },
   sports,
   staffHeadings: ['Trainer', 'Co-Trainer', 'Betreuer', 'Teamoffizielle'],

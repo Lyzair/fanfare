@@ -13,7 +13,9 @@
     "fetch-assets": "node scripts/fetch-assets.mjs",
     "check:dist": "node scripts/check-dist.mjs",
     "prebuild": "node scripts/fetch-assets.mjs",
-    "postinstall": "patch-package --error-on-fail"
+    "postinstall": "patch-package --error-on-fail",
+    "docs:media": "node scripts/make-docs-media.mjs",
+    "postbuild": "node scripts/build-manual.mjs"
   },
   "dependencies": {
     "@mintplex-labs/piper-tts-web": "1.0.5",
@@ -30,9 +32,12 @@
     "@testing-library/user-event": "^14.6.10",
     "@types/node": "^26.6.6",
     "fake-indexeddb": "^6.2.8",
+    "gifenc": "^1.0.3",
     "jsdom": "^31.0.1",
+    "marked": "^18.2.0",
     "onnxruntime-web": "1.18.0",
     "patch-package": "8.0.1",
+    "pngjs": "^7.0.0",
     "typescript": "^7.0.2",
     "vite": "^8.3.8",
     "vitest": "^5.1.0"

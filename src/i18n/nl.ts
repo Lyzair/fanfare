@@ -121,6 +121,7 @@ export const nl = {
     defaultSoundName: "Standaardgeluid",
     errorNotAudio: "Dit is geen audiobestand. Kies een geluidsbestand.",
     errorTooLarge: "Het bestand is te groot (maximaal 10 MB).",
+    manualLink: "Handleiding",
   },
   sports,
   staffHeadings: ['Trainer', 'Assistent-trainer', 'Staf', 'Teamofficials'],

@@ -121,6 +121,7 @@ export const ar = {
     defaultSoundName: "الصوت الافتراضي",
     errorNotAudio: "هذا ليس ملف صوت. يرجى اختيار ملف صوت.",
     errorTooLarge: "الملف كبير جدًا (الحد الأقصى 10 ميغابايت).",
+    manualLink: "الدليل",
   },
   sports,
   staffHeadings: ['المدرب', 'مساعد المدرب', 'الطاقم', 'مسؤولو الفريق'],

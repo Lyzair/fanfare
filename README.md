@@ -13,6 +13,8 @@ Fanfare is a single static web page where a sports club enters its players and a
 3. Tap "Prepare voices" once, before the game, so announcements work without waiting.
 4. Tap "Announce lineup", and use the Goal/Point button during the game.
 
+**Manual:** an illustrated getting-started guide in ten languages is in [docs/manual/README.md](docs/manual/README.md). The built site includes it too (the "Manual" link in the page header).
+
 ## Privacy
 
 Everything stays on this device. Names and sounds are stored only in this browser and are never sent to any server, not even to the website that hosts this page. Use Export to move your team to another device.

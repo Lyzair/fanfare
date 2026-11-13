@@ -121,6 +121,7 @@ export const es = {
     defaultSoundName: "Sonido predeterminado",
     errorNotAudio: "Eso no es un archivo de audio. Elige un archivo de sonido.",
     errorTooLarge: "El archivo es demasiado grande (máximo 10 MB).",
+    manualLink: "Manual",
   },
   sports,
   staffHeadings: ['Entrenador', 'Entrenador asistente', 'Staff', 'Oficiales del equipo'],

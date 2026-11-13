@@ -121,6 +121,7 @@ export const tr = {
     defaultSoundName: "Varsayılan ses",
     errorNotAudio: "Bu bir ses dosyası değil. Lütfen bir ses dosyası seçin.",
     errorTooLarge: "Dosya çok büyük (en fazla 10 MB).",
+    manualLink: "Kılavuz",
   },
   sports,
   staffHeadings: ['Antrenör', 'Yardımcı antrenör', 'Ekip', 'Takım yetkilileri'],
