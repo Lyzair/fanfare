@@ -1,10 +1,10 @@
-import { renderTemplate, calloutText, scoreText, introText } from '../../src/domain/template';
+import { renderTemplate, calloutText, scoreText, introText, speechText } from '../../src/domain/template';
 import { defaultTemplates } from '../../src/i18n';
 import type { Player, Roster } from '../../src/domain/model';
 
-const player: Player = { id: 'p1', name: 'Lea', number: '', position: '', onField: true, customText: null };
+const player: Player = { id: 'p1', name: 'Lea', number: '', position: '', onField: true, customText: null, sayAs: '' };
 const roster: Roster = {
-  homeTeam: '', opponent: '', showPositions: true, players: [],
+  homeTeam: '', homeSayAs: '', opponent: '', opponentSayAs: '', showPositions: true, players: [],
   templates: defaultTemplates('football', 'en'),
 };
 
@@ -36,4 +36,43 @@ test('intro fills opponent and home', () => {
 });
 test('intro without match fields still reads naturally', () => {
   expect(introText(roster)).toBe("Hello everyone and welcome! Here comes the lineup! Let's have a fair and fun game together!");
+});
+
+const sayRoster = (players: Partial<Player>[], extra: Partial<Roster> = {}): Roster => ({
+  ...roster,
+  players: players.map((p, i) => ({ ...player, id: `s${i}`, ...p })),
+  ...extra,
+});
+
+test('speechText swaps names for their sayAs', () => {
+  const r = sayRoster([{ name: 'Zoë', sayAs: 'Tso-eh' }], { opponent: 'SV Musterstadt', opponentSayAs: 'Es Fau Musterstadt' });
+  expect(speechText('Go Zoë! We play SV Musterstadt.', r)).toBe('Go Tso-eh! We play Es Fau Musterstadt.');
+});
+test('speechText also swaps the home team', () => {
+  expect(speechText('Go FC Grün!', sayRoster([], { homeTeam: 'FC Grün', homeSayAs: 'Eff Tse Grühn' }))).toBe('Go Eff Tse Grühn!');
+});
+test('empty sayAs leaves text unchanged', () => {
+  expect(speechText('Go Lea!', sayRoster([{ name: 'Lea', sayAs: '' }, { name: 'Tom', sayAs: '  ' }]))).toBe('Go Lea!');
+});
+test('longer names win: "Lea Marie" sayAs before "Lea"', () => {
+  const r = sayRoster([{ name: 'Lea', sayAs: 'Lee-ah' }, { name: 'Lea Marie', sayAs: 'Lay-ah Ma-ree' }]);
+  expect(speechText('Lea Marie and Lea', r)).toBe('Lay-ah Ma-ree and Lee-ah');
+});
+test('whole-word only: "Leander" untouched when "Lea" has sayAs', () => {
+  expect(speechText('Leander and Lea', sayRoster([{ name: 'Lea', sayAs: 'Lee-ah' }]))).toBe('Leander and Lee-ah');
+});
+test('names with regex characters are matched literally', () => {
+  expect(speechText("Go O'Neil (C)!", sayRoster([{ name: "O'Neil (C)", sayAs: 'Oh-Neel' }]))).toBe('Go Oh-Neel!');
+});
+test('whole-word matching is Unicode aware', () => {
+  const r = sayRoster([{ name: 'Müller', sayAs: 'Mueller' }, { name: 'Олег', sayAs: 'Oleg' }]);
+  expect(speechText('Müller, Олег, Müllers, ХОлег', r)).toBe('Mueller, Oleg, Müllers, ХОлег');
+});
+test('hints are applied once: "Lea"→"Leah" does not re-match inside the output', () => {
+  const r = sayRoster([{ name: 'Lea', sayAs: 'Leah' }, { name: 'Leah', sayAs: 'Lee-ah' }]);
+  expect(speechText('Lea', r)).toBe('Leah');
+  expect(speechText('Lea and Leah', r)).toBe('Leah and Lee-ah');
+});
+test('case-sensitive', () => {
+  expect(speechText('lea Lea', sayRoster([{ name: 'Lea', sayAs: 'Lee-ah' }]))).toBe('lea Lee-ah');
 });

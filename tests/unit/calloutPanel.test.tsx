@@ -1,15 +1,17 @@
-import { render, screen, within, waitFor } from '@testing-library/preact';
+import { render, screen, within, waitFor, act } from '@testing-library/preact';
 import userEvent from '@testing-library/user-event';
 import { useReducer } from 'preact/hooks';
 import CalloutPanel, { lineupSequence } from '../../src/ui/CalloutPanel';
 import { ServicesContext } from '../../src/ui/types';
 import type { Services } from '../../src/ui/types';
+import type { Action } from '../../src/state/reducer';
 import { initialState, reducer, currentRoster } from '../../src/state/reducer';
 import { TtsUnavailableError } from '../../src/tts/engine';
 import type { AppState } from '../../src/domain/model';
 import type { QueueItem } from '../../src/audio/queue';
 
 let latest: AppState;
+let latestDispatch: (a: Action) => void;
 const calls: string[] = [];
 const blobFor = (text: string) => new Blob([text]);
 
@@ -44,6 +46,7 @@ function makeServices(opts: { fail?: boolean } = {}) {
 function Harness({ services, init }: { services: Services; init?: (s: AppState) => AppState }) {
   const [state, dispatch] = useReducer(reducer, undefined, () => (init ? init(initialState('en')) : initialState('en')));
   latest = state;
+  latestDispatch = dispatch;
   return <ServicesContext.Provider value={services}><CalloutPanel state={state} dispatch={dispatch} /></ServicesContext.Provider>;
 }
 const setup = (s: AppState) => {
@@ -205,4 +208,46 @@ test('Prepare voices failure clears progress, re-enables the button and shows th
   expect(screen.queryByText(/^\d+ \/ \d+$/)).toBeNull();
   expect(screen.queryByText('All voices ready ✓')).toBeNull();
   expect(screen.getByRole('button', { name: /Prepare voices/ })).toBeEnabled();
+});
+
+const withHint = (s: AppState) => {
+  const st = setup(s);
+  const lea = currentRoster(st).players.find(p => p.name === 'Lea')!;
+  return reducer(st, { type: 'updatePlayer', id: lea.id, patch: { sayAs: 'Lee-ah' } });
+};
+
+test('speech gets the hint while the textarea keeps the real name', async () => {
+  const { services, queue, speech } = makeServices();
+  render(<Harness services={services} init={withHint} />);
+  expect((screen.getByLabelText('Announcement text for Lea') as HTMLTextAreaElement).value).toContain('Lea');
+  expect((screen.getByLabelText('Announcement text for Lea') as HTMLTextAreaElement).value).not.toContain('Lee-ah');
+  await userEvent.click(screen.getByRole('button', { name: 'Play Lea' }));
+  await (queue.play.mock.calls[0][0] as QueueItem[])[0]!.valueOf();
+  const got = speech.get.mock.calls.at(-1)![1];
+  expect(got).toContain('Lee-ah');
+  expect(got).not.toContain('Lea ');
+});
+
+test('lineupSequence and Prepare use the speech text', async () => {
+  const { services, speech } = makeServices();
+  const seq = lineupSequence(withHint(initialState('en')), speech as never, null);
+  for (const it of seq.slice(1)) await (it as () => Promise<Blob>)();
+  expect(speech.get.mock.calls.map(c => c[1]).some(t => t.includes('Lee-ah'))).toBe(true);
+  expect(speech.get.mock.calls.map(c => c[1]).some(t => /\bLea\b/.test(t))).toBe(false);
+  render(<Harness services={services} init={withHint} />);
+  await userEvent.click(screen.getByRole('button', { name: /Prepare/ }));
+  const texts = speech.prepare.mock.calls[0][1] as string[];
+  expect(texts.some(t => t.includes('Lee-ah'))).toBe(true);
+  expect(texts.some(t => /\bLea\b/.test(t))).toBe(false);
+});
+
+test('changing a hint changes the cache key: the Ready badge disappears for that row', async () => {
+  const { services } = makeServices();
+  render(<Harness services={services} init={withHint} />);
+  await userEvent.click(screen.getByRole('button', { name: /Prepare/ }));
+  const row = () => screen.getByLabelText('Announcement text for Lea').closest('li')!;
+  await waitFor(() => expect(within(row()).getByText('Ready')).toBeInTheDocument());
+  const lea = currentRoster(latest).players.find(p => p.name === 'Lea')!;
+  act(() => latestDispatch({ type: 'updatePlayer', id: lea.id, patch: { sayAs: 'Lay-ah' } }));
+  expect(within(row()).queryByText('Ready')).toBeNull();
 });

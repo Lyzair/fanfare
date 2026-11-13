@@ -6,6 +6,8 @@ import { useReducer } from 'preact/hooks';
 import RosterPanel from '../../src/ui/RosterPanel';
 import { initialState, reducer, currentRoster } from '../../src/state/reducer';
 import type { AppState, Lang } from '../../src/domain/model';
+import { ServicesContext } from '../../src/ui/types';
+import type { Services } from '../../src/ui/types';
 
 let latest: AppState;
 function Harness({ lang = 'en', init }: { lang?: Lang; init?: (s: AppState) => AppState }) {
@@ -131,4 +133,61 @@ test('single-name box with "Last, First" adds exactly one player', async () => {
   render(<Harness />);
   await userEvent.type(screen.getByLabelText('Add one player'), 'Müller, Lea{Enter}');
   expect(currentRoster(latest).players.map(p => p.name)).toEqual(['Lea Müller']);
+});
+
+function makeServices() {
+  const queue = { unlock: vi.fn(), play: vi.fn(async (_items: unknown[]) => undefined), onChange: undefined };
+  const speech = { get: vi.fn(async (_v: string, t: string) => new Blob([t])) };
+  return { queue, speech, services: { queue, speech } as unknown as Services };
+}
+function WithServices({ services, init }: { services: Services; init?: (s: AppState) => AppState }) {
+  const [state, dispatch] = useReducer(reducer, undefined, () => (init ? init(initialState('en')) : initialState('en')));
+  latest = state;
+  return <ServicesContext.Provider value={services}><RosterPanel state={state} dispatch={dispatch} /></ServicesContext.Provider>;
+}
+
+test('🗣 toggles a "Say it like…" input; typing stores sayAs; the button is highlighted when a hint exists', async () => {
+  render(<Harness init={withPlayers(1)} />);
+  expect(screen.queryByLabelText('Say it like…')).toBeNull();
+  const playerToggle = () => screen.getAllByRole('button', { name: 'Pronunciation' }).at(-1)!;
+  const toggle = playerToggle();
+  expect(toggle).not.toHaveClass('has-hint');
+  await userEvent.click(toggle);
+  expect(screen.getByText(/Write the name the way it sounds/)).toBeInTheDocument();
+  const input = screen.getByLabelText('Say it like…');
+  expect(input).toHaveAttribute('placeholder', 'e.g. Tso-eh');
+  await userEvent.type(input, 'Tso-eh');
+  expect(currentRoster(latest).players[0].sayAs).toBe('Tso-eh');
+  expect(playerToggle()).toHaveClass('has-hint');
+  await userEvent.click(playerToggle());
+  expect(screen.queryByLabelText('Say it like…')).toBeNull();
+});
+
+test('home team and opponent each have a 🗣 hint that dispatches setMatch', async () => {
+  render(<Harness />);
+  const toggles = screen.getAllByRole('button', { name: 'Pronunciation' });
+  expect(toggles).toHaveLength(2);
+  await userEvent.click(toggles[1]);
+  await userEvent.type(screen.getByLabelText('Opponent: Say it like…'), 'Es Fau');
+  expect(currentRoster(latest).opponentSayAs).toBe('Es Fau');
+  await userEvent.click(toggles[0]);
+  await userEvent.type(screen.getByLabelText('Home team: Say it like…'), 'Eff Tse');
+  expect(currentRoster(latest).homeSayAs).toBe('Eff Tse');
+  expect(screen.getByLabelText('Home team')).toBeInTheDocument();
+});
+
+test('▶ next to a hint unlocks, then speaks just the hint (or the name if empty) with the voice', async () => {
+  const { services, queue, speech } = makeServices();
+  render(<WithServices services={services} init={withPlayers(1)} />);
+  await userEvent.click(screen.getAllByRole('button', { name: 'Pronunciation' }).at(-1)!);
+  await userEvent.click(screen.getByRole('button', { name: 'Hear it' }));
+  const run = async () => { const items = queue.play.mock.calls.at(-1)![0] as Array<() => Promise<Blob>>; await items[0](); };
+  await run();
+  expect(speech.get).toHaveBeenLastCalledWith(latest.voiceId, 'P1');
+  await userEvent.type(screen.getByLabelText('Say it like…'), 'Pee-one');
+  await userEvent.click(screen.getByRole('button', { name: 'Hear it' }));
+  await run();
+  expect(speech.get).toHaveBeenLastCalledWith(latest.voiceId, 'Pee-one');
+  expect(queue.unlock).toHaveBeenCalledTimes(2);
+  expect(queue.unlock.mock.invocationCallOrder[0]).toBeLessThan(queue.play.mock.invocationCallOrder[0]);
 });

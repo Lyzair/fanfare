@@ -10,11 +10,15 @@ export interface Player {
   position: string;
   onField: boolean;
   customText: string | null;
+  /** How the voice should say the name (empty = say the name itself). */
+  sayAs: string;
 }
 
 export interface Roster {
   homeTeam: string;
+  homeSayAs: string;
   opponent: string;
+  opponentSayAs: string;
   showPositions: boolean;
   players: Player[];
   templates: Record<TemplateKey, string>;

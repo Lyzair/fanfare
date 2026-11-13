@@ -2,7 +2,7 @@ import { useContext, useEffect, useState } from 'preact/hooks';
 import { defaultSoundBlob } from '../audio/defaultSounds';
 import type { QueueItem } from '../audio/queue';
 import { SPORTS } from '../domain/sports';
-import { scoreText } from '../domain/template';
+import { scoreText, speechText } from '../domain/template';
 import { getPack, t } from '../i18n';
 import { currentRoster } from '../state/reducer';
 import { useCustomSoundBlob } from './soundMemory';
@@ -37,7 +37,7 @@ export default function GamePanel({ state }: PanelProps) {
   const score = () => {
     queue.unlock(); // synchronously inside the click, before anything async
     setError(false);
-    const text = scoreText(scorer, roster);
+    const text = speechText(scoreText(scorer, roster), roster);
     const items: QueueItem[] = [];
     if (state.soundsEnabled) items.push(scoreBlob ?? defaultSoundBlob('score'));
     items.push(async () => {

@@ -78,3 +78,14 @@ test('restorePlayer re-inserts at the same index', () => {
   expect(currentRoster(s).players.map(p => p.name)).toEqual(['A', 'B', 'C']);
   expect(reducer(s, { type: 'restorePlayer', player: b, index: 0 })).toBe(s);
 });
+
+test('sayAs round-trips through updatePlayer and setMatch', () => {
+  let s = reducer(initialState('en'), { type: 'addPlayers', text: 'Zoë', onField: true });
+  expect(currentRoster(s).players[0].sayAs).toBe('');
+  const id = currentRoster(s).players[0].id;
+  s = reducer(s, { type: 'updatePlayer', id, patch: { sayAs: 'Tso-eh' } });
+  expect(currentRoster(s).players[0].sayAs).toBe('Tso-eh');
+  s = reducer(s, { type: 'setMatch', homeSayAs: 'A', opponentSayAs: 'B' });
+  expect(currentRoster(s)).toMatchObject({ homeSayAs: 'A', opponentSayAs: 'B', homeTeam: '' });
+  expect(currentRoster(initialState('en'))).toMatchObject({ homeSayAs: '', opponentSayAs: '' });
+});

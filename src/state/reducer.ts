@@ -5,7 +5,7 @@ import { VOICES, defaultVoiceFor } from '../tts/voices';
 
 export type Action =
   | { type: 'setSport'; sport: SportId } | { type: 'setLang'; lang: Lang } | { type: 'setVoice'; voiceId: string }
-  | { type: 'setMatch'; home?: string; opponent?: string } | { type: 'togglePositions'; on: boolean }
+  | { type: 'setMatch'; home?: string; opponent?: string; homeSayAs?: string; opponentSayAs?: string } | { type: 'togglePositions'; on: boolean }
   | { type: 'addPlayers'; text: string; onField: boolean }
   | { type: 'updatePlayer'; id: string; patch: Partial<Omit<Player, 'id'>> }
   | { type: 'removePlayer'; id: string } | { type: 'restorePlayer'; player: Player; index: number } | { type: 'movePlayer'; id: string; delta: -1 | 1 }
@@ -15,7 +15,7 @@ export type Action =
   | { type: 'replaceAll'; state: AppState };
 
 function defaultRoster(sport: SportId, lang: Lang): Roster {
-  return { homeTeam: '', opponent: '', showPositions: false, players: [], templates: defaultTemplates(sport, lang) };
+  return { homeTeam: '', homeSayAs: '', opponent: '', opponentSayAs: '', showPositions: false, players: [], templates: defaultTemplates(sport, lang) };
 }
 
 export function initialState(lang: Lang = 'en'): AppState {
@@ -54,6 +54,7 @@ export function reducer(s: AppState, a: Action): AppState {
     case 'setMatch':
       return withRoster(s, r => ({
         ...r, homeTeam: a.home ?? r.homeTeam, opponent: a.opponent ?? r.opponent,
+        homeSayAs: a.homeSayAs ?? r.homeSayAs, opponentSayAs: a.opponentSayAs ?? r.opponentSayAs,
       }));
     case 'togglePositions': return withRoster(s, r => ({ ...r, showPositions: a.on }));
     case 'addPlayers': {
@@ -62,7 +63,7 @@ export function reducer(s: AppState, a: Action): AppState {
       return withRoster(s, r => ({
         ...r,
         showPositions: r.showPositions || parsed.some(p => p.position !== ''),
-        players: [...r.players, ...parsed.map(p => ({ ...p, id: crypto.randomUUID(), onField: a.onField, customText: null }))],
+        players: [...r.players, ...parsed.map(p => ({ ...p, id: crypto.randomUUID(), onField: a.onField, customText: null, sayAs: '' }))],
       }));
     }
     case 'updatePlayer': {

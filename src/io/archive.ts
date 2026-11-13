@@ -86,7 +86,11 @@ function parsePlayer(v: unknown): Player {
   if (typeof name !== 'string' || typeof number !== 'string' || typeof position !== 'string') throw bad();
   if (typeof onField !== 'boolean') throw bad();
   if (customText !== null && typeof customText !== 'string') throw bad();
-  return { id: typeof id === 'string' && id ? id : crypto.randomUUID(), name, number, position, onField, customText };
+  if (v.sayAs !== undefined && typeof v.sayAs !== 'string') throw bad();
+  return {
+    id: typeof id === 'string' && id ? id : crypto.randomUUID(), name, number, position, onField, customText,
+    sayAs: typeof v.sayAs === 'string' ? v.sayAs : '',
+  };
 }
 
 function parseRoster(v: unknown, sport: SportId, lang: Lang): Roster {
@@ -106,7 +110,9 @@ function parseRoster(v: unknown, sport: SportId, lang: Lang): Roster {
     : defaults;
   return {
     homeTeam: str(v.homeTeam),
+    homeSayAs: str(v.homeSayAs),
     opponent: str(v.opponent),
+    opponentSayAs: str(v.opponentSayAs),
     showPositions: v.showPositions === true,
     players: v.players.map(parsePlayer),
     templates,

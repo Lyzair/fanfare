@@ -1,6 +1,6 @@
 import { useContext, useEffect, useRef, useState } from 'preact/hooks';
 import type { AppState, Player, TemplateKey } from '../domain/model';
-import { calloutText, introText } from '../domain/template';
+import { calloutText, introText, speechText } from '../domain/template';
 import { defaultSoundBlob } from '../audio/defaultSounds';
 import type { QueueItem } from '../audio/queue';
 import { currentRoster } from '../state/reducer';
@@ -30,7 +30,7 @@ export function lineupSequence(
   const roster = currentRoster(state);
   const lazy = (text: string) => async () => {
     try {
-      return await speech.get(state.voiceId, text);
+      return await speech.get(state.voiceId, speechText(text, roster));
     } catch (e) {
       onError?.(e);
       throw e;
@@ -90,14 +90,14 @@ export default function CalloutPanel({ state, dispatch }: PanelProps) {
   };
   const playText = (text: string) => playItems([async () => {
     try {
-      return await speech.get(state.voiceId, text);
+      return await speech.get(state.voiceId, speechText(text, roster));
     } catch (e) {
       reportError();
       throw e;
     }
   }]);
   const announce = () => playItems(lineupSequence(state, speech, introBlob, reportError));
-  const prepareTexts = [intro, ...players.map(p => calloutText(p, roster))].filter(x => x.trim());
+  const prepareTexts = [intro, ...players.map(p => calloutText(p, roster))].map(x => speechText(x, roster)).filter(x => x.trim());
   const prepareKey = `${state.voiceId}\n${prepareTexts.map(x => x.trim()).join('\n')}`;
   const prepare = () => {
     if (preparing) return;
@@ -125,7 +125,7 @@ export default function CalloutPanel({ state, dispatch }: PanelProps) {
   };
 
   const badge = (text: string) =>
-    text.trim() && speech.has(state.voiceId, text) ? <span class="ready-badge"><span aria-hidden="true">✓</span> {tr('readyBadge')}</span> : null;
+    text.trim() && speech.has(state.voiceId, speechText(text, roster)) ? <span class="ready-badge"><span aria-hidden="true">✓</span> {tr('readyBadge')}</span> : null;
 
   const row = (p: Player) => {
     const text = drafts[p.id] ?? calloutText(p, roster);

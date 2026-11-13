@@ -40,3 +40,25 @@ export function scoreText(scorer: Player | null, roster: Roster): string {
 export function introText(roster: Roster): string {
   return renderTemplate(roster.templates.intro, varsFor(null, roster));
 }
+
+const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/**
+ * What the voice should read: every player's name, the home team and the opponent are replaced by
+ * their non-empty "say it like" hint. Longest names first, whole words only, case-sensitive, and all
+ * replacements happen in a single pass so a hint is never re-matched.
+ */
+export function speechText(displayText: string, roster: Roster): string {
+  const hints = new Map<string, string>();
+  const add = (name: string, sayAs: string) => {
+    const n = name.trim();
+    if (n && sayAs.trim() && !hints.has(n)) hints.set(n, sayAs.trim());
+  };
+  for (const p of roster.players) add(p.name, p.sayAs);
+  add(roster.homeTeam, roster.homeSayAs);
+  add(roster.opponent, roster.opponentSayAs);
+  if (hints.size === 0) return displayText;
+  const names = [...hints.keys()].sort((a, b) => b.length - a.length).map(escapeRegExp);
+  const re = new RegExp(`(?<![\\p{L}\\p{N}])(?:${names.join('|')})(?![\\p{L}\\p{N}])`, 'gu');
+  return displayText.replace(re, m => hints.get(m) ?? m);
+}

@@ -13,8 +13,8 @@ function state(): AppState {
     version: 1, sport: 'football', lang: 'en', voiceId: 'v1', soundsEnabled: true,
     rosters: {
       football: {
-        homeTeam: 'A', opponent: 'B', showPositions: true,
-        players: [{ id: 'p1', name: 'Ann', number: '7', position: 'FW', onField: true, customText: null }],
+        homeTeam: 'A', homeSayAs: 'Ay', opponent: 'B', opponentSayAs: 'Bee', showPositions: true,
+        players: [{ id: 'p1', name: 'Ann', number: '7', position: 'FW', onField: true, customText: null, sayAs: 'An' }],
         templates: defaultTemplates('football', 'en'),
       },
     },
@@ -99,10 +99,24 @@ describe('archive', () => {
     const r = out.state.rosters.handball!;
     expect(r.homeTeam).toBe('');
     expect(r.opponent).toBe('');
+    expect(r.homeSayAs).toBe('');
+    expect(r.opponentSayAs).toBe('');
+    expect(r.players[0].sayAs).toBe('');
     expect(r.showPositions).toBe(false);
     expect(r.templates).toEqual(defaultTemplates('handball', 'de'));
     expect(r.players[0].id).toMatch(/.+/);
     expect(r.players[0]).not.toHaveProperty('zzz');
+  });
+  test('non-string sayAs is invalid-data', async () => {
+    for (const mutate of [
+      (s: any) => { s.rosters.football.players[0].sayAs = 5; },
+      (s: any) => { s.rosters.football.homeSayAs = 5; },
+      (s: any) => { s.rosters.football.opponentSayAs = {}; },
+    ]) {
+      const s = state() as any;
+      mutate(s);
+      await expect(importArchive(zipJson(s))).rejects.toMatchObject({ code: 'invalid-data' });
+    }
   });
   test('ImportError keeps name and instanceof', () => {
     const e = new ImportError('not-zip');
