@@ -130,3 +130,23 @@ button, input, textarea { min-height: 44px; font: inherit; }
 .data-panel .row-actions { flex-wrap: wrap; }
 .data-panel .file-button { min-height: 44px; }
 .privacy-note { margin-block: 12px 0; }
+
+/* In-app help */
+.help-button {
+  min-width: 44px; min-height: 44px; border-radius: 50%; font-weight: 700; cursor: pointer;
+  color: var(--accent); background: #fff; border: 2px solid #fff;
+}
+.welcome { border-inline-start-width: 6px; }
+.welcome h2 { margin-block-end: 8px; }
+.welcome-steps { margin: 0 0 12px; padding-inline-start: 1.5em; display: grid; gap: 4px; }
+.welcome .btn, .show-me-toggle {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding-inline: 14px;
+  font: inherit; color: var(--fg); background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+  text-decoration: none; cursor: pointer;
+}
+.welcome .btn.primary { color: #fff; background: var(--accent); border-color: var(--accent); font-weight: 700; }
+.show-me { margin: -4px 0 12px; }
+.show-me-toggle { padding-inline: 0; border: 0; background: transparent; color: inherit; font-weight: 600; text-decoration: underline; }
+.show-me-figure { margin: 8px 0 0; }
+.show-me-figure img { display: block; max-inline-size: 100%; block-size: auto; border-radius: 8px; border: 1px solid var(--border); }
+.card h2:focus { outline: none; }

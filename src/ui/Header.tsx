@@ -3,7 +3,7 @@ import { SPORTS, SPORT_IDS } from '../domain/sports';
 import { LANGS, getPack, t } from '../i18n';
 import type { PanelProps } from './types';
 
-export function Header({ state, dispatch }: PanelProps) {
+export function Header({ state, dispatch, onHelp }: PanelProps & { onHelp: () => void }) {
   const lang = state.lang;
   return (
     <header class="topbar">
@@ -29,6 +29,7 @@ export function Header({ state, dispatch }: PanelProps) {
             </select>
           </span>
         </label>
+        <button type="button" class="help-button" aria-label={t(lang, 'helpButton')} onClick={onHelp}>?</button>
         <a class="manual-link" href={`./manual/${lang}.html`}>📖 {t(lang, 'manualLink')}</a>
       </div>
     </header>

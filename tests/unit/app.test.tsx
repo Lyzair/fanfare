@@ -60,6 +60,7 @@ test('state restored from IndexedDB on load', async () => {
 });
 
 test('panels are numbered steps 1-5 in order', async () => {
+  localStorage.setItem('fanfare.welcomeDismissed', '1');
   render(<App />);
   const heads = await screen.findAllByRole('heading', { level: 2 });
   expect(heads).toHaveLength(5);

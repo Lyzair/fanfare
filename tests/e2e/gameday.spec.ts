@@ -17,6 +17,7 @@ test('game day flow stays on-origin', async ({ page, baseURL }) => {
   page.on('dialog', (d) => void d.accept());
 
   await page.goto('/');
+  await page.getByRole('button', { name: 'Got it' }).click();
   await page.getByLabel('Language').selectOption('en');
   await page.getByLabel('Sport').selectOption('football');
 

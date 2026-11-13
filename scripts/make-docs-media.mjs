@@ -122,6 +122,8 @@ async function saveGif(file, frames) {
 // ---------- page helpers ----------
 
 async function setup(page, pack, { bench = true } = {}) {
+  // the first-visit welcome card would shift the layout of every screenshot
+  await page.addInitScript(() => { try { localStorage.setItem('fanfare.welcomeDismissed', '1'); } catch {} });
   await page.goto(BASE);
   await page.locator('header select').nth(1).selectOption(pack.code);
   await page.locator('header select').first().selectOption('football');

@@ -8,6 +8,8 @@ import { loadState, saveState } from '../state/persist';
 import { PiperEngine } from '../tts/engine';
 import { SpeechCache } from '../tts/speechCache';
 import { Header } from './Header';
+import { WelcomeCard } from './WelcomeCard';
+import { ShowMe } from './ShowMe';
 import DataPanel from './DataPanel';
 import CalloutPanel from './CalloutPanel';
 import GamePanel from './GamePanel';
@@ -21,6 +23,11 @@ export type { PanelProps, Services };
 
 const STEPS = [1, 2, 3, 4, 5] as const;
 const SAVE_DELAY_MS = 300;
+const WELCOME_KEY = 'fanfare.welcomeDismissed';
+
+function welcomeDismissedBefore(): boolean {
+  try { return localStorage.getItem(WELCOME_KEY) === '1'; } catch { return false; }
+}
 
 /** Per-sport accent colours, generated from SPORTS so they live in one place. */
 const ACCENT_CSS = SPORT_IDS.map(id => `[data-sport="${id}"]{--accent:${SPORTS[id].accent}}`).join('\n');
@@ -34,6 +41,7 @@ export function App() {
   const [state, dispatch] = useReducer(reducer, undefined, () => initialState(firstRunLang()));
   const [loaded, setLoaded] = useState(false);
   const [storageFailed, setStorageFailed] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(() => !welcomeDismissedBefore());
   const services = useRef<Services | null>(null);
   services.current ??= { queue: new AudioQueue(), speech: new SpeechCache(new PiperEngine('./')) };
   const value = useMemo(() => services.current!, []);
@@ -55,6 +63,12 @@ export function App() {
     return () => clearTimeout(id);
   }, [state, loaded]);
 
+  const dismissWelcome = () => {
+    setShowWelcome(false);
+    try { localStorage.setItem(WELCOME_KEY, '1'); } catch { /* session-only dismissal */ }
+    document.getElementById('step1-title')?.focus();
+  };
+
   const pack = getPack(state.lang);
   useEffect(() => {
     document.documentElement.lang = state.lang;
@@ -65,13 +79,15 @@ export function App() {
     <ServicesContext.Provider value={value}>
       <style>{ACCENT_CSS}</style>
       <div class="app" data-sport={state.sport}>
-        <Header state={state} dispatch={dispatch} />
+        <Header state={state} dispatch={dispatch} onHelp={() => setShowWelcome(true)} />
         {storageFailed && <p class="notice" role="status">{t(state.lang, 'saveUnavailable')}</p>}
         <main>
+          {showWelcome && <WelcomeCard lang={state.lang} onDismiss={dismissWelcome} />}
           {STEPS.map(n => (
             <section class="card" key={n} aria-labelledby={`step${n}-title`}>
-              <h2 id={`step${n}-title`}>{n} {t(state.lang, `step${n}Title` as keyof UiStrings)}</h2>
+              <h2 id={`step${n}-title`} tabIndex={-1}>{n} {t(state.lang, `step${n}Title` as keyof UiStrings)}</h2>
               <p class="hint">{t(state.lang, `step${n}Hint` as keyof UiStrings)}</p>
+              <ShowMe lang={state.lang} step={n} />
               <div class="panel-body">{n === 1 && <RosterPanel state={state} dispatch={dispatch} />}{n === 2 && <CalloutPanel state={state} dispatch={dispatch} />}{n === 3 && <GamePanel state={state} dispatch={dispatch} />}{n === 4 && <SoundsPanel state={state} dispatch={dispatch} />}{n === 5 && <DataPanel state={state} dispatch={dispatch} />}</div>
             </section>
           ))}
