@@ -987,3 +987,42 @@ Extends Task 18 (same dispatch). Requires Fanfare Studio round 3 (reference-voic
 - [ ] Tests: first visit shows the card; Got it hides it and persists; storage throwing → card still dismissible; ? reopens; Show me inserts the image only after click with the right `src` for the current language and step; reduced-motion → PNG; e2e: no image request under `manual/media` before clicking Show me, then exactly one same-origin request after.
 - [ ] Run `npm test && npx tsc --noEmit && npm run build && npm run check:dist && npm run test:e2e` — all PASS.
 - [ ] Commit — `feat: welcome card and inline "show me" help`
+
+---
+
+### Task 22: Guest team — share/import one team and announce both teams
+
+**Execution order:** after Task 21, before Task 18.
+
+**Goal:** the guest coach sends their player list (file by e-mail/USB); the home side imports it with one click; Fanfare announces guests and home team.
+
+**Model changes** (`model.ts`, `reducer.ts`, `archive.ts` — archive version stays 1, missing fields default):
+```ts
+interface Roster { …existing; guestPlayers: Player[]; }            // default []
+type TemplateKey = 'intro' | 'field' | 'bench' | 'score' | 'guestIntro' | 'guestScore';
+// Actions: addGuestPlayers {text}, updateGuestPlayer, removeGuestPlayer, moveGuestPlayer, importGuestTeam {team: TeamFile}
+interface TeamFile { fanfareTeam: 1; sport: SportId; teamName: string; players: Array<Pick<Player,'name'|'number'|'position'|'onField'|'sayAs'>>; teamSayAs: string }
+function exportTeamFile(state: AppState): TeamFile;                 // current sport, home team = homeTeam/homeSayAs/players
+function parseTeamFile(json: unknown): TeamFile;                     // throws ImportError('invalid-data'|'bad-version'); max 100 players, strings capped like elsewhere
+```
+`importGuestTeam` replaces `guestPlayers` (fresh ids), sets `opponent`/`opponentSayAs` from the file; a file whose `sport` differs from the current sport → readable error suggesting to switch sport (no silent import).
+
+**Templates** (en/de exact; others translated; friendly):
+| key | en | de |
+|---|---|---|
+| guestIntro | `A warm welcome to our guests[ from {opponent}]! Here is their lineup:` | `Ein herzliches Willkommen an unsere Gäste[ vom {opponent}]! Hier ist ihre Aufstellung:` |
+| guestScore | `{score}[ for {opponent}]![ Well played, {name}!]` | `{score}[ für {opponent}]![ Gut gespielt, {name}!]` |
+Guest players use the existing `field`/`bench` templates.
+
+**UI:**
+- Step 1: two tabs **Our team** / **Guests** (`role="tablist"`); Guests tab = same roster editor (reuse the component with a `side` prop — no copy-paste), plus **Import team file** (`accept=".json,application/json"`, ≤ 1 MB) and **Clear guests**.
+- Step 5: **Share our team** → downloads `fanfare-team-<slug(homeTeam)|team>-YYYY-MM-DD.json` (same safe download as Export: anchor in DOM, revoke after 1 s) with the note en `This file contains names. Only send it to the other team's coach.` / de `Diese Datei enthält Namen. Schick sie nur an das Trainerteam der anderen Mannschaft.`
+- Step 2: **📣 Announce lineup** plays guests first (guestIntro → guest field → guest bench) then home (intro → field → bench) when guests exist; extra buttons **Guests only** / **Home only**; Prepare voices covers both; guest rows appear in the list with their own ▶ and Ready badges.
+- Step 3: second, smaller button **{score} for {opponent}** with guest scorer chips (only shown when guests exist).
+- `speechText` also applies guest players' `sayAs`.
+
+**Tests:** reducer (import replaces guests, sets opponent, fresh ids; sport mismatch error), parseTeamFile (valid, wrong marker/version, too many players, wrong types, extra fields dropped), exportTeamFile round-trip, archive with/without guestPlayers, panel tests for tabs/import/share/announce order (guests before home)/guest score, e2e: share team in one browser context → import as guests in a fresh context → Announce lineup sequence starts with the guest intro; no foreign requests.
+
+- [ ] TDD each part; then `npm test && npx tsc --noEmit && npm run build && npm run check:dist && npm run test:e2e` — all PASS.
+- [ ] Update manuals (all 10): section 2 paragraph "Playing against another Fanfare club? Swap team files" and section 3 mention of guests-first announcement; rerun `npm run docs:media` so screenshots show the Guests tab; media budgets still pass.
+- [ ] Commit — `feat: guest team sharing and two-team announcements`
