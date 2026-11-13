@@ -836,3 +836,62 @@ test('index links every language', () => { /* docs/manual/README.md contains `($
 - [ ] **Step 6: Write `scripts/build-manual.mjs`** (`postbuild`): render each `docs/manual/<code>.md` with `marked` into `dist/manual/<code>.html` using a minimal same-origin HTML shell (system fonts, `lang`/`dir` set, the same CSP meta as `index.html`, max-width 720 px, images max-width 100%), copy `docs/manual/media/` to `dist/manual/media/`. Add the header link and `manualLink` string (en `Manual`, de `Anleitung`, others translated).
 - [ ] **Step 7:** Run `npx vitest run tests/unit/manual.test.ts && npm run build && npm run check:dist && npm run test:e2e` — Expected: all PASS; open `dist/manual/de.html` via `vite preview` and confirm images and GIFs load.
 - [ ] **Step 8: Commit** — `docs: add illustrated getting-started manuals in all languages`
+
+---
+
+### Task 18: Optional local voice server (prepare at home, play anywhere)
+
+**Goal of this task:** voices from a high-quality model running on the user's own computer (`http://localhost`), generated at home, saved into the speech cache and the export zip, so the phone plays them on game day without the server. The companion server itself is a separate project; this task only adds the client side and documents the protocol.
+
+**Files:**
+- Create: `src/tts/httpEngine.ts`, `src/tts/routingEngine.ts`, `docs/local-voice-server.md`, `tests/unit/httpEngine.test.ts`, `tests/e2e/localVoice.spec.ts`, `tests/e2e/fixtures/mockVoiceServer.ts`
+- Modify: `index.html` (CSP), `src/domain/model.ts` + `src/state/reducer.ts` (`localTts`), `src/io/archive.ts` (validate `localTts`), `src/ui/SoundsPanel.tsx`, `src/ui/App.tsx` (engine wiring), all `src/i18n/*.ts`, `scripts/check-dist.mjs` (expected CSP), `docs/manual/*.md` (section 5 paragraph)
+
+**Interfaces:**
+- Consumes: `TtsEngine`, `TtsUnavailableError`, `SpeechCache` (Task 9), `VOICES`, `AudioQueue`, SoundsPanel (Task 13), archive (Task 7)
+- Produces:
+```ts
+// model.ts — AppState gains:  localTts: { url: string } | null      (default null; archive version stays 1, missing → null)
+// reducer.ts — Action gains:  { type: 'setLocalTts'; url: string | null }   // url must pass isLocalUrl, else ignored
+function isLocalUrl(url: string): boolean;     // http(s)://localhost or 127.0.0.1, any port, no path/query/credentials
+interface RemoteVoice { id: string; lang: string; label: string }
+class HttpTtsEngine implements TtsEngine {
+  constructor(baseUrl: string, fetchFn?: typeof fetch);
+  listVoices(): Promise<RemoteVoice[]>;          // GET {base}/voices, 5 s timeout
+  synthesize(text: string, voiceId: string): Promise<Blob>;   // voiceId WITHOUT 'local:' prefix; POST {base}/synthesize, 120 s timeout
+  preload(): Promise<void>;                      // no-op
+}
+class RoutingEngine implements TtsEngine {       // ids starting 'local:' → HttpTtsEngine (prefix stripped), others → PiperEngine
+  constructor(piper: TtsEngine, getLocal: () => HttpTtsEngine | null);
+}
+const LOCAL_TTS_DEFAULT_URL = 'http://127.0.0.1:5123';
+```
+
+**Protocol** (`docs/local-voice-server.md`, the contract for the companion project):
+- `GET /voices` → `200 application/json` `[{ "id": "de-high", "lang": "de", "label": "German (high quality)" }]` (`lang` is a code from `LANGS`)
+- `POST /synthesize` body `application/json` `{ "text": "...", "voice": "de-high" }` → `200 audio/wav` (or `audio/mpeg`/`audio/ogg`); errors → `4xx/5xx` with `text/plain` message
+- CORS on every response: `Access-Control-Allow-Origin: *`; preflight `OPTIONS` answers `Access-Control-Allow-Methods: GET, POST`, `Access-Control-Allow-Headers: Content-Type`, `Access-Control-Allow-Private-Network: true`
+- Bind to `127.0.0.1` only (never `0.0.0.0`); no logging of request text
+- Document the workflow: start server → enable in step 4 → pick a `local:` voice → **Prepare voices** → **Export** → import the zip on the phone.
+
+- [ ] **Step 1: CSP.** `connect-src 'self' http://localhost:* http://127.0.0.1:*` in `index.html` and in `scripts/check-dist.mjs`' expected CSP. Update the Task 1/15 e2e "foreign request" filters only if they fail: requests to localhost are allowed **only** in `localVoice.spec.ts`; every other e2e still asserts zero non-origin requests.
+- [ ] **Step 2: Write failing unit tests** `tests/unit/httpEngine.test.ts` (fake `fetch`):
+```ts
+test('isLocalUrl', () => {
+  expect(['http://localhost:5123', 'http://127.0.0.1:8000', 'https://localhost:1'].every(isLocalUrl)).toBe(true);
+  expect(['http://192.168.1.5:5123', 'https://example.com', 'http://localhost.evil.com', 'http://user:pw@localhost:1', 'http://localhost:1/x?y', 'file:///x'].some(isLocalUrl)).toBe(false);
+});
+test('listVoices parses and filters to known LANGS', async () => {});
+test('synthesize POSTs JSON and returns the audio blob', async () => { /* body {text, voice}; content-type header */ });
+test('non-2xx, network error, timeout and non-audio response → TtsUnavailableError with readable message', async () => {});
+test('RoutingEngine sends local: ids to http engine (prefix stripped) and others to piper', async () => {});
+test('RoutingEngine with local voice but no server configured → TtsUnavailableError', async () => {});
+test('setLocalTts ignores non-local URLs; archive round-trips localTts and rejects a non-local url as invalid-data', () => {});
+```
+- [ ] **Step 3:** Run `npx vitest run tests/unit/httpEngine.test.ts` — Expected: FAIL. Implement; run again — Expected: PASS.
+- [ ] **Step 4: UI (SoundsPanel).** Collapsed `<details>` **Local voice server (advanced)**: URL field (default `LOCAL_TTS_DEFAULT_URL`), **Connect** button → `listVoices()` → shows "✓ 3 voices found" or the readable error; **Disconnect** clears `localTts`. Connected voices for the current language appear in the voice `<select>` as an extra `<optgroup>` labelled "On this computer", values `local:<id>`. One-line hint under the field: en `Generate high-quality voices on your own computer, then Prepare voices and Export — your phone plays them without the server.` / de `Erzeuge hochwertige Stimmen auf deinem eigenen Computer, dann „Stimmen vorbereiten“ und „Exportieren“ – dein Handy spielt sie ohne Server ab.` A link to `docs/local-voice-server.md` is not needed in the app (the manual covers it). Add a component test: connect success lists voices in the select; failure shows `role="alert"`.
+- [ ] **Step 5: Wiring.** `App` builds `SpeechCache(new RoutingEngine(new PiperEngine('./'), () => state.localTts ? new HttpTtsEngine(state.localTts.url) : null))` (read the current state through a ref so the cache isn't rebuilt). If the selected voice is `local:` and the server is unreachable, already-cached clips still play (cache hit before engine).
+- [ ] **Step 6: e2e** `tests/e2e/localVoice.spec.ts` with `mockVoiceServer.ts` (Node `http` on `127.0.0.1:5123`, implements the protocol incl. CORS/PNA headers, returns `encodeWav`-style silent WAV): connect → select `local:mock-de` → add 2 players → Prepare voices `2 / 2` → Export → stop the mock server → reload → Delete all data → Import → Announce lineup plays (Stop button appears) with **no** request to 127.0.0.1 after import; all requests either page origin or `127.0.0.1:5123`.
+- [ ] **Step 7: Docs.** Write `docs/local-voice-server.md` (protocol above + workflow + note that most high-quality GPU voice models have licence restrictions, check the model's licence before sharing generated audio). Add one short paragraph about the local voice server to section 5 of every `docs/manual/<code>.md` (keeps the 7-section structure).
+- [ ] **Step 8:** Run `npm test && npx tsc --noEmit && npm run build && npm run check:dist && npm run test:e2e` — Expected: all PASS.
+- [ ] **Step 9: Commit** — `feat: optional local voice server for prepare-at-home voices`
