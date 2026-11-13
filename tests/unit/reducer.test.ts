@@ -69,3 +69,12 @@ test('removePlayer, resetTemplates, custom sounds', () => {
   s = reducer(s, { type: 'setCustomSound', slot: 'score', sound: null });
   expect(s.customSounds.score).toBeUndefined();
 });
+
+test('restorePlayer re-inserts at the same index', () => {
+  let s = reducer(initialState('en'), { type: 'addPlayers', text: 'A\nB\nC', onField: true });
+  const [, b] = currentRoster(s).players;
+  s = reducer(s, { type: 'removePlayer', id: b.id });
+  s = reducer(s, { type: 'restorePlayer', player: b, index: 1 });
+  expect(currentRoster(s).players.map(p => p.name)).toEqual(['A', 'B', 'C']);
+  expect(reducer(s, { type: 'restorePlayer', player: b, index: 0 })).toBe(s);
+});

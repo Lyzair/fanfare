@@ -34,3 +34,11 @@ test('junk lines are skipped', () =>
   expect(parsePlayerLines('https://www.fussball.de/x\n---\n12.10.2026\nLea', fb, staff).map(p => p.name)).toEqual(['Lea']));
 test('names are capped at 60 chars', () =>
   expect(parsePlayerLines('A'.repeat(70) + '\nB'.repeat(1), fb, staff)[0].name).toHaveLength(60));
+
+test('a single pasted line starting with a number is one player (comma swap applies)', () => {
+  expect(parsePlayerLines('1 Müller, Lea', fb, staff)).toEqual([{ name: 'Lea Müller', number: '1', position: '' }]);
+});
+test('a plain single line "Müller, Lea" stays a two-name list', () => {
+  expect(parsePlayerLines('Müller, Lea', fb, staff)).toEqual([
+    { name: 'Müller', number: '', position: '' }, { name: 'Lea', number: '', position: '' }]);
+});

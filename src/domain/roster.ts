@@ -19,7 +19,9 @@ function isHiddenPlayer(line: string): boolean {
 
 export function parsePlayerLines(text: string, positions: string[], staffHeadings: string[]): ParsedPlayer[] {
   let lines = text.split(/[\n;]/).map(l => l.replace(/\s+/g, ' ').trim()).filter(l => l);
-  if (lines.length === 1 && lines[0].includes(',')) {
+  // A lone line that starts with a shirt number is one "7 Last, First" player, never a comma list.
+  const singleNumbered = lines.length === 1 && /^#?\d{1,3}(?:\s+|\.\s*)\S/.test(lines[0]);
+  if (lines.length === 1 && lines[0].includes(',') && !singleNumbered) {
     lines = lines[0].split(',').map(l => l.trim()).filter(l => l);
   }
   const posByKey = new Map(positions.map(p => [norm(p), p]));
@@ -50,7 +52,7 @@ export function parsePlayerLines(text: string, positions: string[], staffHeading
   }
 
   const oneComma = (n: string) => n.split(',').length === 2;
-  if (out.length >= 2 && out.every(p => oneComma(p.name))) {
+  if ((out.length >= 2 || singleNumbered) && out.every(p => oneComma(p.name))) {
     for (const p of out) {
       const [last, first] = p.name.split(',').map(s => s.trim());
       p.name = `${first} ${last}`.trim();

@@ -8,7 +8,7 @@ export type Action =
   | { type: 'setMatch'; home?: string; opponent?: string } | { type: 'togglePositions'; on: boolean }
   | { type: 'addPlayers'; text: string; onField: boolean }
   | { type: 'updatePlayer'; id: string; patch: Partial<Omit<Player, 'id'>> }
-  | { type: 'removePlayer'; id: string } | { type: 'movePlayer'; id: string; delta: -1 | 1 }
+  | { type: 'removePlayer'; id: string } | { type: 'restorePlayer'; player: Player; index: number } | { type: 'movePlayer'; id: string; delta: -1 | 1 }
   | { type: 'setTemplate'; key: TemplateKey; text: string } | { type: 'resetTemplates' }
   | { type: 'setSoundsEnabled'; on: boolean }
   | { type: 'setCustomSound'; slot: SoundSlot; sound: CustomSound | null }
@@ -75,6 +75,14 @@ export function reducer(s: AppState, a: Action): AppState {
       return withRoster(s, r => ({ ...r, players: r.players.map(p => (p.id === a.id ? { ...p, ...patch } : p)) }));
     }
     case 'removePlayer': return withRoster(s, r => ({ ...r, players: r.players.filter(p => p.id !== a.id) }));
+    case 'restorePlayer': {
+      if (currentRoster(s).players.some(p => p.id === a.player.id)) return s;
+      return withRoster(s, r => {
+        const players = [...r.players];
+        players.splice(Math.min(Math.max(a.index, 0), players.length), 0, a.player);
+        return { ...r, players };
+      });
+    }
     case 'movePlayer': {
       const r = currentRoster(s);
       const i = r.players.findIndex(p => p.id === a.id), j = i + a.delta;
