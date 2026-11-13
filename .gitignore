@@ -1,7 +1,8 @@
 node_modules
 dist
 .superpowers
-public/voices/*.onnx*
+public/voices/*
+!public/voices/LICENSES.md
 public/ort
 public/piper
 test-results

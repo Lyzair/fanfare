@@ -1,0 +1,69 @@
+diff --git a/node_modules/@mintplex-labs/piper-tts-web/dist/piper-tts-web.js b/node_modules/@mintplex-labs/piper-tts-web/dist/piper-tts-web.js
+index 250fa01..7d8af7b 100644
+--- a/node_modules/@mintplex-labs/piper-tts-web/dist/piper-tts-web.js
++++ b/node_modules/@mintplex-labs/piper-tts-web/dist/piper-tts-web.js
+@@ -10,9 +10,10 @@ var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot
+ var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), setter ? setter.call(obj, value) : member.set(obj, value), value);
+ var __privateMethod = (obj, member, method) => (__accessCheck(obj, member, "access private method"), method);
+ var _createPiperPhonemize, _modelConfig, _ort, _ortSession, _progressCallback, _wasmPaths, _logger, _TtsSession_instances, predictChunk_fn;
+-const HF_BASE = "https://huggingface.co/diffusionstudio/piper-voices/resolve/main";
+-const ONNX_BASE = "https://cdnjs.cloudflare.com/ajax/libs/onnxruntime-web/1.18.0/";
+-const WASM_BASE = "https://cdn.jsdelivr.net/npm/@diffusionstudio/piper-wasm@1.0.0/build/piper_phonemize";
++// sports-caller patch: voices are self-hosted next to the page (public/voices/).
++const HF_BASE = "./voices";
++const ONNX_BASE = "./ort/";
++const WASM_BASE = "./piper/piper_phonemize";
+ const PATH_MAP = {
+   "ar_JO-kareem-low": "ar/ar_JO/kareem/low/ar_JO-kareem-low.onnx",
+   "ar_JO-kareem-medium": "ar/ar_JO/kareem/medium/ar_JO-kareem-medium.onnx",
+@@ -141,7 +142,7 @@ const PATH_MAP = {
+   "it_IT-paola-medium": "it/it_IT/paola/medium/it_IT-paola-medium.onnx"
+ };
+ async function writeBlob(url, blob) {
+-  if (!url.match("https://huggingface.co")) return;
++  if (!url.startsWith(HF_BASE + "/")) return;
+   try {
+     const root = await navigator.storage.getDirectory();
+     const dir = await root.getDirectoryHandle("piper", {
+@@ -168,7 +169,7 @@ async function removeBlob(url) {
+   }
+ }
+ async function readBlob(url) {
+-  if (!url.match("https://huggingface.co")) return;
++  if (!url.startsWith(HF_BASE + "/")) return;
+   try {
+     const root = await navigator.storage.getDirectory();
+     const dir = await root.getDirectoryHandle("piper", {
+@@ -184,6 +185,7 @@ async function readBlob(url) {
+ async function fetchBlob(url, callback) {
+   var _a;
+   const res = await fetch(url);
++  if (!res.ok) throw new Error(`Failed to fetch ${url}: HTTP ${res.status}`);
+   const reader = (_a = res.body) == null ? void 0 : _a.getReader();
+   const contentLength = +(res.headers.get("Content-Length") ?? 0);
+   let receivedLength = 0;
+@@ -360,9 +362,23 @@ _progressCallback = new WeakMap();
+ _wasmPaths = new WeakMap();
+ _logger = new WeakMap();
+ _TtsSession_instances = new WeakSet();
++// sports-caller patch: voices with phoneme_type "text" (e.g. uk_UA-ukrainian_tts)
++// map lower-cased NFD code points straight to ids, as piper does; espeak would
++// produce ids from a different table.
++function textPhonemeIds(text, idMap) {
++  const id = (p) => idMap[p] ? idMap[p][0] : void 0;
++  const pad = id("_"), ids = [id("^"), pad];
++  for (const ch of text.trim().toLowerCase().normalize("NFD")) {
++    const v = id(ch);
++    if (v === void 0) continue;
++    ids.push(v, pad);
++  }
++  ids.push(id("$"));
++  return ids;
++}
+ predictChunk_fn = async function(text) {
+   const input = JSON.stringify([{ text: text.trim() }]);
+-  const phonemeIds = await new Promise(async (resolve) => {
++  const phonemeIds = __privateGet(this, _modelConfig).phoneme_type === "text" ? textPhonemeIds(text, __privateGet(this, _modelConfig).phoneme_id_map) : await new Promise(async (resolve) => {
+     const module = await __privateGet(this, _createPiperPhonemize).call(this, {
+       print: (data) => {
+         resolve(JSON.parse(data).phoneme_ids);

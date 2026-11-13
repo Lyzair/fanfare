@@ -10,15 +10,18 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "fetch-assets": "node -e \"console.log('no assets yet')\""
+    "fetch-assets": "node scripts/fetch-assets.mjs",
+    "prebuild": "node scripts/fetch-assets.mjs",
+    "postinstall": "patch-package"
   },
   "dependencies": {
-    "@mintplex-labs/piper-tts-web": "^1.0.5",
+    "@mintplex-labs/piper-tts-web": "1.0.5",
     "fflate": "^0.8.3",
     "idb-keyval": "^6.3.0",
     "preact": "^11.2.0"
   },
   "devDependencies": {
+    "@diffusionstudio/piper-wasm": "1.0.0",
     "@playwright/test": "^1.65.0",
     "@preact/preset-vite": "^2.10.6",
     "@testing-library/jest-dom": "^7.0.1",
@@ -27,6 +30,8 @@
     "@types/node": "^26.6.6",
     "fake-indexeddb": "^6.2.8",
     "jsdom": "^31.0.1",
+    "onnxruntime-web": "1.18.0",
+    "patch-package": "8.0.1",
     "typescript": "^7.0.2",
     "vite": "^8.3.8",
     "vitest": "^5.1.0"
