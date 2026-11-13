@@ -3,11 +3,11 @@ import type { AppState, Player, TemplateKey } from '../domain/model';
 import { calloutText, introText } from '../domain/template';
 import { defaultSoundBlob } from '../audio/defaultSounds';
 import type { QueueItem } from '../audio/queue';
-import { loadSoundBlob } from '../state/persist';
 import { currentRoster } from '../state/reducer';
 import { t } from '../i18n';
 import type { UiStrings } from '../i18n';
 import type { SpeechCache } from '../tts/speechCache';
+import { useCustomSoundBlob } from './soundMemory';
 import { ServicesContext } from './types';
 import type { PanelProps } from './types';
 
@@ -61,7 +61,6 @@ export default function CalloutPanel({ state, dispatch }: PanelProps) {
   useEffect(() => () => { mounted.current = false; }, []);
   const [, setTick] = useState(0);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
-  const [introBlob, setIntroBlob] = useState<Blob | null>(null);
   const tplRefs = useRef<Partial<Record<TemplateKey, HTMLTextAreaElement | null>>>({});
   const lastTpl = useRef<TemplateKey>('field');
 
@@ -74,15 +73,7 @@ export default function CalloutPanel({ state, dispatch }: PanelProps) {
     return () => { q.onChange = prev; };
   }, [services]);
 
-  const customIntro = state.customSounds.intro;
-  useEffect(() => {
-    let cancelled = false;
-    setIntroBlob(null);
-    if (customIntro) {
-      loadSoundBlob('intro').then(b => { if (!cancelled) setIntroBlob(b); }, () => { /* fall back to default */ });
-    }
-    return () => { cancelled = true; };
-  }, [customIntro]);
+  const introBlob = useCustomSoundBlob('intro', state.customSounds.intro);
 
   if (!services) return null;
   const { queue, speech } = services;

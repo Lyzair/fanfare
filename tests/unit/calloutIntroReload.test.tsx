@@ -7,11 +7,19 @@ import type { Services } from '../../src/ui/types';
 import { initialState, reducer } from '../../src/state/reducer';
 import type { Action } from '../../src/state/reducer';
 import type { QueueItem } from '../../src/audio/queue';
+import { rememberSound } from '../../src/ui/soundMemory';
 
 const blobs: Record<string, Blob> = {};
 vi.mock('../../src/state/persist', () => ({
   loadSoundBlob: vi.fn(async (slot: string) => blobs[slot] ?? null),
 }));
+
+function mk() {
+  const played: QueueItem[][] = [];
+  const queue = { playing: false, onChange: undefined, unlock: vi.fn(), stop: vi.fn(), play: vi.fn(async (i: QueueItem[]) => { played.push(i); }) };
+  const services = { queue, speech: { has: () => false, get: vi.fn(async () => new Blob(['x'])), prepare: vi.fn() } } as unknown as Services;
+  return { played, services };
+}
 
 test('replacing the custom intro sound reloads the intro blob', async () => {
   blobs.intro = new Blob(['first']);
@@ -33,4 +41,21 @@ test('replacing the custom intro sound reloads the intro blob', async () => {
   blobs.intro = second;
   act(() => dispatchOut({ type: 'setCustomSound', slot: 'intro', sound: { name: 'b.mp3', mime: 'audio/mpeg' } }));
   await waitFor(async () => { await announce(); expect(played.at(-1)![0]).toBe(second); });
+});
+
+test('lineup uses a custom intro that only exists in memory (storage returns null)', async () => {
+  delete blobs.intro;
+  const mem = new Blob(['mem']);
+  rememberSound('intro', mem);
+  const { played, services } = mk();
+  function H() {
+    const [state, dispatch] = useReducer(reducer, undefined, () =>
+      reducer(initialState('en'), { type: 'setCustomSound', slot: 'intro', sound: { name: 'm.mp3', mime: 'audio/mpeg' } }));
+    return <ServicesContext.Provider value={services}><CalloutPanel state={state} dispatch={dispatch} /></ServicesContext.Provider>;
+  }
+  render(<H />);
+  await waitFor(async () => {
+    await userEvent.click(screen.getByRole('button', { name: /Announce lineup/ }));
+    expect(played.at(-1)![0]).toBe(mem);
+  });
 });

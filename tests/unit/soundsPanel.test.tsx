@@ -57,8 +57,10 @@ test('upload still registers the sound when storage fails, and previews from mem
   const file = new File(['abc'], 'horn.mp3', { type: 'audio/mpeg' });
   await userEvent.upload(fileInput('Score sound'), file);
   await waitFor(() => expect(latest.customSounds.score?.name).toBe('horn.mp3'));
-  await userEvent.click(screen.getByRole('button', { name: 'Preview Score sound' }));
-  expect(queue.play.mock.calls[0][0][0]).toBe(file);
+  await waitFor(async () => {
+    await userEvent.click(screen.getByRole('button', { name: 'Preview Score sound' }));
+    expect(queue.play.mock.calls.at(-1)![0][0]).toBe(file);
+  });
 });
 
 test('non-audio file is rejected with a message', async () => {
