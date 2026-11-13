@@ -33,17 +33,37 @@ export function currentRoster(s: AppState): Roster {
   return s.rosters[s.sport] ?? defaultRoster(s.sport, s.lang);
 }
 
-/** Older saved states and exports predate the guest team: give them the defaults. */
-function withGuestDefaults(s: AppState): AppState {
+const strOr = (v: unknown): string => (typeof v === 'string' ? v : '');
+
+function normalizePlayer(raw: Partial<Player>): Player {
+  return {
+    ...raw as Player,
+    sayAs: strOr(raw.sayAs), origSpelling: strOr(raw.origSpelling), nameLang: strOr(raw.nameLang),
+    customText: typeof raw.customText === 'string' ? raw.customText : null,
+  };
+}
+
+/**
+ * Fills every field added after the first model version with its default, for every roster, so
+ * saved states and imports from older versions are safe to use. Applied by `replaceAll`.
+ */
+export function normalizeState(raw: AppState): AppState {
   const rosters: AppState['rosters'] = {};
-  for (const [sport, r] of Object.entries(s.rosters) as [SportId, Roster][]) {
-    const defaults = defaultTemplates(sport, s.lang);
+  for (const [sport, r] of Object.entries(raw.rosters ?? {}) as [SportId, Partial<Roster>][]) {
+    const defaults = defaultTemplates(sport, raw.lang);
+    const t: Partial<Record<TemplateKey, string>> = r.templates ?? {};
+    const templates = { ...defaults } as Record<TemplateKey, string>;
+    for (const k of Object.keys(defaults) as TemplateKey[]) if (typeof t[k] === 'string') templates[k] = t[k];
     rosters[sport] = {
-      ...r, guestPlayers: r.guestPlayers ?? [],
-      templates: { ...r.templates, guestIntro: r.templates.guestIntro ?? defaults.guestIntro, guestScore: r.templates.guestScore ?? defaults.guestScore },
+      homeTeam: strOr(r.homeTeam), homeSayAs: strOr(r.homeSayAs), homeOrigSpelling: strOr(r.homeOrigSpelling), homeNameLang: strOr(r.homeNameLang),
+      opponent: strOr(r.opponent), opponentSayAs: strOr(r.opponentSayAs), opponentOrigSpelling: strOr(r.opponentOrigSpelling), opponentNameLang: strOr(r.opponentNameLang),
+      showPositions: r.showPositions === true,
+      players: (r.players ?? []).map(normalizePlayer),
+      guestPlayers: (r.guestPlayers ?? []).map(normalizePlayer),
+      templates,
     };
   }
-  return { ...s, rosters };
+  return { ...raw, rosters };
 }
 
 const listKey = (side: Side | undefined) => (side === 'guest' ? 'guestPlayers' : 'players');
@@ -139,6 +159,6 @@ export function reducer(s: AppState, a: Action): AppState {
       if (a.sound) customSounds[a.slot] = a.sound; else delete customSounds[a.slot];
       return { ...s, customSounds };
     }
-    case 'replaceAll': return withGuestDefaults(a.state);
+    case 'replaceAll': return normalizeState(a.state);
   }
 }

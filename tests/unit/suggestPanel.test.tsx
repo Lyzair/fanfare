@@ -124,3 +124,16 @@ test('German UI strings', async () => {
   expect(screen.getByLabelText('Sprache des Namens')).toBeInTheDocument();
   expect(screen.getByLabelText('Originalschreibweise')).toBeInTheDocument();
 });
+
+test('a player normalized from an old saved state works: name shown as original spelling, Find runs', async () => {
+  const { reducer, initialState, currentRoster } = await import('../../src/state/reducer');
+  const old = { version: 1, sport: 'football', lang: 'en', voiceId: defaultVoiceFor('en'), soundsEnabled: true, customSounds: {},
+    rosters: { football: { homeTeam: '', opponent: '', showPositions: false, players: [{ id: 'p', name: 'Wojciech', number: '', position: '', onField: true }], templates: {} } } };
+  const p = currentRoster(reducer(initialState('en'), { type: 'replaceAll', state: old as never })).players[0];
+  const { props } = setup({ name: p.name, origSpelling: p.origSpelling, nameLang: p.nameLang });
+  await open();
+  expect(screen.getByLabelText('Original spelling')).toHaveValue('Wojciech');
+  await find();
+  expect(await screen.findByRole('button', { name: 'Hear Wojtschech' })).toBeInTheDocument();
+  expect(props.run).toHaveBeenCalledWith(expect.objectContaining({ origSpelling: 'Wojciech' }));
+});

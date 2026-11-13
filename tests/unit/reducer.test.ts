@@ -160,3 +160,25 @@ describe('guest team', () => {
     expect(currentRoster(s).templates.guestIntro).toBe(defaultTemplates('football', 'de').guestIntro);
   });
 });
+
+describe('normalizeState via replaceAll', () => {
+  const old = () => ({
+    version: 1, sport: 'football', lang: 'de', voiceId: 'v', soundsEnabled: true, customSounds: {},
+    rosters: { football: {
+      homeTeam: 'A', opponent: 'B', showPositions: false,
+      players: [{ id: 'p1', name: 'Lea', number: '7', position: '', onField: true }],
+      templates: { intro: 'i', field: 'f', bench: 'b', score: 's' },
+    } },
+  }) as unknown as import('../../src/domain/model').AppState;
+  test('a Task 4-era state gets every default', () => {
+    const r = currentRoster(reducer(initialState('de'), { type: 'replaceAll', state: old() }));
+    expect(r).toMatchObject({ homeSayAs: '', opponentSayAs: '', homeOrigSpelling: '', opponentOrigSpelling: '', homeNameLang: '', opponentNameLang: '', guestPlayers: [] });
+    expect(r.players[0]).toMatchObject({ name: 'Lea', sayAs: '', origSpelling: '', nameLang: '', customText: null });
+    expect(r.templates).toMatchObject({ intro: 'i', guestIntro: defaultTemplates('football', 'de').guestIntro, guestScore: defaultTemplates('football', 'de').guestScore });
+  });
+  test('speechText does not throw on a pre-hint player', async () => {
+    const { speechText } = await import('../../src/domain/template');
+    const r = currentRoster(reducer(initialState('de'), { type: 'replaceAll', state: old() }));
+    expect(speechText('Lea 7', r)).toBe('Lea 7');
+  });
+});
