@@ -26,7 +26,9 @@ Ogni riga ha piccoli pulsanti: **⇄** sposta un giocatore tra campo e panchina,
 
 **Consiglio:** se la tua società usa fussball.de, apri lì la rosa della **tua squadra**, copiala e incollala nel campo. Numeri e nomi vengono riconosciuti. Fanfare non si collega mai a fussball.de. Maggiori dettagli in "Vieni da fussball.de?" nel passaggio 1.
 
-**Giochi contro un altro club che usa Fanfare? Scambiatevi i file squadra.** Al passaggio 5 premi **Condividi la nostra squadra** e invia il file (via e-mail o con una chiavetta USB) all'allenatore dell'altra squadra. Il file contiene solo nomi, quindi non inviarlo a nessun altro. Quando ricevi il loro file, apri la scheda **Ospiti** al passaggio 1, premi **Importa file squadra** e sceglilo. Gli ospiti compaiono in un elenco a parte e l'avversario viene compilato. **Cancella ospiti** li rimuove di nuovo.
+**Giochi contro un altro club che usa Fanfare? Scambiatevi i file squadra.** Al passaggio 5 premi **Condividi la nostra squadra** e invia il file (via e-mail o con una chiavetta USB) all'allenatore dell'altra squadra. Il file contiene nomi. Invialo solo all'allenatore dell'altra squadra. Quando ricevi il loro file, apri la scheda **Ospiti** al passaggio 1, premi **Importa file squadra** e sceglilo. Gli ospiti compaiono in un elenco a parte e l'avversario viene compilato. **Cancella ospiti** li rimuove di nuovo.
+
+![La scheda Ospiti dopo l'importazione di un file squadra](media/it/02b-guests.png)
 
 ## 3. Il giorno della partita
 

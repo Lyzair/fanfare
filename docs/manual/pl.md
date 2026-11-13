@@ -26,7 +26,9 @@ Każdy wiersz ma małe przyciski: **⇄** przenosi zawodnika między boiskiem a 
 
 **Wskazówka:** jeśli Twój klub korzysta z fussball.de, otwórz tam skład **własnej drużyny**, skopiuj go i wklej w pole. Numery i nazwiska są rozpoznawane. Fanfare nigdy nie łączy się z fussball.de. Więcej w "Dane z fussball.de?" w kroku 1.
 
-**Grasz z innym klubem używającym Fanfare? Wymieńcie się plikami drużyn.** W kroku 5 naciśnij **Udostępnij naszą drużynę** i wyślij plik (e-mailem lub na pendrive) trenerowi drugiej drużyny. Plik zawiera tylko imiona i nazwiska, więc nie wysyłaj go nikomu innemu. Gdy dostaniesz ich plik, otwórz w kroku 1 kartę **Goście**, naciśnij **Importuj plik drużyny** i wybierz go. Goście pojawią się na osobnej liście, a przeciwnik zostanie wpisany. **Wyczyść gości** usuwa ich ponownie.
+**Grasz z innym klubem używającym Fanfare? Wymieńcie się plikami drużyn.** W kroku 5 naciśnij **Udostępnij naszą drużynę** i wyślij plik (e-mailem lub na pendrive) trenerowi drugiej drużyny. Plik zawiera imiona i nazwiska. Wyślij go tylko trenerowi drugiej drużyny. Gdy dostaniesz ich plik, otwórz w kroku 1 kartę **Goście**, naciśnij **Importuj plik drużyny** i wybierz go. Goście pojawią się na osobnej liście, a przeciwnik zostanie wpisany. **Wyczyść gości** usuwa ich ponownie.
+
+![Karta Goście po zaimportowaniu pliku drużyny](media/pl/02b-guests.png)
 
 ## 3. W dniu meczu
 

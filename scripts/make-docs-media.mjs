@@ -26,6 +26,7 @@ const MAX_GIF_MS = 12_000;
 const FPS = 6;
 
 const DEMO = {
+  sayAs: 'Kim Mooster',
   home: 'FC Example',
   opponent: 'SV Sample',
   field: '1 Alex Demo\n4 Sam Test\n7 Kim Muster\n9 Robin Probe',
@@ -39,7 +40,6 @@ const DEMO = {
       { name: 'Noor Visitor', number: '11', position: '', onField: false, sayAs: '' },
     ],
   },
-  guestSayAs: 'Mee-ka Bezoosh',
 };
 const PHONE = { width: 390, height: 844 };
 const DESKTOP = { width: 1280, height: 800 };
@@ -278,15 +278,20 @@ async function runLang(browser, pack, outDir) {
   await png(card(page, 4), '05-sounds.png');
   await png(card(page, 5), '06-save.png');
 
-  // 02 players: the Guests tab (imported team) with one row's "Say it like..." hint open
+  // 02 players: our team with one row's "Say it like..." hint open
   {
-    await page.getByRole('tab', { name: new RegExp(`^${pack.ui.tabGuests}`) }).click();
-    const row = page.getByRole('listitem').filter({ has: page.locator('input[value="Mika Besuch"]') });
+    const row = page.getByRole('listitem').filter({ has: page.locator('input[value="Kim Muster"]') });
     await row.getByRole('button', { name: pack.ui.pronunciation, exact: true }).click();
-    await row.getByLabel(pack.ui.sayAsLabel).fill(DEMO.guestSayAs);
+    await row.getByLabel(pack.ui.sayAsLabel).fill(DEMO.sayAs);
     await sleep(300);
     await scrollToCard(page, 1);
     await png(card(page, 1), '02-players.png');
+    // 02b guests: the Guests tab after importing the team file
+    await row.getByRole('button', { name: pack.ui.pronunciation, exact: true }).click();
+    await page.getByRole('tab', { name: new RegExp(`^${pack.ui.tabGuests}`) }).click();
+    await sleep(300);
+    await scrollToCard(page, 1);
+    await png(card(page, 1), '02b-guests.png');
   }
   await ctx.close();
   return written;

@@ -6,7 +6,8 @@ test.each(LANGS)('%s manual exists, has all sections and only existing media', (
   const md = readFileSync(`docs/manual/${lang}.md`, 'utf8');
   expect(md.match(/^## /gm)?.length).toBe(7); // same section count in every language
   const images = [...md.matchAll(/!\[[^\]]*\]\(([^)]+)\)/g)];
-  expect(images.length).toBeGreaterThanOrEqual(8);
+  expect(images.length).toBeGreaterThanOrEqual(10);
+  expect(md).toContain(`media/${lang}/02b-guests.png`);
   for (const [, src] of images) expect(existsSync(`docs/manual/${src}`)).toBe(true);
   expect(md).not.toMatch(/https?:\/\//); // relative links only
   if (lang !== 'de' && lang !== 'en') expect(md).toContain('Translation: machine-assisted');

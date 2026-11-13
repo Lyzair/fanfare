@@ -26,7 +26,9 @@ Chaque ligne a de petits boutons : **⇄** déplace un joueur entre le terrain e
 
 **Astuce :** si votre club utilise fussball.de, ouvrez l'effectif de **votre propre équipe** sur ce site, copiez-le et collez-le dans la zone. Les numéros et les noms sont reconnus. Fanfare ne se connecte jamais à fussball.de. Voir "Vous venez de fussball.de ?" à l'étape 1.
 
-**Vous jouez contre un autre club Fanfare ? Échangez vos fichiers d'équipe.** À l'étape 5, appuyez sur **Partager notre équipe** et envoyez le fichier (par e-mail ou clé USB) à l'entraîneur de l'autre équipe. Le fichier ne contient que des noms : ne l'envoyez à personne d'autre. Quand vous recevez leur fichier, ouvrez l'onglet **Invités** à l'étape 1, appuyez sur **Importer un fichier d'équipe** et choisissez-le. Les invités apparaissent dans leur propre liste et l'adversaire est rempli. **Effacer les invités** les supprime à nouveau.
+**Vous jouez contre un autre club Fanfare ? Échangez vos fichiers d'équipe.** À l'étape 5, appuyez sur **Partager notre équipe** et envoyez le fichier (par e-mail ou clé USB) à l'entraîneur de l'autre équipe. Le fichier contient des noms. Ne l'envoyez qu'à l'entraîneur de l'autre équipe. Quand vous recevez leur fichier, ouvrez l'onglet **Invités** à l'étape 1, appuyez sur **Importer un fichier d'équipe** et choisissez-le. Les invités apparaissent dans leur propre liste et l'adversaire est rempli. **Effacer les invités** les supprime à nouveau.
+
+![L'onglet Invités après l'import d'un fichier d'équipe](media/fr/02b-guests.png)
 
 ## 3. Le jour du match
 

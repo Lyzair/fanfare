@@ -26,7 +26,9 @@ Met **🗣 Zeg het als…** bepaal je hoe een naam wordt uitgesproken. Druk in e
 
 **Tip:** als je club fussball.de gebruikt, open daar de selectie van **je eigen team**, kopieer die en plak hem in het vak. Rugnummers en namen worden herkend. Fanfare maakt nooit verbinding met fussball.de. Meer onder "Kom je van fussball.de?" in stap 1.
 
-**Speel je tegen een andere Fanfare-club? Wissel teambestanden uit.** Druk in stap 5 op **Ons team delen** en stuur het bestand (per e-mail of op een USB-stick) naar de trainer van het andere team. Het bestand bevat alleen namen, stuur het dus naar niemand anders. Als je hun bestand krijgt, open dan in stap 1 het tabblad **Gasten**, druk op **Teambestand importeren** en kies het. De gasten verschijnen in een eigen lijst en de tegenstander wordt ingevuld. **Gasten wissen** verwijdert ze weer.
+**Speel je tegen een andere Fanfare-club? Wissel teambestanden uit.** Druk in stap 5 op **Ons team delen** en stuur het bestand (per e-mail of op een USB-stick) naar de trainer van het andere team. Het bestand bevat namen. Stuur het alleen naar de trainer van het andere team. Als je hun bestand krijgt, open dan in stap 1 het tabblad **Gasten**, druk op **Teambestand importeren** en kies het. De gasten verschijnen in een eigen lijst en de tegenstander wordt ingevuld. **Gasten wissen** verwijdert ze weer.
+
+![Het tabblad Gasten na het importeren van een teambestand](media/nl/02b-guests.png)
 
 ## 3. Op wedstrijddag
 

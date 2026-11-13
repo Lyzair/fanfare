@@ -24,7 +24,9 @@ Each row has small buttons: **⇄** moves a player between the field and the ben
 
 **Tip:** if your club uses fussball.de, open **your own team's** squad there, copy it and paste it into the box. Shirt numbers and names are recognised. Fanfare never connects to fussball.de. Open "Coming from fussball.de?" in step 1 for details.
 
-**Playing against another Fanfare club? Swap team files.** In step 5, press **Share our team** and send the file (by e-mail or on a USB stick) to the other team's coach. The file contains names only, so send it to nobody else. When you receive their file, open the **Guests** tab in step 1, press **Import team file** and choose it. The guests appear in their own list and the opponent is filled in. **Clear guests** removes them again.
+**Playing against another Fanfare club? Swap team files.** In step 5, press **Share our team** and send the file (by e-mail or on a USB stick) to the other team's coach. The file contains names. Only send it to the other team's coach. When you receive their file, open the **Guests** tab in step 1, press **Import team file** and choose it. The guests appear in their own list and the opponent is filled in. **Clear guests** removes them again.
+
+![The Guests tab after importing a team file](media/en/02b-guests.png)
 
 ## 3. On game day
 

@@ -26,7 +26,9 @@ Cada fila tiene botones pequeños: **⇄** mueve a un jugador entre el campo y e
 
 **Consejo:** si tu club usa fussball.de, abre allí la plantilla de **tu propio equipo**, cópiala y pégala en el cuadro. Se reconocen dorsales y nombres. Fanfare nunca se conecta a fussball.de. Más información en "¿Vienes de fussball.de?" en el paso 1.
 
-**¿Juegas contra otro club con Fanfare? Intercambiad archivos de equipo.** En el paso 5, pulsa **Compartir nuestro equipo** y envía el archivo (por correo electrónico o en una memoria USB) al entrenador del otro equipo. El archivo solo contiene nombres, así que no se lo envíes a nadie más. Cuando recibas el suyo, abre la pestaña **Invitados** en el paso 1, pulsa **Importar archivo de equipo** y elígelo. Los invitados aparecen en su propia lista y se rellena el rival. **Borrar invitados** los quita de nuevo.
+**¿Juegas contra otro club con Fanfare? Intercambiad archivos de equipo.** En el paso 5, pulsa **Compartir nuestro equipo** y envía el archivo (por correo electrónico o en una memoria USB) al entrenador del otro equipo. El archivo contiene nombres. Envíalo solo al entrenador del otro equipo. Cuando recibas el suyo, abre la pestaña **Invitados** en el paso 1, pulsa **Importar archivo de equipo** y elígelo. Los invitados aparecen en su propia lista y se rellena el rival. **Borrar invitados** los quita de nuevo.
+
+![La pestaña Invitados tras importar un archivo de equipo](media/es/02b-guests.png)
 
 ## 3. El día del partido
 

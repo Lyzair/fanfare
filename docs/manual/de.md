@@ -24,7 +24,9 @@ Mit **🗣 Sag es so…** legst du fest, wie ein Name ausgesprochen wird. Tippe 
 
 **Tipp:** Wenn dein Verein fussball.de nutzt, öffne dort den Kader **deiner eigenen Mannschaft**, kopiere ihn und füge ihn in das Feld ein. Rückennummern und Namen werden erkannt. Fanfare verbindet sich nie mit fussball.de. Mehr dazu unter "Daten von fussball.de?" in Schritt 1.
 
-**Du spielst gegen einen anderen Fanfare-Verein? Tauscht Mannschaftsdateien aus.** Drücke in Schritt 5 auf **Unsere Mannschaft teilen** und schicke die Datei (per E-Mail oder USB-Stick) an das Trainerteam der anderen Mannschaft. Die Datei enthält nur Namen, schicke sie also an niemand anderen. Wenn du deren Datei bekommst, öffne in Schritt 1 den Reiter **Gäste**, drücke **Mannschaftsdatei importieren** und wähle sie aus. Die Gäste erscheinen in einer eigenen Liste und der Gegner wird eingetragen. Mit **Gäste entfernen** entfernst du sie wieder.
+**Du spielst gegen einen anderen Fanfare-Verein? Tauscht Mannschaftsdateien aus.** Drücke in Schritt 5 auf **Unsere Mannschaft teilen** und schicke die Datei (per E-Mail oder USB-Stick) an das Trainerteam der anderen Mannschaft. Die Datei enthält Namen. Schick sie nur an das Trainerteam der anderen Mannschaft. Wenn du deren Datei bekommst, öffne in Schritt 1 den Reiter **Gäste**, drücke **Mannschaftsdatei importieren** und wähle sie aus. Die Gäste erscheinen in einer eigenen Liste und der Gegner wird eingetragen. Mit **Gäste entfernen** entfernst du sie wieder.
+
+![Der Reiter Gäste nach dem Import einer Mannschaftsdatei](media/de/02b-guests.png)
 
 ## 3. Am Spieltag
 
