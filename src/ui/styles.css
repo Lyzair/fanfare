@@ -47,3 +47,38 @@ button, input, textarea { min-height: 44px; font: inherit; }
   .controls select { width: 100%; }
   .lang-wrap { flex: 1; }
 }
+
+/* Roster panel */
+.roster-panel { display: grid; gap: 12px; }
+.roster-panel input:not([type="checkbox"]), .roster-panel textarea {
+  min-width: 0; padding-inline: 10px; color: var(--fg); background: var(--card);
+  border: 1px solid var(--border); border-radius: 8px;
+}
+.roster-panel textarea { width: 100%; padding-block: 8px; }
+.roster-panel button {
+  min-width: 44px; padding-inline: 12px; color: var(--fg); background: var(--card);
+  border: 1px solid var(--border); border-radius: 8px; cursor: pointer;
+}
+.match-card { display: grid; gap: 8px; margin: 0; padding: 12px; border: 1px solid var(--border); border-radius: 8px; min-width: 0; }
+.match-card .hint { margin: 0; }
+.stack { display: grid; gap: 4px; font-weight: 600; }
+.stack input { font-weight: 400; width: 100%; }
+.button-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.help summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-weight: 600; }
+.help p { margin: 0 0 8px; color: var(--muted); }
+.check { display: flex; align-items: center; gap: 8px; min-height: 44px; }
+.check input { min-height: 24px; width: 24px; height: 24px; }
+.counter { margin: 0; color: var(--muted); }
+.counter.warn { color: #b45309; font-weight: 600; }
+.player-list h3 { margin: 8px 0; font-size: 1rem; }
+.player-list ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.player-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.player-row .num { width: 5ch; flex: 0 0 auto; text-align: center; box-sizing: content-box; }
+.player-row .name { flex: 1 1 140px; }
+.player-row .pos { flex: 1 1 120px; }
+.row-actions { display: flex; gap: 4px; margin-inline-start: auto; }
+.undo-bar {
+  position: sticky; inset-block-end: 8px; margin: 0; padding: 8px 12px; border-radius: 8px;
+  background: var(--fg); color: var(--bg); display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.undo-bar button { color: var(--bg); background: transparent; border-color: currentColor; }
