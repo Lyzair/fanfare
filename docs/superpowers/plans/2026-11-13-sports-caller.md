@@ -1,4 +1,6 @@
-# Sports Caller Implementation Plan
+# Fanfare Implementation Plan
+
+> **Name:** the project is now called **Fanfare**; the companion local voice server is **Fanfare Studio** (decided 2026-11-13). File paths of this plan/spec keep the old `sports-caller` slug.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -23,7 +25,7 @@
 - Default templates must fit any team: they mention teams only through `{home}` / `{opponent}` inside `[ ]` sections, so between games a coach changes only names and the Opponent field.
 - No live fussball.de connection: no widget, no fetch, no scraping. fussball.de data gets in only by the user's copy and paste.
 - Default callouts must be friendly and encouraging — no rankings, no criticism, no "best player".
-- Export archive: `sports-caller.json` with `"version": 1`, `sounds/<slot>.<ext>`, `speech/<n>.wav`.
+- Export archive: `fanfare.json` with `"version": 1`, `sounds/<slot>.<ext>`, `speech/<n>.wav`.
 - Every file used at runtime (WASM, ONNX voice models, phonemizer data) is copied into `public/` by `scripts/fetch-assets.mjs`; voice files are git-ignored, not committed.
 - License: MIT. Every bundled voice must have a license allowing redistribution, recorded in `public/voices/LICENSES.md`.
 
@@ -32,7 +34,7 @@
 1. **Phone autoplay policy (iOS Safari / Android Chrome):** the first tap on any play button must produce sound — `AudioQueue.unlock()` runs synchronously inside the click handler before any `await`. Test in Task 8 and Task 12.
 2. **Button mashing / overlapping audio:** pressing Score while the lineup is being announced stops the lineup immediately and plays only the score sequence; never two clips at once. Test in Task 8.
 3. **Messy names and pasted squad lists:** umlauts, accents, apostrophes, emoji, blank lines, duplicates, `"7 Max Müller"`, and a whole fussball.de squad list with position headings, `Last, First` names, age columns and coach entries. Trimmed, junk and coaches skipped, duplicates kept as distinct players, numbers and positions picked up, names in `First Last` order. Test in Task 4 and Task 11.
-4. **Broken or foreign import file:** a non-zip, a zip without `sports-caller.json`, wrong `version`, or a file over 200 MB shows a clear message and leaves current data untouched. Test in Task 7 and Task 14.
+4. **Broken or foreign import file:** a non-zip, a zip without `fanfare.json`, wrong `version`, or a file over 200 MB shows a clear message and leaves current data untouched. Test in Task 7 and Task 14.
 5. **Voice model unavailable** (assets missing, slow phone, offline after load): a readable error appears, and score sounds / custom sounds keep working. Test in Task 9 and Task 13.
 
 ---
@@ -87,14 +89,14 @@ tests/e2e/*.spec.ts            Playwright
 - Produces: `npm run dev | build | preview | test | test:e2e | fetch-assets`; `<App/>` default export from `src/ui/App.tsx`.
 
 - [ ] **Step 1:** `git init`, `npm create vite@latest . -- --template preact-ts`, then add dev deps `vitest jsdom @testing-library/preact @testing-library/user-event fake-indexeddb @playwright/test` and deps `fflate idb-keyval @mintplex-labs/piper-tts-web`. Remove template demo assets. `.gitignore`: `node_modules dist public/voices/*.onnx* public/ort public/piper test-results playwright-report`.
-- [ ] **Step 2:** Set `base: './'` and `test: { environment: 'jsdom', include: ['tests/unit/**/*.test.ts?(x)'] }` in `vite.config.ts`; strict mode in `tsconfig.json`; add the CSP meta tag from Global Constraints and `<title>Sports Caller</title>` to `index.html`. MIT `LICENSE`. README: one paragraph purpose + privacy promise + `npm run fetch-assets && npm run build`.
+- [ ] **Step 2:** Set `base: './'` and `test: { environment: 'jsdom', include: ['tests/unit/**/*.test.ts?(x)'] }` in `vite.config.ts`; strict mode in `tsconfig.json`; add the CSP meta tag from Global Constraints and `<title>Fanfare</title>` to `index.html`. MIT `LICENSE`. README: one paragraph purpose + privacy promise + `npm run fetch-assets && npm run build`.
 - [ ] **Step 3: Write tests**
 
 ```tsx
 // tests/unit/smoke.test.tsx
 test('App renders the product name', () => {
   render(<App />);
-  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Sports Caller');
+  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Fanfare');
 });
 ```
 ```ts
@@ -103,13 +105,13 @@ test('page loads with CSP and no foreign requests', async ({ page, baseURL }) =>
   const foreign: string[] = [];
   page.on('request', r => { if (new URL(r.url()).origin !== new URL(baseURL!).origin) foreign.push(r.url()); });
   await page.goto('/');
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Sports Caller');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Fanfare');
   expect(await page.locator('meta[http-equiv="Content-Security-Policy"]').count()).toBe(1);
   expect(foreign).toEqual([]);
 });
 ```
 
-- [ ] **Step 4:** Run `npm test` and `npx playwright install chromium && npm run build && npm run test:e2e`. Expected: both FAIL until `App` renders `<h1>Sports Caller</h1>`; implement that; both PASS.
+- [ ] **Step 4:** Run `npm test` and `npx playwright install chromium && npm run build && npm run test:e2e`. Expected: both FAIL until `App` renders `<h1>Fanfare</h1>`; implement that; both PASS.
 - [ ] **Step 5: Commit** — `git add -A && git commit -m "chore: scaffold vite preact app with CSP and test tooling"`
 
 ---
@@ -593,7 +595,7 @@ test('panels are numbered steps 1–5 in order', () => { /* headings "1 …" …
 ```
 
 - [ ] **Step 2:** Run `npx vitest run tests/unit/app.test.tsx` — Expected: FAIL.
-- [ ] **Step 3: Implement.** Layout: sticky top bar (icon + "Sports Caller", sport `<select>`, language `<select>` showing 🌐 and each language's `nativeName`), then five `<section>` cards with numbered headings and a one-sentence hint under each (this is the "self-explanatory" requirement — every panel says what to do in plain words). CSS custom properties `--accent`, `--bg`, `--fg`, `--card`; `[data-sport=x] { --accent: … }` generated from `SPORTS`; light/dark via `prefers-color-scheme`; min touch target 44 px; single column under 640 px, 16 px gutters.
+- [ ] **Step 3: Implement.** Layout: sticky top bar (icon + "Fanfare", sport `<select>`, language `<select>` showing 🌐 and each language's `nativeName`), then five `<section>` cards with numbered headings and a one-sentence hint under each (this is the "self-explanatory" requirement — every panel says what to do in plain words). CSS custom properties `--accent`, `--bg`, `--fg`, `--card`; `[data-sport=x] { --accent: … }` generated from `SPORTS`; light/dark via `prefers-color-scheme`; min touch target 44 px; single column under 640 px, 16 px gutters.
 - [ ] **Step 4:** Run tests — Expected: PASS.
 - [ ] **Step 5: Commit** — `feat: add app shell with sport and language switcher`
 
@@ -715,7 +717,7 @@ test('▶ preview plays the current sound for each slot', async () => {});
 - [ ] **Step 1: Write failing tests**
 
 ```tsx
-test('export downloads sports-caller-YYYY-MM-DD.zip', async () => { /* spy URL.createObjectURL + anchor click; filename uses today */ });
+test('export downloads fanfare-YYYY-MM-DD.zip', async () => { /* spy URL.createObjectURL + anchor click; filename uses today */ });
 test('import replaces state after confirm', async () => {});
 test('import of a broken file shows the ImportError message and keeps state', async () => {
   // file "notes.txt" → role="alert" with t('import.not-zip'); roster unchanged
@@ -825,7 +827,7 @@ test('index links every language', () => { /* docs/manual/README.md contains `($
   - voice synthesis in GIF runs is replaced by the app's normal flow; if it takes long, cut the waiting frames (only keep every 10th frame while the progress counter runs)
 - [ ] **Step 4:** Run `npm run build && npm run docs:media` — Expected: 6 PNG + 3 GIF per language under `docs/manual/media/<code>/`, every GIF ≤ 1.5 MB, total media ≤ 40 MB.
 - [ ] **Step 5: Write the manuals.** Same 7 `##` sections in every language, short sentences, one image per step:
-  1. What is Sports Caller? (one paragraph + `01-overview.png`)
+  1. What is Fanfare? (one paragraph + `01-overview.png`)
   2. Before the first game: pick sport and language, enter your team (`02-players.png`, `add-players.gif`), tip: paste your own squad from fussball.de
   3. On game day: fill in **Opponent**, press **Prepare voices** while you still have Wi-Fi, then **Announce lineup** (`03-announcements.png`, `announce.gif`)
   4. During the game: score button and scorer (`04-game.png`, `score.gif`)

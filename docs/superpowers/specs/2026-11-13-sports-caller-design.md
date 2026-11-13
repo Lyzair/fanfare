@@ -1,4 +1,6 @@
-# Sports Caller — Design Spec
+# Fanfare — Design Spec
+
+> **Name:** the project is now called **Fanfare**; the companion local voice server is **Fanfare Studio** (decided 2026-11-13). File paths of this plan/spec keep the old `sports-caller` slug.
 
 ## Purpose
 
@@ -51,7 +53,7 @@ optional scorer callout. Built for friendly club games, not pro stadiums.
   file and reset to default.
 - **Storage:** IndexedDB on the device (autosave), plus a "Delete all data on this
   device" button. Nothing is ever sent anywhere.
-- **Export format:** `.zip` containing `sports-caller.json` (schema version 1),
+- **Export format:** `.zip` containing `fanfare.json` (schema version 1),
   `sounds/<slot>.<ext>` for custom sounds, and `speech/<n>.wav` for generated clips.
   WAV, not MP3 (Piper outputs WAV; no encoder dependency).
 - **Privacy enforcement:** a Content-Security-Policy meta tag restricting every fetch to
