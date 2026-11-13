@@ -74,15 +74,15 @@ export default function CalloutPanel({ state, dispatch }: PanelProps) {
     return () => { q.onChange = prev; };
   }, [services]);
 
-  const hasCustomIntro = !!state.customSounds.intro;
+  const customIntro = state.customSounds.intro;
   useEffect(() => {
     let cancelled = false;
     setIntroBlob(null);
-    if (hasCustomIntro) {
+    if (customIntro) {
       loadSoundBlob('intro').then(b => { if (!cancelled) setIntroBlob(b); }, () => { /* fall back to default */ });
     }
     return () => { cancelled = true; };
-  }, [hasCustomIntro]);
+  }, [customIntro]);
 
   if (!services) return null;
   const { queue, speech } = services;
