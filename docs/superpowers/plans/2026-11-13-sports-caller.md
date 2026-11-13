@@ -1091,3 +1091,30 @@ Guest players use the existing `field`/`bench` templates.
 - [ ] Startup prints the HTTPS LAN URL, the fingerprint, and "Phones: open <url>/trust.html once to trust this laptop (needed for offline mode and the microphone)".
 - [ ] Tests: cert generation with each available backend (skip if missing), SAN contains the LAN IP, CA key never served (request `/…key` → 404), `/fanfare-ca.crt` content-type `application/x-x509-ca-cert`, fallback to HTTP when no backend, TLS handshake succeeds against the generated CA (`ssl.create_default_context(cafile=…)`).
 - [ ] Manual section 7 paragraph extended: the one-time trust step for phones.
+
+---
+
+### Task 26: Phone as remote ("soundboard mode")
+
+**Execution order:** after Task 25 (needs `fanfare-local.py --lan` with HTTPS), before Task 18.
+**Goal:** the laptop next to the speakers plays everything; a paired phone on the same Wi-Fi triggers it. Works only when Fanfare is served by `fanfare-local.py` (no third-party relay — ever).
+
+**Relay in `scripts/fanfare-local.py` (stdlib only):**
+- `POST /remote/session` — only from the laptop itself (client address is loopback or the request carries the per-run speaker secret written into the page at serve time via a `<meta name="fanfare-speaker-secret">` injected only for loopback clients): creates a session, returns a 6-digit pairing code (expires after 10 min unused) and a speaker token.
+- `POST /remote/pair {code}` → remote token (code single-use; 5 wrong attempts → session locked; constant-time compare).
+- `GET /remote/events?token=` — Server-Sent Events stream for the speaker page (commands) and for the remote (state updates).
+- `POST /remote/command {cmd, args}` (remote token in `X-Fanfare-Remote` header) — allowlisted commands only: `announce` (`all|guests|home`), `score` (`home|guest`, optional scorer id), `stop`, `sound` (`intro|score`), `player` (id). Rate limit 5/s.
+- `POST /remote/state` (speaker token) — snapshot for the remote: sport, score word, team names, field/bench player ids+display names, guests present, playing flag.
+- `DELETE /remote/session` (speaker token) — ends pairing; all streams closed.
+- Sessions live in memory only; nothing written to disk or logged except method/path/status.
+
+**Fanfare UI:**
+- Step 3: **📱 Use a phone as remote** — if the page is not served by `fanfare-local` (probe `GET ./remote/health` → 404), show en `Phone remote needs Fanfare running on this laptop. See the manual: "No internet at all?"` / de `Die Handy-Fernbedienung braucht Fanfare auf diesem Laptop. Siehe Anleitung: „Ganz ohne Internet?“`. Otherwise: **Activate speaker** (a tap that runs `queue.unlock()`, required once), then a QR code (local generator; vendored MIT `qrcode-generator` or equivalent, no CDN) for `https://<lan-host>:<port>/#remote` plus the 6-digit code, a "1 phone connected" status, and **End remote**.
+- Remote mode (`#remote`): code entry → soundboard with big buttons (min 64 px): Goal! (+ scorer chips), Guests' goal (if guests), 📣 Lineup / Guests only / Home only, Stop, Intro sound; shows "Playing…" from state; reconnects automatically; never plays audio itself.
+- Speaker page executes received commands through the same handlers as its own buttons (no duplicated logic).
+- All strings in 10 packs; RTL; 360 px.
+
+**Tests:** Python unit tests for the relay (code expiry, single use, lockout after 5 tries, constant-time compare, command allowlist, rate limit, speaker-only endpoints reject non-loopback without secret, session end closes streams); unit tests for remote UI and command dispatch; e2e with two browser contexts against `fanfare-local.py --lan --http` on 127.0.0.1 (speaker + remote): pair → press Goal on remote → speaker's queue plays the score sequence; wrong code rejected; End remote → remote shows disconnected; no foreign requests.
+- [ ] TDD; then all suites incl. Python tests pass.
+- [ ] Manuals (all 10) section 4: "Phone as remote" paragraph + screenshot of the remote (`docs:media` extended).
+- [ ] Commit — `feat: phone remote control via local server`
