@@ -970,3 +970,20 @@ Extends Task 18 (same dispatch). Requires Fanfare Studio round 3 (reference-voic
 - [ ] Readable errors: microphone denied, no microphone, server rejected (show server message).
 - [ ] Tests: unit (mock `getUserMedia`/`MediaRecorder`/fetch): Save disabled without consent; upload goes only to the local URL with `consent=true`; stream tracks stopped after recording; recording not written to persist; delete flow. e2e: extend `mockVoiceServer.ts` with `/references` and run record → save → voice appears (Chromium fake media: `--use-fake-device-for-media-stream --use-fake-ui-for-media-stream`).
 - [ ] Manual (Task 17 already done by then → update section 5 in all languages): one paragraph on club voices incl. consent and "don't imitate famous voices".
+
+---
+
+### Task 21: In-app help — welcome card and "Show me" per step
+
+**Execution order:** right after Task 17 (needs its media), before Task 18.
+
+**Goal:** beginners learn Fanfare inside the page, without opening anything else. The manuals (Task 17, served at `./manual/<lang>.html`) stay the long form.
+
+**Files:** Create `src/ui/WelcomeCard.tsx`, `src/ui/ShowMe.tsx`, `tests/unit/help.test.tsx`; modify `src/ui/App.tsx`, `src/ui/styles.css`, all `src/i18n/*.ts`, `scripts/build-manual.mjs` (only if media paths need exporting).
+
+- [ ] **Welcome card** (top of the page, before step 1) shown on first visit: title `Welcome to Fanfare!`, three numbered lines (en: `Enter your team and today's opponent.` / `Press "Prepare voices" while you have Wi-Fi.` / `On game day: "Announce lineup" and celebrate every goal.`; de: `Gib dein Team und den heutigen Gegner ein.` / `Drück „Stimmen vorbereiten“, solange du WLAN hast.` / `Am Spieltag: „Aufstellung ansagen“ und jedes Tor feiern.`), buttons **Show me how** (opens `./manual/<lang>.html` in a new tab, `rel="noopener"`) and **Got it** (hides it). Dismissal is a per-device convenience in `localStorage` (`fanfare.welcomeDismissed`), wrapped in try/catch — if storage fails the card can be dismissed for the session. A **?** button in the top bar reopens it.
+- [ ] **"▶ Show me"** link under each step's hint (steps 1–5) toggles an inline `<figure>` with that step's media for the current language: step 1 → `add-players.gif`, step 2 → `announce.gif`, step 3 → `score.gif`, step 4 → `05-sounds.png`, step 5 → `06-save.png`, from `./manual/media/<lang>/`. `<img loading="lazy">` is inserted only when opened (no media requests before the first click), `alt` text translated, `max-inline-size: 100%`, a **Hide** toggle. Respect `prefers-reduced-motion`: show the matching still PNG instead of the GIF.
+- [ ] All strings in all 10 packs (en/de exact as above; others translated). Arabic RTL works.
+- [ ] Tests: first visit shows the card; Got it hides it and persists; storage throwing → card still dismissible; ? reopens; Show me inserts the image only after click with the right `src` for the current language and step; reduced-motion → PNG; e2e: no image request under `manual/media` before clicking Show me, then exactly one same-origin request after.
+- [ ] Run `npm test && npx tsc --noEmit && npm run build && npm run check:dist && npm run test:e2e` — all PASS.
+- [ ] Commit — `feat: welcome card and inline "show me" help`
