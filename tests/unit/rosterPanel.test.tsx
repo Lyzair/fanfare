@@ -126,3 +126,9 @@ test('remove asks no confirmation but offers Undo for 5 s', async () => {
     expect(screen.queryByRole('button', { name: 'Undo' })).toBeNull();
   } finally { vi.useRealTimers(); }
 });
+
+test('single-name box with "Last, First" adds exactly one player', async () => {
+  render(<Harness />);
+  await userEvent.type(screen.getByLabelText('Add one player'), 'Müller, Lea{Enter}');
+  expect(currentRoster(latest).players.map(p => p.name)).toEqual(['Lea Müller']);
+});

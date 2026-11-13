@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { Player } from '../domain/model';
+import { parseSinglePlayer } from '../domain/roster';
 import { SPORTS } from '../domain/sports';
 import { getPack, t } from '../i18n';
 import type { UiStrings } from '../i18n';
@@ -34,8 +35,9 @@ export default function RosterPanel({ state, dispatch }: PanelProps) {
     setListText('');
   };
   const addOne = () => {
-    if (!oneText.trim()) return;
-    dispatch({ type: 'addPlayers', text: oneText, onField: true });
+    const one = parseSinglePlayer(oneText);
+    if (!one) return;
+    dispatch({ type: 'addPlayers', text: `${one.number} ${one.name}`.trim(), onField: true });
     setOneText('');
   };
   const remove = (p: Player) => {

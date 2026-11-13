@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { parsePlayerLines } from '../../src/domain/roster';
+import { parsePlayerLines, parseSinglePlayer } from '../../src/domain/roster';
 import { getPack } from '../../src/i18n';
 
 const readFixture = (n: string) => readFileSync(resolve(process.cwd(), 'tests/fixtures', n), 'utf8');
@@ -41,4 +41,13 @@ test('a single pasted line starting with a number is one player (comma swap appl
 test('a plain single line "Müller, Lea" stays a two-name list', () => {
   expect(parsePlayerLines('Müller, Lea', fb, staff)).toEqual([
     { name: 'Müller', number: '', position: '' }, { name: 'Lea', number: '', position: '' }]);
+});
+
+test('parseSinglePlayer always yields exactly one player', () => {
+  expect(parseSinglePlayer('7 Lea')).toEqual({ name: 'Lea', number: '7', position: '' });
+  expect(parseSinglePlayer('Müller, Lea')).toEqual({ name: 'Lea Müller', number: '', position: '' });
+  expect(parseSinglePlayer('7 Müller, Lea')).toEqual({ name: 'Lea Müller', number: '7', position: '' });
+  expect(parseSinglePlayer('van der Berg, Jan, Jr; Sr')).toEqual({ name: 'van der Berg Jan Jr Sr', number: '', position: '' });
+  expect(parseSinglePlayer('   ')).toBeNull();
+  expect(parseSinglePlayer('')).toBeNull();
 });

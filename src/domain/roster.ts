@@ -60,3 +60,15 @@ export function parsePlayerLines(text: string, positions: string[], staffHeading
   }
   return out.map(p => ({ ...p, name: p.name.slice(0, 60) }));
 }
+
+/** One typed entry always means exactly one player: "7 Müller, Lea" -> #7 "Lea Müller". */
+export function parseSinglePlayer(text: string): ParsedPlayer | null {
+  const line = text.replace(/;/g, ' ').replace(/\s+/g, ' ').trim();
+  const m = /^#?(\d{1,3})(?:\s+|\.\s*)(\S.*)$/.exec(line);
+  const number = m ? m[1] : '';
+  let name = m ? m[2] : line;
+  const parts = name.split(',').map(s => s.trim()).filter(Boolean);
+  name = parts.length === 2 && name.split(',').length === 2 ? `${parts[1]} ${parts[0]}` : parts.join(' ');
+  name = name.replace(/\s+/g, ' ').trim().slice(0, 60);
+  return HAS_LETTER.test(name) ? { name, number, position: '' } : null;
+}
