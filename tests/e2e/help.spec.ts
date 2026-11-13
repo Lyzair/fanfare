@@ -26,3 +26,19 @@ test('Show me loads exactly one same-origin media file, only after the click', a
   expect(media[0]).toContain('/manual/media/en/add-players.gif');
   expect(foreign).toEqual([]);
 });
+
+for (const lang of ['en', 'ar']) {
+  test(`help controls meet 44 px touch targets (${lang})`, async ({ page }) => {
+    await page.goto('/');
+    await page.locator('header select').nth(1).selectOption(lang);
+    const box = async (loc: ReturnType<typeof page.locator>) => (await loc.boundingBox())!;
+    const ok = (b: { width: number; height: number }) => { expect(b.width).toBeGreaterThanOrEqual(44); expect(b.height).toBeGreaterThanOrEqual(44); };
+    ok(await box(page.locator('.help-button')));
+    ok(await box(page.locator('.welcome .btn').first()));
+    ok(await box(page.locator('.welcome button.btn')));
+    const toggle = page.locator('.show-me-toggle').first();
+    ok(await box(toggle));
+    await toggle.click();
+    ok(await box(page.locator('.show-me-toggle').first())); // "Hide" state
+  });
+}
