@@ -65,5 +65,25 @@ the only Arabic voice the Piper library supports.)
 | Directory | Source package | Licence |
 |---|---|---|
 | `ort/ort-wasm*.wasm` | [`onnxruntime-web@1.18.0`](https://github.com/microsoft/onnxruntime) | MIT (Microsoft) |
-| `piper/piper_phonemize.wasm`, `piper/piper_phonemize.data` | [`@diffusionstudio/piper-wasm@1.0.0`](https://github.com/diffusionstudio/piper-wasm) (build of [piper-phonemize](https://github.com/rhasspy/piper-phonemize)) | Package: MIT. Contains [eSpeak NG](https://github.com/espeak-ng/espeak-ng) code and data, which are GPL-3.0-or-later; their source is available at that link. |
+| `piper/piper_phonemize.wasm`, `piper/piper_phonemize.data` | [`@diffusionstudio/piper-wasm@1.0.0`](https://github.com/diffusionstudio/piper-wasm) (build of [piper-phonemize](https://github.com/rhasspy/piper-phonemize)) | Package: MIT. Contains eSpeak NG code and data (see below). |
 | bundled JS | [`@mintplex-labs/piper-tts-web@1.0.5`](https://github.com/Mintplex-Labs/piper-tts-web) (patched, see `patches/`) | MIT |
+
+### eSpeak NG (GPL-3.0-or-later)
+
+`piper/piper_phonemize.wasm` and `piper/piper_phonemize.data` contain
+[eSpeak NG](https://github.com/espeak-ng/espeak-ng) code and data, which are
+licensed under the **GNU General Public License, version 3 or (at your option)
+any later version (GPL-3.0-or-later)**. The full licence text is served with
+this site: [`../licenses/GPL-3.0.txt`](../licenses/GPL-3.0.txt).
+
+Corresponding source:
+
+- The WebAssembly build is from
+  [`@diffusionstudio/piper-wasm@1.0.0`](https://github.com/diffusion-studio/piper-wasm)
+  (npm: <https://www.npmjs.com/package/@diffusionstudio/piper-wasm/v/1.0.0>;
+  repository `https://github.com/diffusion-studio/piper-wasm`), which compiles
+  [piper-phonemize](https://github.com/rhasspy/piper-phonemize) and eSpeak NG.
+- eSpeak NG upstream source: <https://github.com/espeak-ng/espeak-ng>.
+
+Fanfare's own code is not a derivative of eSpeak NG; it loads the phonemizer as
+a separate WebAssembly module. The GPL applies to the eSpeak NG components.
