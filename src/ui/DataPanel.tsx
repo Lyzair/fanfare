@@ -1,4 +1,4 @@
-import { useContext, useState } from 'preact/hooks';
+import { useContext, useEffect, useState } from 'preact/hooks';
 import type { SoundSlot } from '../domain/model';
 import { t } from '../i18n';
 import type { UiStrings } from '../i18n';
@@ -9,6 +9,10 @@ import type { ArchiveContent } from '../io/archive';
 import { currentRoster, initialState } from '../state/reducer';
 import { clearAll, loadSoundBlob, saveSoundBlob } from '../state/persist';
 import { recalledSound, rememberSound } from './soundMemory';
+import { offlineStatus, voiceInOpfs } from '../pwa/offline';
+import type { OfflineStatus } from '../pwa/offline';
+import { usePwaState } from '../pwa/register';
+import { lineupTexts } from './CalloutPanel';
 import { ServicesContext } from './types';
 import type { PanelProps } from './types';
 
@@ -19,8 +23,30 @@ export default function DataPanel({ state, dispatch }: PanelProps) {
   const lang = state.lang;
   const tr = (k: keyof UiStrings) => t(lang, k);
   const [message, setMessage] = useState<{ kind: 'ok' | 'error'; key: keyof UiStrings } | null>(null);
+  const pwa = usePwaState();
+  const [voiceStored, setVoiceStored] = useState(false);
+  const [allClips, setAllClips] = useState(false);
+  const speechForStatus = services?.speech;
+  const voiceId = state.voiceId;
+  useEffect(() => {
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const check = async () => {
+      const stored = await voiceInOpfs(voiceId);
+      const texts = lineupTexts(state);
+      const clips = !!speechForStatus && texts.length > 0 && texts.every(x => speechForStatus.has(voiceId, x));
+      if (cancelled) return;
+      setVoiceStored(stored);
+      setAllClips(clips);
+      if (!(stored || clips)) timer = setTimeout(() => void check(), 2000); // pick up a finished "Prepare voices"
+    };
+    void check();
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [voiceId, state, speechForStatus]);
   if (!services) return null;
   const { speech } = services;
+  const offline: OfflineStatus = offlineStatus({ controlled: pwa.controlled, voiceStored, allClips });
+  const offlineKey = { ready: 'offlineReady', noShell: 'offlineNoShell', noVoice: 'offlineNoVoice' } as const;
 
   const doExport = async () => {
     setMessage(null);
@@ -105,6 +131,7 @@ export default function DataPanel({ state, dispatch }: PanelProps) {
         <button type="button" onClick={doShare}>{tr('shareTeam')}</button>
         <p class="hint">{tr('shareNote')}</p>
       </div>
+      <p class="offline-status" data-offline={offline} aria-live="polite">{tr(offlineKey[offline])}</p>
       {message?.kind === 'error' && <p role="alert" class="error">{tr(message.key)}</p>}
       {message?.kind === 'ok' && <p role="status">{tr(message.key)}</p>}
       <p class="privacy-note">{tr('privacyNote')}</p>

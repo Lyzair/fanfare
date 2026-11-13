@@ -40,6 +40,8 @@ Met **🗣 Zeg het als…** bepaal je hoe een naam wordt uitgesproken. Druk in e
 
 4. Als de teams het veld op komen, druk je op **📣 Opstelling omroepen**. Eerst klinkt het introgeluid, dan leest de stem de opstelling voor. Met **Stop** beëindig je het op elk moment.
 
+**Thuis voorbereiden.** Open Fanfare één keer met wifi en druk op **Stemmen voorbereiden**. Daarna werkt Fanfare op het veld ook zonder internet. In stap 5 zie je **Offline klaar ✓**. Je kunt de app ook aan je startscherm toevoegen (in het browsermenu: "App installeren" of "Toevoegen aan startscherm").
+
 ![Stemmen voorbereiden, opstelling omroepen, stoppen](media/nl/announce.gif)
 
 ![Stap 2 nadat de stemmen zijn voorbereid](media/nl/03-announcements.png)
@@ -86,3 +88,4 @@ Open stap 5 **Opslaan en privacy**.
 - **Het team is weg na heropenen:** een privévenster kan niets opslaan. Gebruik een gewoon venster of **Exporteren (zip)** voordat je het sluit.
 - **De luidspreker:** verbind een bluetooth-luidspreker of een kabel met het apparaat en test met ▶ voor de wedstrijd. Zet "Niet storen" uit.
 - **Browsers:** actuele Chrome, Edge of Firefox, en Safari of iOS 16.4 of nieuwer.
+- **Offline werkt niet (geen "Offline klaar ✓" in stap 5):** open Fanfare één keer met wifi, wacht even en laad de pagina opnieuw. Druk daarna op **Stemmen voorbereiden** en wacht op **Alle stemmen zijn klaar ✓**. Staat er een melding dat er een update is, druk dan tussen twee aankondigingen op **Opnieuw laden**.

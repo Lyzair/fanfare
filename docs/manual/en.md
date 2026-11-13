@@ -38,6 +38,8 @@ Each row has small buttons: **⇄** moves a player between the field and the ben
 
 4. When the teams line up, press **📣 Announce lineup**. The intro sound plays, then the announcer reads the lineup. **Stop** ends it at any time.
 
+**Prepare at home.** Open Fanfare once with Wi-Fi and press **Prepare voices**. After that Fanfare works offline at the pitch. In step 5 you will see **Offline ready ✓**. You can also add it to your home screen (in the browser menu: "Install app" or "Add to Home Screen").
+
 ![Prepare voices, then announce the lineup, then stop](media/en/announce.gif)
 
 ![Step 2 after the voices were prepared](media/en/03-announcements.png)
@@ -84,3 +86,4 @@ Open step 5 **Save & privacy**.
 - **Your team is gone after reopening:** a private or incognito window cannot save anything. Use a normal window, or use **Export (zip)** before you close it.
 - **The speaker:** connect a Bluetooth speaker or a cable to the device, and test with ▶ before the game. Turn off any "do not disturb" mode.
 - **Which browsers:** current Chrome, Edge or Firefox, and Safari or iOS 16.4 or newer.
+- **Offline does not work (no "Offline ready ✓" in step 5):** open Fanfare once with Wi-Fi, wait a moment, then reload the page. Then press **Prepare voices** and wait for **All voices ready ✓**. If a message says an update is available, press **Reload** between announcements.

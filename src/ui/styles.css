@@ -188,3 +188,7 @@ button, input, textarea { min-height: 44px; font: inherit; }
 .closeness { letter-spacing: 2px; white-space: nowrap; }
 .closeness.c3 { color: var(--ok, #1a7f37); }
 .closeness.c1 { color: var(--muted); }
+
+.offline-status { margin: 8px 0; color: var(--muted); }
+.offline-status[data-offline="ready"] { color: var(--accent); font-weight: 600; }
+.update-notice button { margin-inline-start: 8px; }

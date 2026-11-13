@@ -12,10 +12,10 @@
     "test:e2e": "playwright test",
     "fetch-assets": "node scripts/fetch-assets.mjs",
     "check:dist": "node scripts/check-dist.mjs",
-    "prebuild": "node scripts/fetch-assets.mjs",
+    "prebuild": "node scripts/fetch-assets.mjs && node scripts/make-icons.mjs",
     "postinstall": "patch-package --error-on-fail",
     "docs:media": "node scripts/make-docs-media.mjs",
-    "postbuild": "node scripts/build-manual.mjs"
+    "postbuild": "node scripts/build-manual.mjs && node scripts/build-sw.mjs"
   },
   "dependencies": {
     "@mintplex-labs/piper-tts-web": "1.0.5",

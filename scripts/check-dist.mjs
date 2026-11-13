@@ -58,6 +58,10 @@ export function findProblems(source, ext) {
   const problems = [];
   const abs = code.match(/\b(?:src|href)="\//g);
   if (abs) problems.push(`absolute path ${abs[0]}...: breaks under a sub-path`);
+  if (ext === '.webmanifest') {
+    const rooted = code.match(/"(?:src|start_url|scope)"\s*:\s*"\//g);
+    if (rooted) problems.push(`absolute path ${rooted[0]}...: breaks under a sub-path`);
+  }
   for (const url of code.match(/https?:\/\/[^\s"'`)<>\\]+/g) ?? []) {
     if (!HARMLESS_URLS.some((re) => re.test(url))) problems.push(`external URL ${url}`);
   }
@@ -85,7 +89,7 @@ async function main() {
     total += size;
     if (size > MAX_FILE) errors.push(`${rel}: ${size} bytes exceeds 100 MB`);
     const ext = extname(file);
-    if (['.html', '.js', '.css'].includes(ext)) {
+    if (['.html', '.js', '.css', '.webmanifest'].includes(ext)) {
       for (const p of findProblems(await readFile(file, 'utf8'), ext)) errors.push(`${rel}: ${p}`);
     }
   }
@@ -95,6 +99,9 @@ async function main() {
     if (!html.includes(CSP)) errors.push(`${join(dist, 'index.html')}: CSP meta tag missing or changed`);
   } catch {
     errors.push(`${join(dist, 'index.html')}: missing`);
+  }
+  for (const need of ['sw.js', 'manifest.webmanifest']) {
+    if (!files.some((f) => relative(dist, f) === need)) errors.push(`${join(dist, need)}: missing (offline support)`);
   }
   if (errors.length) {
     console.error(errors.join('\n'));

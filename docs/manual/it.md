@@ -40,6 +40,8 @@ Ogni riga ha piccoli pulsanti: **⇄** sposta un giocatore tra campo e panchina,
 
 4. Quando le squadre entrano in campo, premi **📣 Annuncia la formazione**. Parte il suono d'introduzione, poi la voce legge la formazione. **Stop** la interrompe in qualsiasi momento.
 
+**Preparare a casa.** Apri Fanfare una volta con il Wi-Fi e premi **Prepara le voci**. Dopo di che Fanfare funziona senza internet al campo. Nel passo 5 vedrai **Pronto offline ✓**. Puoi anche aggiungerlo alla schermata Home (menu del browser: «Installa app» o «Aggiungi a schermata Home»).
+
 ![Preparare le voci, annunciare la formazione, fermare](media/it/announce.gif)
 
 ![Il passaggio 2 dopo la preparazione delle voci](media/it/03-announcements.png)
@@ -86,3 +88,4 @@ Apri il passaggio 5 **Salvataggio e privacy**.
 - **La squadra è sparita alla riapertura:** una finestra privata non può salvare nulla. Usa una finestra normale oppure **Esporta (zip)** prima di chiuderla.
 - **L'altoparlante:** collega un altoparlante Bluetooth o un cavo al dispositivo e prova con ▶ prima della partita. Disattiva "Non disturbare".
 - **Browser:** Chrome, Edge o Firefox recenti, e Safari o iOS 16.4 o successivo.
+- **Offline non funziona (nel passo 5 non c'è «Pronto offline ✓»):** apri Fanfare una volta con il Wi-Fi, attendi un momento e ricarica la pagina. Poi premi **Prepara le voci** e attendi **Tutte le voci sono pronte ✓**. Se compare un avviso di aggiornamento, premi **Ricarica** tra un annuncio e l'altro.

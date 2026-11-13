@@ -5,6 +5,7 @@ import { detectLang, getPack, t } from '../i18n';
 import type { UiStrings } from '../i18n';
 import { initialState, reducer } from '../state/reducer';
 import { loadState, saveState } from '../state/persist';
+import { applyUpdate, usePwaState } from '../pwa/register';
 import { PiperEngine } from '../tts/engine';
 import { SpeechCache } from '../tts/speechCache';
 import { Header } from './Header';
@@ -41,6 +42,8 @@ export function App() {
   const [state, dispatch] = useReducer(reducer, undefined, () => initialState(firstRunLang()));
   const [loaded, setLoaded] = useState(false);
   const [storageFailed, setStorageFailed] = useState(false);
+  const pwa = usePwaState();
+  const [updateWait, setUpdateWait] = useState(false);
   const [showWelcome, setShowWelcome] = useState(() => !welcomeDismissedBefore());
   const services = useRef<Services | null>(null);
   services.current ??= { queue: new AudioQueue(), speech: new SpeechCache(new PiperEngine('./')) };
@@ -81,6 +84,15 @@ export function App() {
       <div class="app" data-sport={state.sport}>
         <Header state={state} dispatch={dispatch} onHelp={() => setShowWelcome(true)} />
         {storageFailed && <p class="notice" role="status">{t(state.lang, 'saveUnavailable')}</p>}
+        {pwa.updateReady && (
+          <p class="notice update-notice" role="status">
+            {t(state.lang, updateWait ? 'updateWait' : 'updateAvailable')}{' '}
+            <button type="button" onClick={() => {
+              if (value.queue.playing) { setUpdateWait(true); return; } // never reload mid-announcement
+              applyUpdate();
+            }}>{t(state.lang, 'updateReload')}</button>
+          </p>
+        )}
         <main>
           {showWelcome && <WelcomeCard lang={state.lang} onDismiss={dismissWelcome} />}
           {STEPS.map(n => (

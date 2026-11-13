@@ -38,6 +38,8 @@ Mit **🗣 Sag es so…** legst du fest, wie ein Name ausgesprochen wird. Tippe 
 
 4. Wenn die Mannschaften aufs Feld kommen, drücke **📣 Aufstellung ansagen**. Erst läuft der Intro-Sound, dann liest der Sprecher die Aufstellung vor. Mit **Stopp** beendest du es jederzeit.
 
+**Zu Hause vorbereiten.** Öffne Fanfare einmal mit WLAN und tippe auf **Stimmen vorbereiten**. Danach funktioniert Fanfare am Spielfeld auch ohne Internet. In Schritt 5 siehst du **Offline bereit ✓**. Du kannst die App auch zum Startbildschirm hinzufügen (im Browser-Menü: „App installieren“ oder „Zum Startbildschirm hinzufügen“).
+
 ![Stimmen vorbereiten, Aufstellung ansagen, stoppen](media/de/announce.gif)
 
 ![Schritt 2, nachdem die Stimmen vorbereitet wurden](media/de/03-announcements.png)
@@ -84,3 +86,4 @@ Wenn der Torschütze genannt werden soll, tippe vorher unter dem Knopf auf den S
 - **Die Mannschaft ist nach dem Neuöffnen weg:** Ein privates oder Inkognito-Fenster kann nichts speichern. Nimm ein normales Fenster oder nutze **Exportieren (zip)**, bevor du es schließt.
 - **Der Lautsprecher:** Verbinde einen Bluetooth-Lautsprecher oder ein Kabel mit dem Gerät und teste vor dem Spiel mit ▶. Schalte "Nicht stören" aus.
 - **Welche Browser:** aktuelles Chrome, Edge oder Firefox, und Safari bzw. iOS 16.4 oder neuer.
+- **Offline funktioniert nicht (in Schritt 5 steht nicht „Offline bereit ✓“):** Öffne Fanfare einmal mit WLAN, warte kurz und lade die Seite neu. Tippe dann auf **Stimmen vorbereiten** und warte auf **Alle Stimmen bereit ✓**. Meldet die App ein verfügbares Update, tippe zwischen den Ansagen auf **Neu laden**.

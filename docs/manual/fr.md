@@ -40,6 +40,8 @@ Chaque ligne a de petits boutons : **⇄** déplace un joueur entre le terrain e
 
 4. Quand les équipes entrent, appuyez sur **📣 Annoncer la composition**. Le son d'introduction joue, puis la voix lit la composition. **Arrêter** y met fin à tout moment.
 
+**Préparer à la maison.** Ouvre Fanfare une fois avec le Wi-Fi et appuie sur **Préparer les voix**. Ensuite Fanfare fonctionne sans internet sur le terrain. À l'étape 5, tu verras **Prêt hors ligne ✓**. Tu peux aussi l'ajouter à l'écran d'accueil (menu du navigateur : « Installer l'application » ou « Ajouter à l'écran d'accueil »).
+
 ![Préparer les voix, annoncer la composition, arrêter](media/fr/announce.gif)
 
 ![L'étape 2 une fois les voix préparées](media/fr/03-announcements.png)
@@ -86,3 +88,4 @@ Ouvrez l'étape 5 **Sauvegarde et confidentialité**.
 - **L'équipe a disparu à la réouverture :** une fenêtre privée ne peut rien enregistrer. Utilisez une fenêtre normale ou **Exporter (zip)** avant de la fermer.
 - **Le haut-parleur :** connectez une enceinte Bluetooth ou un câble à l'appareil et testez avec ▶ avant le match. Désactivez le mode "Ne pas déranger".
 - **Navigateurs :** Chrome, Edge ou Firefox récents, et Safari ou iOS 16.4 ou plus récent.
+- **Le mode hors ligne ne marche pas (pas de « Prêt hors ligne ✓ » à l'étape 5) :** ouvre Fanfare une fois avec le Wi-Fi, attends un instant, puis recharge la page. Appuie ensuite sur **Préparer les voix** et attends **Toutes les voix sont prêtes ✓**. Si une mise à jour est proposée, appuie sur **Recharger** entre deux annonces.

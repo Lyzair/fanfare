@@ -40,6 +40,8 @@ Her satırda küçük düğmeler vardır: **⇄** oyuncuyu saha ile yedekler ara
 
 4. Takımlar sahaya çıkarken **📣 Kadroyu duyur** düğmesine basın. Önce giriş sesi çalar, sonra ses kadroyu okur. **Durdur** istediğiniz an bitirir.
 
+**Evde hazırla.** Fanfare'ı bir kez Wi-Fi ile aç ve **Sesleri hazırla** düğmesine bas. Bundan sonra Fanfare sahada internetsiz de çalışır. 5. adımda **Çevrimdışı hazır ✓** yazısını görürsün. Uygulamayı ana ekrana da ekleyebilirsin (tarayıcı menüsünde: "Uygulamayı yükle" veya "Ana ekrana ekle").
+
 ![Sesleri hazırlama, kadroyu duyurma, durdurma](media/tr/announce.gif)
 
 ![Sesler hazırlandıktan sonra 2. adım](media/tr/03-announcements.png)
@@ -86,3 +88,4 @@ Golü atanı söyletmek için önce düğmenin altındaki oyuncuya dokunun, örn
 - **Yeniden açınca takım yok:** gizli pencere hiçbir şey kaydedemez. Normal pencere kullanın veya kapatmadan önce **Dışa aktar (zip)** yapın.
 - **Hoparlör:** cihaza bir Bluetooth hoparlör veya kablo bağlayın ve maçtan önce ▶ ile deneyin. "Rahatsız etmeyin" modunu kapatın.
 - **Tarayıcılar:** güncel Chrome, Edge veya Firefox ve Safari ya da iOS 16.4 veya daha yeni.
+- **Çevrimdışı çalışmıyor (5. adımda "Çevrimdışı hazır ✓" yok):** Fanfare'ı bir kez Wi-Fi ile aç, biraz bekle ve sayfayı yenile. Sonra **Sesleri hazırla** düğmesine bas ve **Tüm sesler hazır ✓** yazısını bekle. Güncelleme olduğunu söyleyen bir ileti çıkarsa, anonslar arasında **Yenile** düğmesine bas.

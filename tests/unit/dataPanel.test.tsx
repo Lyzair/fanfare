@@ -232,3 +232,8 @@ describe('share our team', () => {
     expect(screen.getByText('Diese Datei enthält Namen. Schick sie nur an das Trainerteam der anderen Mannschaft.')).toBeInTheDocument();
   });
 });
+
+test('offline status line explains what is missing', async () => {
+  setup();
+  expect(await screen.findByText(t('en', 'offlineNoShell'))).toBeInTheDocument();
+});

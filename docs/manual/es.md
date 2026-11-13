@@ -40,6 +40,8 @@ Cada fila tiene botones pequeños: **⇄** mueve a un jugador entre el campo y e
 
 4. Cuando salgan los equipos, pulsa **📣 Anunciar la alineación**. Suena el sonido de intro y luego la voz lee la alineación. **Detener** la termina en cualquier momento.
 
+**Prepararlo en casa.** Abre Fanfare una vez con Wi-Fi y pulsa **Preparar voces**. Después Fanfare funciona sin internet en el campo. En el paso 5 verás **Listo sin conexión ✓**. También puedes añadirlo a la pantalla de inicio (menú del navegador: «Instalar aplicación» o «Añadir a la pantalla de inicio»).
+
 ![Preparar voces, anunciar la alineación y detener](media/es/announce.gif)
 
 ![El paso 2 después de preparar las voces](media/es/03-announcements.png)
@@ -86,3 +88,4 @@ Abre el paso 5 **Guardar y privacidad**.
 - **El equipo ha desaparecido al reabrir:** una ventana privada no puede guardar nada. Usa una ventana normal o **Exportar (zip)** antes de cerrarla.
 - **El altavoz:** conecta un altavoz Bluetooth o un cable al dispositivo y prueba con ▶ antes del partido. Desactiva "No molestar".
 - **Navegadores:** Chrome, Edge o Firefox actuales, y Safari o iOS 16.4 o posterior.
+- **No funciona sin conexión (no aparece «Listo sin conexión ✓» en el paso 5):** abre Fanfare una vez con Wi-Fi, espera un momento y recarga la página. Luego pulsa **Preparar voces** y espera a **Todas las voces están listas ✓**. Si aparece un aviso de actualización, pulsa **Recargar** entre dos anuncios.

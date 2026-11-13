@@ -41,6 +41,12 @@ function sidesFor(roster: Roster, part: LineupPart): Side[] {
   return sides;
 }
 
+/** Every speech text a full lineup needs (both teams), as passed to Prepare voices. */
+export function lineupTexts(state: AppState): string[] {
+  const roster = currentRoster(state);
+  return sidesFor(roster, 'both').flatMap(side => teamTexts(side, roster)).map(x => speechText(x, roster)).filter(x => x.trim());
+}
+
 /** Intro sound (if enabled) → [guest intro → guest field → guest bench →] intro → field → bench. Speech items are lazy. */
 export function lineupSequence(
   state: AppState,
@@ -116,7 +122,7 @@ export default function CalloutPanel({ state, dispatch }: PanelProps) {
     }
   }]);
   const announce = (part: LineupPart) => playItems(lineupSequence(state, speech, introBlob, reportError, part));
-  const prepareTexts = sidesFor(roster, 'both').flatMap(side => teamTexts(side, roster)).map(x => speechText(x, roster)).filter(x => x.trim());
+  const prepareTexts = lineupTexts(state);
   const prepareKey = `${state.voiceId}\n${prepareTexts.map(x => x.trim()).join('\n')}`;
   const prepare = () => {
     if (preparing) return;

@@ -24,3 +24,16 @@ describe('check-dist URL detector', () => {
     expect(findProblems('a{background:url(https://a.test/i.png)}', '.css')).toHaveLength(1);
   });
 });
+
+describe('check-dist manifest and service worker', () => {
+  test('accepts a relative manifest', () => {
+    expect(findProblems('{"start_url":"./","icons":[{"src":"icons/a.png"}]}', '.webmanifest')).toEqual([]);
+  });
+  test('flags rooted paths and external URLs in a manifest', () => {
+    expect(findProblems('{"start_url":"/app"}', '.webmanifest').join()).toContain('absolute path');
+    expect(findProblems('{"icons":[{"src":"https://cdn.example/a.png"}]}', '.webmanifest').join()).toContain('https://cdn.example/a.png');
+  });
+  test('flags an external URL in a service worker', () => {
+    expect(findProblems('fetch("https://cdn.example/x.js")', '.js').join()).toContain('cdn.example');
+  });
+});
