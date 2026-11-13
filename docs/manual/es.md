@@ -40,7 +40,7 @@ Cada fila tiene botones pequeños: **⇄** mueve a un jugador entre el campo y e
 
 4. Cuando salgan los equipos, pulsa **📣 Anunciar la alineación**. Suena el sonido de intro y luego la voz lee la alineación. **Detener** la termina en cualquier momento.
 
-**Prepararlo en casa.** Abre Fanfare una vez con Wi-Fi y pulsa **Preparar voces**. Después Fanfare funciona sin internet en el campo. En el paso 5 verás **Listo sin conexión ✓**. También puedes añadirlo a la pantalla de inicio (menú del navegador: «Instalar aplicación» o «Añadir a la pantalla de inicio»).
+**Prepararlo en casa.** Abre Fanfare con Wi-Fi, pulsa **Preparar voces** y comprueba que el paso 5 muestra **Listo sin conexión ✓**. Después Fanfare funciona sin internet en el campo. Para usarlo desde la pantalla de inicio (menú del navegador: «Instalar aplicación» o «Añadir a la pantalla de inicio»): **en iPhone y iPad añádelo primero a la pantalla de inicio**, luego ábrelo desde el icono con Wi-Fi, pulsa **Preparar voces** y comprueba **Listo sin conexión ✓** allí. En iOS una app de la pantalla de inicio tiene su propio almacenamiento, así que lo preparado en Safari no está disponible en ella.
 
 ![Preparar voces, anunciar la alineación y detener](media/es/announce.gif)
 

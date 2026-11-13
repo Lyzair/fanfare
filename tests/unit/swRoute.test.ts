@@ -35,3 +35,14 @@ test('cross-origin, non-GET, out-of-scope and unknown requests bypass', () => {
   expect(get('https://example.org/fanfare/unknown.json')).toBe('bypass');
   expect(get('https://cdn.example.com/', 'navigate')).toBe('bypass');
 });
+
+test('non-threaded ORT variants and manual media are runtime-cached; threaded wasm is not', () => {
+  expect(get('https://example.org/fanfare/ort/ort-wasm.wasm')).toBe('runtime');
+  expect(get('https://example.org/fanfare/manual/media/en/a.png')).toBe('runtime');
+  expect(get('https://example.org/fanfare/ort/ort-wasm-simd-threaded.wasm')).toBe('bypass');
+});
+
+test('range requests bypass', () => {
+  expect(route({ url: 'https://example.org/fanfare/assets/index-abc.js', method: 'GET', range: true }, ctx)).toBe('bypass');
+  expect(route({ url: 'https://example.org/fanfare/manual/media/en/a.png', method: 'GET', range: true }, ctx)).toBe('bypass');
+});

@@ -40,7 +40,7 @@ Chaque ligne a de petits boutons : **⇄** déplace un joueur entre le terrain e
 
 4. Quand les équipes entrent, appuyez sur **📣 Annoncer la composition**. Le son d'introduction joue, puis la voix lit la composition. **Arrêter** y met fin à tout moment.
 
-**Préparer à la maison.** Ouvre Fanfare une fois avec le Wi-Fi et appuie sur **Préparer les voix**. Ensuite Fanfare fonctionne sans internet sur le terrain. À l'étape 5, tu verras **Prêt hors ligne ✓**. Tu peux aussi l'ajouter à l'écran d'accueil (menu du navigateur : « Installer l'application » ou « Ajouter à l'écran d'accueil »).
+**Préparer à la maison.** Ouvre Fanfare avec le Wi-Fi, appuie sur **Préparer les voix** et vérifie que l'étape 5 affiche **Prêt hors ligne ✓**. Ensuite Fanfare fonctionne sans internet sur le terrain. Pour l'utiliser depuis l'écran d'accueil (menu du navigateur : « Installer l'application » ou « Ajouter à l'écran d'accueil ») : **sur iPhone et iPad, ajoute d'abord l'application à l'écran d'accueil**, puis ouvre-la depuis l'icône avec le Wi-Fi, appuie sur **Préparer les voix** et vérifie **Prêt hors ligne ✓** à cet endroit. Sur iOS, une app de l'écran d'accueil a son propre stockage : ce que tu as préparé dans Safari n'y est pas disponible.
 
 ![Préparer les voix, annoncer la composition, arrêter](media/fr/announce.gif)
 

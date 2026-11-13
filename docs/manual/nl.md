@@ -40,7 +40,7 @@ Met **🗣 Zeg het als…** bepaal je hoe een naam wordt uitgesproken. Druk in e
 
 4. Als de teams het veld op komen, druk je op **📣 Opstelling omroepen**. Eerst klinkt het introgeluid, dan leest de stem de opstelling voor. Met **Stop** beëindig je het op elk moment.
 
-**Thuis voorbereiden.** Open Fanfare één keer met wifi en druk op **Stemmen voorbereiden**. Daarna werkt Fanfare op het veld ook zonder internet. In stap 5 zie je **Offline klaar ✓**. Je kunt de app ook aan je startscherm toevoegen (in het browsermenu: "App installeren" of "Toevoegen aan startscherm").
+**Thuis voorbereiden.** Open Fanfare met wifi, druk op **Stemmen voorbereiden** en controleer of stap 5 **Offline klaar ✓** toont. Daarna werkt Fanfare op het veld ook zonder internet. Wil je de app vanaf je startscherm gebruiken (browsermenu: "App installeren" of "Toevoegen aan startscherm"): **voeg hem op iPhone en iPad eerst toe aan het startscherm**, open hem dan met wifi via het pictogram, druk op **Stemmen voorbereiden** en controleer daar **Offline klaar ✓**. Een startschermapp op iOS heeft een eigen opslag, dus wat je in Safari hebt voorbereid is daar niet beschikbaar.
 
 ![Stemmen voorbereiden, opstelling omroepen, stoppen](media/nl/announce.gif)
 

@@ -5,13 +5,13 @@ const f = (path: string, hash = 'h') => ({ path, hash });
 
 test('includes the app shell and excludes voices, licences, sw and threaded wasm', () => {
   const { entries } = buildPrecache([
-    f('index.html'), f('assets/index-1.js'), f('assets/a.css'), f('ort/ort-wasm-simd.wasm'), f('ort/ort-wasm-simd-threaded.wasm'),
-    f('piper/piper_phonemize.data'), f('manual/en.html'), f('manual/media/en/a.png'), f('manifest.webmanifest'), f('icons/icon-192.png'),
+    f('index.html'), f('assets/index-1.js'), f('assets/a.css'), f('ort/ort-wasm-simd.wasm'), f('ort/ort-wasm.wasm'), f('ort/ort-wasm-simd-threaded.wasm'),
+    f('piper/piper_phonemize.data'), f('manual/en.html'), f('manual/media/en/a.png'), f('manual/media/de/a.gif'), f('manifest.webmanifest'), f('icons/icon-192.png'),
     f('voices/de/x.onnx'), f('voices/LICENSES.md'), f('licenses/GPL-3.0.txt'), f('sw.js'), f('assets/a.js.map'),
   ]);
   expect(entries.map((e: { url: string }) => e.url)).toEqual([
     './assets/a.css', './assets/index-1.js', './icons/icon-192.png', './index.html', './manifest.webmanifest',
-    './manual/en.html', './manual/media/en/a.png', './ort/ort-wasm-simd.wasm', './piper/piper_phonemize.data',
+    './manual/en.html', './ort/ort-wasm-simd.wasm', './piper/piper_phonemize.data',
   ]);
 });
 

@@ -40,7 +40,7 @@ Her satırda küçük düğmeler vardır: **⇄** oyuncuyu saha ile yedekler ara
 
 4. Takımlar sahaya çıkarken **📣 Kadroyu duyur** düğmesine basın. Önce giriş sesi çalar, sonra ses kadroyu okur. **Durdur** istediğiniz an bitirir.
 
-**Evde hazırla.** Fanfare'ı bir kez Wi-Fi ile aç ve **Sesleri hazırla** düğmesine bas. Bundan sonra Fanfare sahada internetsiz de çalışır. 5. adımda **Çevrimdışı hazır ✓** yazısını görürsün. Uygulamayı ana ekrana da ekleyebilirsin (tarayıcı menüsünde: "Uygulamayı yükle" veya "Ana ekrana ekle").
+**Evde hazırla.** Fanfare'ı Wi-Fi ile aç, **Sesleri hazırla** düğmesine bas ve 5. adımda **Çevrimdışı hazır ✓** yazdığını kontrol et. Bundan sonra Fanfare sahada internetsiz de çalışır. Uygulamayı ana ekrandan kullanmak istersen (tarayıcı menüsünde: "Uygulamayı yükle" veya "Ana ekrana ekle"): **iPhone ve iPad'de önce ana ekrana ekle**, sonra simgeden Wi-Fi ile aç, **Sesleri hazırla** düğmesine bas ve orada **Çevrimdışı hazır ✓** yazısını kontrol et. iOS'ta ana ekran uygulamasının kendi depolaması vardır; Safari'de hazırladıkların onda bulunmaz.
 
 ![Sesleri hazırlama, kadroyu duyurma, durdurma](media/tr/announce.gif)
 

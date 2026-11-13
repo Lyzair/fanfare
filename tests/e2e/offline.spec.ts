@@ -33,6 +33,14 @@ test('after one online visit the app reloads and announces offline', async ({ pa
   });
   expect(cachedVoices).toEqual([]);
 
+  // View the manual once online so its media are cached at runtime.
+  await page.getByRole('link', { name: /Manual|manual/ }).first().click();
+  await expect(page).toHaveURL(/manual\/en\.html$/);
+  await expect(page.locator('img').first()).toBeVisible();
+  await page.waitForFunction(() => Array.from(document.images).every(i => i.complete && i.naturalWidth > 0));
+  await page.goBack();
+  await expect(page.getByRole('heading', { level: 1, name: 'Fanfare' })).toBeVisible();
+
   await context.setOffline(true);
   page.on('requestfailed', (r) => failed.push(r.url()));
   await page.reload();
@@ -49,9 +57,11 @@ test('after one online visit the app reloads and announces offline', async ({ pa
     await expect(page.getByRole('button', { name: 'Stop', exact: true })).toHaveCount(0);
   }
 
-  // The manual is part of the precached shell.
+  // The manual page (precached) and its media (cached after the online view) work offline.
   await page.getByRole('link', { name: /Manual|manual/ }).first().click();
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('Fanfare');
+  await expect(page).toHaveURL(/manual\/en\.html$/);
+  await expect(page.locator('h1').first()).toBeVisible();
+  await expect(page.locator('img').first()).toBeVisible();
 
   expect(foreign).toEqual([]);
   expect(failed).toEqual([]);

@@ -40,7 +40,7 @@ Każdy wiersz ma małe przyciski: **⇄** przenosi zawodnika między boiskiem a 
 
 4. Gdy drużyny wychodzą na boisko, naciśnij **📣 Ogłoś skład**. Najpierw gra dźwięk wstępu, potem głos odczytuje skład. **Zatrzymaj** kończy w każdej chwili.
 
-**Przygotuj w domu.** Otwórz Fanfare raz z Wi-Fi i naciśnij **Przygotuj głosy**. Potem Fanfare działa na boisku bez internetu. W kroku 5 zobaczysz **Gotowe offline ✓**. Możesz też dodać aplikację do ekranu głównego (menu przeglądarki: „Zainstaluj aplikację” lub „Dodaj do ekranu głównego”).
+**Przygotuj w domu.** Otwórz Fanfare z Wi-Fi, naciśnij **Przygotuj głosy** i sprawdź, czy w kroku 5 widać **Gotowe offline ✓**. Potem Fanfare działa na boisku bez internetu. Aby używać aplikacji z ekranu głównego (menu przeglądarki: „Zainstaluj aplikację” lub „Dodaj do ekranu głównego”): **na iPhonie i iPadzie najpierw dodaj ją do ekranu głównego**, potem otwórz z ikony przy włączonym Wi-Fi, naciśnij **Przygotuj głosy** i sprawdź tam **Gotowe offline ✓**. Aplikacja z ekranu głównego na iOS ma własną pamięć, więc to, co przygotowano w Safari, nie jest w niej dostępne.
 
 ![Przygotowanie głosów, ogłoszenie składu, zatrzymanie](media/pl/announce.gif)
 

@@ -2,6 +2,7 @@
 /// scripts/build-sw.mjs), serves it cache-first and index.html network-first.
 /// Voice models are deliberately not handled (the speech library caches them).
 import { route } from './sw/route';
+import { fetchVerified } from './sw/verify';
 
 declare const __PRECACHE__: { url: string; hash: string }[];
 declare const __VERSION__: string;
@@ -17,14 +18,22 @@ interface SwScope {
 const sw = self as unknown as SwScope;
 
 const PREFIX = 'fanfare-shell-';
+const RT_PREFIX = 'fanfare-rt-';
 const CACHE = PREFIX + __VERSION__;
+const RUNTIME = RT_PREFIX + __VERSION__;
 const HASH_HEADER = 'x-fanfare-hash';
 const NETWORK_TIMEOUT_MS = 4000;
 
 const scope = sw.registration.scope;
 const abs = (u: string) => new URL(u, scope).href;
-const precache: ReadonlySet<string> = new Set(__PRECACHE__.map(e => abs(e.url)));
+const PRECACHE = __PRECACHE__;
+const precache: ReadonlySet<string> = new Set(PRECACHE.map(e => abs(e.url)));
 const indexUrl = abs('./index.html');
+
+async function hashOf(body: ArrayBuffer): Promise<string> {
+  const d = new Uint8Array(await crypto.subtle.digest('SHA-256', body));
+  return Array.from(d, b => b.toString(16).padStart(2, '0')).join('').slice(0, 16);
+}
 
 async function previousCopy(url: string, hash: string): Promise<Response | undefined> {
   for (const name of await caches.keys()) {
@@ -37,18 +46,17 @@ async function previousCopy(url: string, hash: string): Promise<Response | undef
 
 async function install(): Promise<void> {
   const cache = await caches.open(CACHE);
-  const queue = [...__PRECACHE__];
+  const queue = [...PRECACHE];
   const worker = async () => {
     for (let e = queue.shift(); e; e = queue.shift()) {
       const url = abs(e.url);
       if (await cache.match(url)) continue;
       let res = await previousCopy(url, e.hash);
       if (!res) {
-        const net = await fetch(url, { cache: 'no-store' });
-        if (!net.ok) throw new Error(`precache ${e.url}: HTTP ${net.status}`);
-        const headers = new Headers(net.headers);
+        const { response, body } = await fetchVerified(url, e.hash, (u, cacheMode) => fetch(u, { cache: cacheMode }), hashOf);
+        const headers = new Headers(response.headers);
         headers.set(HASH_HEADER, e.hash);
-        res = new Response(net.body, { status: net.status, statusText: net.statusText, headers });
+        res = new Response(body, { status: 200, statusText: response.statusText, headers });
       }
       await cache.put(url, res);
     }
@@ -57,7 +65,7 @@ async function install(): Promise<void> {
 }
 
 async function activate(): Promise<void> {
-  for (const name of await caches.keys()) if (name.startsWith(PREFIX) && name !== CACHE) await caches.delete(name);
+  for (const name of await caches.keys()) if ((name.startsWith(PREFIX) || name.startsWith(RT_PREFIX)) && name !== CACHE && name !== RUNTIME) await caches.delete(name);
   await sw.clients.claim();
 }
 
@@ -78,6 +86,16 @@ async function networkFirst(req: Request): Promise<Response> {
   try { return await Promise.race([net, timeout]); } catch { return fallback; }
 }
 
+async function runtimeFirst(req: Request): Promise<Response> {
+  const cache = await caches.open(RUNTIME);
+  const key = noQuery(req.url);
+  const hit = await cache.match(key);
+  if (hit) return hit;
+  const res = await fetch(req);
+  if (res.ok && res.status === 200) await cache.put(key, res.clone());
+  return res;
+}
+
 async function cacheFirst(req: Request): Promise<Response> {
   const hit = await (await caches.open(CACHE)).match(noQuery(req.url));
   return hit ?? fetch(req);
@@ -89,7 +107,8 @@ sw.addEventListener('message', ((e: { data?: { type?: string } }) => {
   if (e.data?.type === 'SKIP_WAITING') void sw.skipWaiting();
 }) as (e: never) => void);
 sw.addEventListener('fetch', ((e: FetchEv) => {
-  const strategy = route({ url: e.request.url, method: e.request.method, mode: e.request.mode }, { scope, precache });
+  const strategy = route({ url: e.request.url, method: e.request.method, mode: e.request.mode, range: e.request.headers.has('range') }, { scope, precache });
   if (strategy === 'precache') e.respondWith(cacheFirst(e.request));
+  else if (strategy === 'runtime') e.respondWith(runtimeFirst(e.request));
   else if (strategy === 'network-first') e.respondWith(networkFirst(e.request));
 }) as (e: never) => void);
