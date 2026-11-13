@@ -913,3 +913,41 @@ test('setLocalTts ignores non-local URLs; archive round-trips localTts and rejec
 - [ ] **Step 2: Apply (Fable implementer, one dispatch).** Apply every must-fix and the accepted simplifications in small commits (`refactor: …`, `fix: …`), each keeping the suite green. Constraints: no behaviour change except must-fixes; tests are only changed where an internal API they target was simplified (never weakened); file structure from the plan may change only where the review justified it, and the README/plan file map is updated accordingly.
 - [ ] **Step 3: Verify.** Run `npm test && npx tsc --noEmit && npm run build && npm run check:dist && npm run test:e2e` — Expected: all PASS. Report line counts before/after (`git diff --stat main..HEAD -- src`) and the number of exported symbols before/after.
 - [ ] **Step 4: Scoped re-review (Fable).** Verdict each must-fix and each applied simplification (ADDRESSED / NOT ADDRESSED / BEHAVIOUR CHANGED); residuals are adjudicated by the controller and listed for the user.
+
+---
+
+### Task 20: "Say it like…" pronunciation hints
+
+**Execution order:** run after Task 16 and **before Task 17** (so manuals/screenshots include it).
+
+**Goal:** a coach preparing at home can fix how the voice pronounces a name without changing how it is displayed. Applies to players, Home team and Opponent.
+
+**Files:**
+- Modify: `src/domain/model.ts` (`Player.sayAs: string`, `Roster.homeSayAs: string`, `Roster.opponentSayAs: string`, all default `''`), `src/state/reducer.ts` (`updatePlayer` accepts `sayAs`; `setMatch` accepts `homeSayAs`/`opponentSayAs`), `src/io/archive.ts` (validate; missing → `''`), `src/domain/template.ts`, `src/ui/RosterPanel.tsx`, `src/ui/CalloutPanel.tsx`, `src/ui/GamePanel.tsx`, all `src/i18n/*.ts`
+- Test: `tests/unit/template.test.ts`, `tests/unit/reducer.test.ts`, `tests/unit/archive.test.ts`, `tests/unit/rosterPanel.test.tsx`, `tests/unit/calloutPanel.test.tsx`
+
+**Interfaces:**
+```ts
+function speechText(displayText: string, roster: Roster): string;
+// replaces every occurrence of each player's display name (longest names first, whole-word, case-sensitive),
+// roster.homeTeam and roster.opponent with their sayAs value when that value is non-empty; otherwise unchanged
+```
+Every place that sends text to the voice (`speech.get`, `speech.prepare`, `lineupSequence`, score) uses `speechText(...)`; every place that shows text keeps the display text. The speech-cache key is the speech text, so changing a hint regenerates that clip automatically. Custom-edited texts are covered too (the name inside them is replaced at speech time).
+
+- [ ] **Step 1: Failing unit tests** (`template.test.ts`):
+```ts
+test('speechText swaps names for their sayAs', () => {
+  // player {name:'Zoë', sayAs:'Tso-eh'}, opponent 'SV Musterstadt' sayAs 'Es Fau Musterstadt'
+  expect(speechText('Go Zoë! We play SV Musterstadt.', roster)).toBe('Go Tso-eh! We play Es Fau Musterstadt.');
+});
+test('empty sayAs leaves text unchanged', () => {});
+test('longer names win: "Lea Marie" sayAs before "Lea"', () => {});
+test('whole-word only: "Leander" untouched when "Lea" has sayAs', () => {});
+test('names with regex characters ("O\'Neil (C)") are matched literally', () => {});
+```
+Reducer + archive tests: `sayAs` round-trips; old archives without the fields import with `''`.
+- [ ] **Step 2:** Run — Expected: FAIL. Implement `speechText` and wire every speech call through it. Run — Expected: PASS.
+- [ ] **Step 3: UI.** In each roster row a small **🗣** toggle button (aria-label "Pronunciation") reveals one extra input **Say it like…** (placeholder en `e.g. Tso-eh`, de `z. B. Tso-eh`) and a **▶** that speaks just that hint (or the name if empty) with the current voice. Rows with a hint show the 🗣 button highlighted so it is visible later. Same for Home team and Opponent fields (one 🗣 each). One-line hint shown when the input is open — en: `Write the name the way it sounds. Only the voice uses this; the list still shows the real name.` / de: `Schreib den Namen so, wie er klingt. Nur die Stimme nutzt das; in der Liste steht weiter der echte Name.` All strings in all 10 packs.
+- [ ] **Step 4: Panel tests:** toggling 🗣 shows the input; typing a hint dispatches; ▶ calls `speech.get` with the hint; CalloutPanel's Announce/▶ send `speechText` (hint) while the textarea still shows the real name; editing a hint changes the speech cache key (Ready badge disappears for that row).
+- [ ] **Step 5:** Run `npm test && npx tsc --noEmit && npm run build && npm run test:e2e` — Expected: all PASS.
+- [ ] **Step 6: Commit** — `feat: "say it like" pronunciation hints for names and teams`
