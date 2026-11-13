@@ -15,6 +15,7 @@ function state(): AppState {
       football: {
         homeTeam: 'A', homeSayAs: 'Ay', opponent: 'B', opponentSayAs: 'Bee', showPositions: true,
         players: [{ id: 'p1', name: 'Ann', number: '7', position: 'FW', onField: true, customText: null, sayAs: 'An' }],
+        guestPlayers: [{ id: 'g1', name: 'Gus', number: '3', position: '', onField: false, customText: null, sayAs: 'Goose' }],
         templates: defaultTemplates('football', 'en'),
       },
     },
@@ -104,8 +105,24 @@ describe('archive', () => {
     expect(r.players[0].sayAs).toBe('');
     expect(r.showPositions).toBe(false);
     expect(r.templates).toEqual(defaultTemplates('handball', 'de'));
+    expect(r.guestPlayers).toEqual([]);
     expect(r.players[0].id).toMatch(/.+/);
     expect(r.players[0]).not.toHaveProperty('zzz');
+  });
+  test('guest players round-trip; old templates without guest keys get the defaults', async () => {
+    const out = await importArchive(zipJson(state()));
+    expect(out.state.rosters.football!.guestPlayers).toEqual(state().rosters.football!.guestPlayers);
+    const j = state() as any;
+    delete j.rosters.football.templates.guestIntro; delete j.rosters.football.templates.guestScore;
+    const old = await importArchive(zipJson(j));
+    expect(old.state.rosters.football!.templates).toEqual(defaultTemplates('football', 'en'));
+  });
+  test('invalid guest players are invalid-data', async () => {
+    const j = state() as any;
+    j.rosters.football.guestPlayers = [{ name: 5 }];
+    await expect(importArchive(zipJson(j))).rejects.toMatchObject({ code: 'invalid-data' });
+    j.rosters.football.guestPlayers = 'x';
+    await expect(importArchive(zipJson(j))).rejects.toMatchObject({ code: 'invalid-data' });
   });
   test('non-string sayAs is invalid-data', async () => {
     for (const mutate of [

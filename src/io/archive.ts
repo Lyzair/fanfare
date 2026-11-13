@@ -24,6 +24,7 @@ export class ImportError extends Error {
 export const MAX_IMPORT_BYTES = 200 * 1024 * 1024;
 
 const SLOTS: SoundSlot[] = ['score', 'intro'];
+/** The templates every export has; the guest ones are optional for older files. */
 const TEMPLATE_KEYS: TemplateKey[] = ['intro', 'field', 'bench', 'score'];
 
 function blobBytes(b: Blob): Promise<ArrayBuffer> {
@@ -80,7 +81,7 @@ export async function exportArchive(c: ArchiveContent): Promise<Blob> {
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 const bad = () => new ImportError('invalid-data');
 
-function parsePlayer(v: unknown): Player {
+export function parsePlayer(v: unknown): Player {
   if (!isObj(v)) throw bad();
   const { name, number, position, onField, customText, id } = v;
   if (typeof name !== 'string' || typeof number !== 'string' || typeof position !== 'string') throw bad();
@@ -105,9 +106,15 @@ function parseRoster(v: unknown, sport: SportId, lang: Lang): Roster {
   const defaults = defaultTemplates(sport, lang);
   const t = isObj(v.templates) ? v.templates : {};
   const valid = TEMPLATE_KEYS.every((k) => typeof t[k] === 'string');
+  // the guest templates arrived later: older exports lack them and get the language defaults
   const templates = valid
-    ? ({ intro: t.intro, field: t.field, bench: t.bench, score: t.score } as Record<TemplateKey, string>)
+    ? ({
+        intro: t.intro, field: t.field, bench: t.bench, score: t.score,
+        guestIntro: typeof t.guestIntro === 'string' ? t.guestIntro : defaults.guestIntro,
+        guestScore: typeof t.guestScore === 'string' ? t.guestScore : defaults.guestScore,
+      } as Record<TemplateKey, string>)
     : defaults;
+  if (v.guestPlayers !== undefined && !Array.isArray(v.guestPlayers)) throw bad();
   return {
     homeTeam: str(v.homeTeam),
     homeSayAs: str(v.homeSayAs),
@@ -115,6 +122,7 @@ function parseRoster(v: unknown, sport: SportId, lang: Lang): Roster {
     opponentSayAs: str(v.opponentSayAs),
     showPositions: v.showPositions === true,
     players: v.players.map(parsePlayer),
+    guestPlayers: Array.isArray(v.guestPlayers) ? v.guestPlayers.map(parsePlayer) : [],
     templates,
   };
 }

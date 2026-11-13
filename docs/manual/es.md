@@ -26,6 +26,8 @@ Cada fila tiene botones pequeños: **⇄** mueve a un jugador entre el campo y e
 
 **Consejo:** si tu club usa fussball.de, abre allí la plantilla de **tu propio equipo**, cópiala y pégala en el cuadro. Se reconocen dorsales y nombres. Fanfare nunca se conecta a fussball.de. Más información en "¿Vienes de fussball.de?" en el paso 1.
 
+**¿Juegas contra otro club con Fanfare? Intercambiad archivos de equipo.** En el paso 5, pulsa **Compartir nuestro equipo** y envía el archivo (por correo electrónico o en una memoria USB) al entrenador del otro equipo. El archivo solo contiene nombres, así que no se lo envíes a nadie más. Cuando recibas el suyo, abre la pestaña **Invitados** en el paso 1, pulsa **Importar archivo de equipo** y elígelo. Los invitados aparecen en su propia lista y se rellena el rival. **Borrar invitados** los quita de nuevo.
+
 ## 3. El día del partido
 
 1. En el paso 1, escribe el **Rival**. Normalmente es lo único que cambia de un partido a otro.
@@ -39,6 +41,8 @@ Cada fila tiene botones pequeños: **⇄** mueve a un jugador entre el campo y e
 ![Preparar voces, anunciar la alineación y detener](media/es/announce.gif)
 
 ![El paso 2 después de preparar las voces](media/es/03-announcements.png)
+
+**Los invitados van primero.** Si importaste un equipo invitado, **📣 Anunciar la alineación** da la bienvenida a los invitados y lee su alineación, y después la tuya. **Solo invitados** y **Solo nuestro equipo** anuncian solo un equipo. **Preparar voces** abarca los dos equipos. En el paso 3 hay un botón adicional **Gol para SV Sample** para los goles de los invitados.
 
 ## 4. Durante el partido
 

@@ -26,6 +26,8 @@ Ogni riga ha piccoli pulsanti: **⇄** sposta un giocatore tra campo e panchina,
 
 **Consiglio:** se la tua società usa fussball.de, apri lì la rosa della **tua squadra**, copiala e incollala nel campo. Numeri e nomi vengono riconosciuti. Fanfare non si collega mai a fussball.de. Maggiori dettagli in "Vieni da fussball.de?" nel passaggio 1.
 
+**Giochi contro un altro club che usa Fanfare? Scambiatevi i file squadra.** Al passaggio 5 premi **Condividi la nostra squadra** e invia il file (via e-mail o con una chiavetta USB) all'allenatore dell'altra squadra. Il file contiene solo nomi, quindi non inviarlo a nessun altro. Quando ricevi il loro file, apri la scheda **Ospiti** al passaggio 1, premi **Importa file squadra** e sceglilo. Gli ospiti compaiono in un elenco a parte e l'avversario viene compilato. **Cancella ospiti** li rimuove di nuovo.
+
 ## 3. Il giorno della partita
 
 1. Nel passaggio 1 inserisci l'**Avversario**. Di solito è l'unica cosa che cambia da una partita all'altra.
@@ -39,6 +41,8 @@ Ogni riga ha piccoli pulsanti: **⇄** sposta un giocatore tra campo e panchina,
 ![Preparare le voci, annunciare la formazione, fermare](media/it/announce.gif)
 
 ![Il passaggio 2 dopo la preparazione delle voci](media/it/03-announcements.png)
+
+**Gli ospiti vengono per primi.** Se hai importato una squadra ospite, **📣 Annuncia la formazione** dà il benvenuto agli ospiti e legge la loro formazione, poi la tua. **Solo ospiti** e **Solo la nostra squadra** annunciano una sola squadra. **Prepara le voci** copre entrambe le squadre. Al passaggio 3 un pulsante in più, **Gol per SV Sample**, annuncia i gol degli ospiti.
 
 ## 4. Durante la partita
 

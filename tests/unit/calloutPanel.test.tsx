@@ -265,3 +265,108 @@ test('a hint containing its own name is spoken once, not re-replaced', async () 
   expect(got).not.toContain('Lea-ah-ah');
   expect(got.match(/Lea-ah/g)).toHaveLength(1);
 });
+
+describe('guest team announcements', () => {
+  const withGuests = (s: AppState) => {
+    let st = setup(s);
+    st = reducer(st, { type: 'setMatch', opponent: 'SV Gegner', opponentSayAs: 'Ess Fau Gegner' });
+    st = reducer(st, { type: 'addPlayers', text: '3 Gus\n5 Gina', onField: true, side: 'guest' });
+    return reducer(st, { type: 'addPlayers', text: '14 Gabi', onField: false, side: 'guest' });
+  };
+  const spoken = async (seq: ReturnType<typeof lineupSequence>, speech: { get: { mock: { calls: string[][] } } }) => {
+    for (const it of seq) if (typeof it === 'function') await it();
+    return speech.get.mock.calls.map(c => c[1]);
+  };
+
+  test('both teams: guest intro, guest field, guest bench, then our intro, field, bench', async () => {
+    const { speech } = makeServices();
+    const seq = lineupSequence(withGuests(initialState('en')), speech as never, blobFor('S'));
+    expect(seq).toHaveLength(1 + 4 + 4);
+    const texts = await spoken(seq, speech as never);
+    expect(texts[0]).toContain('A warm welcome to our guests from Ess Fau Gegner');
+    expect(texts.slice(1, 4).map(t => /Gus|Gina|Gabi/.exec(t)![0])).toEqual(['Gus', 'Gina', 'Gabi']);
+    expect(texts[3]).toContain('bench');
+    expect(texts[4]).toContain('welcome to today');
+    expect(texts.slice(5).map(t => /Lea|Tom|Ann/.exec(t)![0])).toEqual(['Lea', 'Tom', 'Ann']);
+  });
+  test('guests only / home only', async () => {
+    const st = withGuests(initialState('en'));
+    const a = makeServices();
+    const g = await spoken(lineupSequence(st, a.speech as never, null, undefined, 'guests'), a.speech as never);
+    expect(g).toHaveLength(4);
+    expect(g.join(' ')).not.toContain('Lea');
+    const b = makeServices();
+    const h = await spoken(lineupSequence(st, b.speech as never, null, undefined, 'home'), b.speech as never);
+    expect(h).toHaveLength(4);
+    expect(h.join(' ')).not.toContain('Gus');
+    expect(h[0]).toContain('welcome to today');
+  });
+  test('without guests nothing changes', () => {
+    const { speech } = makeServices();
+    expect(lineupSequence(setup(initialState('en')), speech as never, null)).toHaveLength(5);
+  });
+
+  test('buttons: Announce lineup plays both, Guests only / Home only play one team; unlock first', async () => {
+    const { services, queue } = makeServices();
+    render(<Harness services={services} init={withGuests} />);
+    await userEvent.click(screen.getByRole('button', { name: /Announce lineup/ }));
+    expect(calls).toEqual(['unlock', 'play']);
+    expect(queue.play.mock.calls[0][0]).toHaveLength(9);
+    calls.length = 0;
+    await userEvent.click(screen.getByRole('button', { name: 'Guests only' }));
+    expect(calls).toEqual(['unlock', 'play']);
+    expect(queue.play.mock.calls[1][0]).toHaveLength(5);
+    await userEvent.click(screen.getByRole('button', { name: 'Home only' }));
+    expect(queue.play.mock.calls[2][0]).toHaveLength(5);
+  });
+  test('the extra buttons only exist when guests exist', () => {
+    const { services } = makeServices();
+    render(<Harness services={services} init={setup} />);
+    expect(screen.queryByRole('button', { name: 'Guests only' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Home only' })).toBeNull();
+    expect(screen.queryByRole('heading', { name: /Guests/ })).toBeNull();
+  });
+
+  test('the list is headed per team, guests first, each row with its own play button', async () => {
+    const { services, speech } = makeServices();
+    render(<Harness services={services} init={withGuests} />);
+    const headings = screen.getAllByRole('heading', { level: 3 }).map(h => h.textContent);
+    expect(headings).toEqual(['Guests: SV Gegner', 'Our team: FC Test']);
+    const texts = screen.getAllByRole('textbox').map(t => t.getAttribute('aria-label')).filter(l => l?.startsWith('Announcement text for'));
+    expect(texts).toEqual(['Announcement text for Gus', 'Announcement text for Gina', 'Announcement text for Gabi',
+      'Announcement text for Lea', 'Announcement text for Tom', 'Announcement text for Ann']);
+    await userEvent.click(screen.getByRole('button', { name: 'Play Gus' }));
+    expect(speech.get).toHaveBeenCalledWith(latest.voiceId, expect.stringContaining('Gus'));
+    expect(screen.getByRole('button', { name: 'Play Guest intro' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Play Intro' })).toBeInTheDocument();
+  });
+  test('editing a guest text customises that guest only; reset restores', async () => {
+    const { services } = makeServices();
+    render(<Harness services={services} init={withGuests} />);
+    const box = screen.getByLabelText('Announcement text for Gus');
+    await userEvent.clear(box);
+    await userEvent.type(box, 'Hi Gus');
+    expect(currentRoster(latest).guestPlayers[0].customText).toBe('Hi Gus');
+    expect(currentRoster(latest).players.every(p => p.customText === null)).toBe(true);
+    await userEvent.click(screen.getByRole('button', { name: 'Reset to the standard text' }));
+    expect(currentRoster(latest).guestPlayers[0].customText).toBeNull();
+  });
+  test('Prepare voices covers both teams and Ready badges appear on guest rows', async () => {
+    const { services, speech } = makeServices();
+    render(<Harness services={services} init={withGuests} />);
+    await userEvent.click(screen.getByRole('button', { name: /Prepare voices/ }));
+    const texts: string[] = speech.prepare.mock.calls[0][1];
+    expect(texts).toHaveLength(1 + 3 + 1 + 3);
+    expect(texts.some(t => t.includes('Gabi'))).toBe(true);
+    expect(texts[0]).toContain('guests');
+    await screen.findByText('All voices ready ✓');
+    expect(screen.getAllByText('Ready')).toHaveLength(8);
+  });
+  test('the guest intro template is editable', async () => {
+    const { services } = makeServices();
+    render(<Harness services={services} init={withGuests} />);
+    await userEvent.click(screen.getByText('Change the standard texts (rarely needed)'));
+    const box = screen.getByLabelText('Guest intro', { selector: 'textarea' });
+    expect(box).toHaveValue(currentRoster(latest).templates.guestIntro);
+  });
+});

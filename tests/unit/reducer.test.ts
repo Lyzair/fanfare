@@ -89,3 +89,72 @@ test('sayAs round-trips through updatePlayer and setMatch', () => {
   expect(currentRoster(s)).toMatchObject({ homeSayAs: 'A', opponentSayAs: 'B', homeTeam: '' });
   expect(currentRoster(initialState('en'))).toMatchObject({ homeSayAs: '', opponentSayAs: '' });
 });
+
+describe('guest team', () => {
+  const team = {
+    fanfareTeam: 1 as const, sport: 'football' as const, teamName: 'SV Sample', teamSayAs: 'Ess Fau',
+    players: [
+      { name: 'Pat Gast', number: '3', position: '', onField: true, sayAs: '' },
+      { name: 'Mika Besuch', number: '8', position: '', onField: false, sayAs: 'Mee-ka' },
+    ],
+  };
+  test('initial roster has no guests', () => expect(currentRoster(initialState('en')).guestPlayers).toEqual([]));
+  test('guest actions leave the home players alone and share the home logic', () => {
+    let s = reducer(initialState('en'), { type: 'addPlayers', text: 'Lea', onField: true });
+    s = reducer(s, { type: 'addPlayers', text: 'Goalkeeper\n1 Gus\n2 Gina', onField: true, side: 'guest' });
+    let r = currentRoster(s);
+    expect(r.players.map(p => p.name)).toEqual(['Lea']);
+    expect(r.guestPlayers.map(p => p.name)).toEqual(['Gus', 'Gina']);
+    const gus = r.guestPlayers[0];
+    s = reducer(s, { type: 'updatePlayer', id: gus.id, patch: { sayAs: 'Gus!', name: ' Gustav ' }, side: 'guest' });
+    s = reducer(s, { type: 'movePlayer', id: gus.id, delta: 1, side: 'guest' });
+    r = currentRoster(s);
+    expect(r.guestPlayers.map(p => p.name)).toEqual(['Gina', 'Gustav']);
+    expect(r.guestPlayers[1].sayAs).toBe('Gus!');
+    s = reducer(s, { type: 'removePlayer', id: gus.id, side: 'guest' });
+    expect(currentRoster(s).guestPlayers.map(p => p.name)).toEqual(['Gina']);
+    s = reducer(s, { type: 'restorePlayer', player: gus, index: 0, side: 'guest' });
+    expect(currentRoster(s).guestPlayers.map(p => p.name)).toEqual(['Gus', 'Gina']);
+    expect(currentRoster(s).players).toHaveLength(1);
+  });
+  test('importGuestTeam replaces guests with fresh ids and sets the opponent', () => {
+    let s = reducer(initialState('en'), { type: 'addPlayers', text: 'Old', onField: true, side: 'guest' });
+    const oldId = currentRoster(s).guestPlayers[0].id;
+    s = reducer(s, { type: 'importGuestTeam', team });
+    const r = currentRoster(s);
+    expect(r.guestPlayers.map(p => [p.name, p.number, p.onField, p.sayAs, p.customText])).toEqual([
+      ['Pat Gast', '3', true, '', null], ['Mika Besuch', '8', false, 'Mee-ka', null]]);
+    expect(r.guestPlayers.every(p => p.id && p.id !== oldId)).toBe(true);
+    expect(new Set(r.guestPlayers.map(p => p.id)).size).toBe(2);
+    expect(r.opponent).toBe('SV Sample');
+    expect(r.opponentSayAs).toBe('Ess Fau');
+    const again = currentRoster(reducer(s, { type: 'importGuestTeam', team }));
+    expect(again.guestPlayers[0].id).not.toBe(r.guestPlayers[0].id);
+  });
+  test('importGuestTeam ignores a file for another sport', () => {
+    const s = initialState('en');
+    expect(reducer(s, { type: 'importGuestTeam', team: { ...team, sport: 'handball' } })).toBe(s);
+  });
+  test('showPositions turns on when imported guests have positions', () => {
+    const s = reducer(initialState('en'), { type: 'importGuestTeam', team: { ...team, players: [{ ...team.players[0], position: 'Defence' }] } });
+    expect(currentRoster(s).showPositions).toBe(true);
+  });
+  test('clearGuests empties the guest list but keeps the opponent', () => {
+    let s = reducer(initialState('en'), { type: 'importGuestTeam', team });
+    s = reducer(s, { type: 'clearGuests' });
+    expect(currentRoster(s).guestPlayers).toEqual([]);
+    expect(currentRoster(s).opponent).toBe('SV Sample');
+  });
+  test('replaceAll fills guest fields of an older saved state', () => {
+    const old = initialState('de');
+    const r = old.rosters.football as any;
+    delete r.guestPlayers; delete r.templates.guestIntro; delete r.templates.guestScore;
+    const s = reducer(initialState('en'), { type: 'replaceAll', state: old });
+    expect(currentRoster(s).guestPlayers).toEqual([]);
+    expect(currentRoster(s).templates.guestIntro).toBe(defaultTemplates('football', 'de').guestIntro);
+  });
+  test('setLang swaps untouched guest templates', () => {
+    const s = reducer(initialState('en'), { type: 'setLang', lang: 'de' });
+    expect(currentRoster(s).templates.guestIntro).toBe(defaultTemplates('football', 'de').guestIntro);
+  });
+});

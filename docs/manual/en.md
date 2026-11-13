@@ -24,6 +24,8 @@ Each row has small buttons: **⇄** moves a player between the field and the ben
 
 **Tip:** if your club uses fussball.de, open **your own team's** squad there, copy it and paste it into the box. Shirt numbers and names are recognised. Fanfare never connects to fussball.de. Open "Coming from fussball.de?" in step 1 for details.
 
+**Playing against another Fanfare club? Swap team files.** In step 5, press **Share our team** and send the file (by e-mail or on a USB stick) to the other team's coach. The file contains names only, so send it to nobody else. When you receive their file, open the **Guests** tab in step 1, press **Import team file** and choose it. The guests appear in their own list and the opponent is filled in. **Clear guests** removes them again.
+
 ## 3. On game day
 
 1. In step 1, enter the **Opponent**. This is usually the only thing that changes from game to game.
@@ -37,6 +39,8 @@ Each row has small buttons: **⇄** moves a player between the field and the ben
 ![Prepare voices, then announce the lineup, then stop](media/en/announce.gif)
 
 ![Step 2 after the voices were prepared](media/en/03-announcements.png)
+
+**Guests come first.** If you imported a guest team, **📣 Announce lineup** welcomes the guests and reads out their lineup, then reads yours. **Guests only** and **Home only** play just one team. **Prepare voices** covers both teams. In step 3 an extra button **Goal for SV Sample** announces the guests' goals.
 
 ## 4. During the game
 

@@ -30,7 +30,16 @@ const DEMO = {
   opponent: 'SV Sample',
   field: '1 Alex Demo\n4 Sam Test\n7 Kim Muster\n9 Robin Probe',
   bench: '12 Jo Beispiel',
-  sayAs: 'Kim Mooster',
+  // the guest team arrives as a team file, exactly like a real swap between two clubs
+  guests: {
+    fanfareTeam: 1, sport: 'football', teamName: 'SV Sample', teamSayAs: '',
+    players: [
+      { name: 'Pat Gast', number: '3', position: '', onField: true, sayAs: '' },
+      { name: 'Mika Besuch', number: '8', position: '', onField: true, sayAs: '' },
+      { name: 'Noor Visitor', number: '11', position: '', onField: false, sayAs: '' },
+    ],
+  },
+  guestSayAs: 'Mee-ka Bezoosh',
 };
 const PHONE = { width: 390, height: 844 };
 const DESKTOP = { width: 1280, height: 800 };
@@ -137,6 +146,17 @@ async function setup(page, pack, { bench = true } = {}) {
     await page.getByLabel(pack.ui.pasteLabel).fill(DEMO.bench);
     await page.getByRole('button', { name: pack.ui.addToBench, exact: true }).click();
   }
+  await importGuests(page, pack);
+}
+
+/** Imports the demo guest team through the Guests tab, then returns to Our team. */
+async function importGuests(page, pack) {
+  await page.getByRole('tab', { name: new RegExp(`^${pack.ui.tabGuests}`) }).click();
+  await page.getByLabel(pack.ui.importTeam).setInputFiles({
+    name: 'fanfare-team-sv-sample.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(DEMO.guests)),
+  });
+  await page.getByText(DEMO.guests.players[0].name).first().waitFor({ state: 'attached' });
+  await page.getByRole('tab', { name: new RegExp(`^${pack.ui.ourTeam}`) }).click();
 }
 
 const card = (page, n) => page.locator(`section.card[aria-labelledby="step${n}-title"]`);
@@ -209,6 +229,7 @@ async function runLang(browser, pack, outDir) {
     const file = join(outDir, 'add-players.gif');
     await saveGif(file, await rec.stop());
     written.push(file);
+    await importGuests(page, pack);
   }
 
   // announce.gif: prepare voices -> progress -> announce -> stop
@@ -257,11 +278,12 @@ async function runLang(browser, pack, outDir) {
   await png(card(page, 4), '05-sounds.png');
   await png(card(page, 5), '06-save.png');
 
-  // 02 players: one row with the "Say it like..." hint open
+  // 02 players: the Guests tab (imported team) with one row's "Say it like..." hint open
   {
-    const row = page.getByRole('listitem').filter({ has: page.locator('input[value="Kim Muster"]') });
+    await page.getByRole('tab', { name: new RegExp(`^${pack.ui.tabGuests}`) }).click();
+    const row = page.getByRole('listitem').filter({ has: page.locator('input[value="Mika Besuch"]') });
     await row.getByRole('button', { name: pack.ui.pronunciation, exact: true }).click();
-    await row.getByLabel(pack.ui.sayAsLabel).fill(DEMO.sayAs);
+    await row.getByLabel(pack.ui.sayAsLabel).fill(DEMO.guestSayAs);
     await sleep(300);
     await scrollToCard(page, 1);
     await png(card(page, 1), '02-players.png');

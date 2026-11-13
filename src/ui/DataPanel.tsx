@@ -3,21 +3,16 @@ import type { SoundSlot } from '../domain/model';
 import { t } from '../i18n';
 import type { UiStrings } from '../i18n';
 import { ImportError, exportArchive, importArchive } from '../io/archive';
+import { dateStamp, downloadBlob } from '../io/download';
+import { exportTeamFile, teamFileName } from '../io/teamFile';
 import type { ArchiveContent } from '../io/archive';
-import { initialState } from '../state/reducer';
+import { currentRoster, initialState } from '../state/reducer';
 import { clearAll, loadSoundBlob, saveSoundBlob } from '../state/persist';
 import { recalledSound, rememberSound } from './soundMemory';
 import { ServicesContext } from './types';
 import type { PanelProps } from './types';
 
 const SLOTS: SoundSlot[] = ['score', 'intro'];
-const REVOKE_DELAY_MS = 1000;
-
-function todayStamp(): string {
-  const d = new Date();
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-}
 
 export default function DataPanel({ state, dispatch }: PanelProps) {
   const services = useContext(ServicesContext);
@@ -38,15 +33,20 @@ export default function DataPanel({ state, dispatch }: PanelProps) {
         if (blob) sounds[slot] = blob;
       }
       const zip = await exportArchive({ state, sounds, speech: speech.entries() });
-      const url = URL.createObjectURL(zip);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `fanfare-${todayStamp()}.zip`;
-      a.style.display = 'none';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), REVOKE_DELAY_MS);
+      downloadBlob(zip, `fanfare-${dateStamp()}.zip`);
+    } catch {
+      setMessage({ kind: 'error', key: 'exportFailed' });
+    }
+  };
+
+  /** Names only (no clips, no settings), meant to be sent to the other team's coach. */
+  const doShare = () => {
+    setMessage(null);
+    const roster = currentRoster(state);
+    if (roster.players.length === 0) { setMessage({ kind: 'error', key: 'shareNoPlayers' }); return; }
+    try {
+      const json = JSON.stringify(exportTeamFile(state), null, 2);
+      downloadBlob(new Blob([json], { type: 'application/json' }), teamFileName(roster.homeTeam));
     } catch {
       setMessage({ kind: 'error', key: 'exportFailed' });
     }
@@ -100,6 +100,10 @@ export default function DataPanel({ state, dispatch }: PanelProps) {
             onChange={e => { const input = e.currentTarget; void doImport(input.files?.[0]).finally(() => { input.value = ''; }); }} />
         </label>
         <button type="button" class="danger" onClick={() => void deleteAll()}>{tr('deleteAll')}</button>
+      </div>
+      <div class="share-team">
+        <button type="button" onClick={doShare}>{tr('shareTeam')}</button>
+        <p class="hint">{tr('shareNote')}</p>
       </div>
       {message?.kind === 'error' && <p role="alert" class="error">{tr(message.key)}</p>}
       {message?.kind === 'ok' && <p role="status">{tr(message.key)}</p>}

@@ -1,10 +1,10 @@
-import { renderTemplate, calloutText, scoreText, introText, speechText } from '../../src/domain/template';
+import { renderTemplate, calloutText, scoreText, introText, speechText, guestIntroText, guestScoreText } from '../../src/domain/template';
 import { defaultTemplates } from '../../src/i18n';
 import type { Player, Roster } from '../../src/domain/model';
 
 const player: Player = { id: 'p1', name: 'Lea', number: '', position: '', onField: true, customText: null, sayAs: '' };
 const roster: Roster = {
-  homeTeam: '', homeSayAs: '', opponent: '', opponentSayAs: '', showPositions: true, players: [],
+  homeTeam: '', homeSayAs: '', opponent: '', opponentSayAs: '', showPositions: true, players: [], guestPlayers: [],
   templates: defaultTemplates('football', 'en'),
 };
 
@@ -75,4 +75,26 @@ test('hints are applied once: "Lea"→"Leah" does not re-match inside the output
 });
 test('case-sensitive', () => {
   expect(speechText('lea Lea', sayRoster([{ name: 'Lea', sayAs: 'Lee-ah' }]))).toBe('lea Lee-ah');
+});
+
+describe('guest texts', () => {
+  const r: Roster = { ...roster, homeTeam: 'FC A', opponent: 'SV X', opponentSayAs: 'Ess Fau X', guestPlayers: [{ ...player, id: 'g1', name: 'Gus', sayAs: 'Goose' }] };
+  test('guest intro and score templates (en)', () => {
+    expect(guestIntroText(r)).toBe('A warm welcome to our guests from SV X! Here is their lineup:');
+    expect(guestIntroText({ ...r, opponent: '' })).toBe('A warm welcome to our guests! Here is their lineup:');
+    expect(guestScoreText(r.guestPlayers[0], r)).toBe('Goal for SV X! Well played, Gus!');
+    expect(guestScoreText(null, r)).toBe('Goal for SV X!');
+  });
+  test('de copy is exact', () => {
+    const d = defaultTemplates('football', 'de');
+    expect(d.guestIntro).toBe('Ein herzliches Willkommen an unsere Gäste[ vom {opponent}]! Hier ist ihre Aufstellung:');
+    expect(d.guestScore).toBe('Toooor[ für {opponent}]![ Gut gespielt, {name}!]');
+  });
+  test('guest players use the field and bench templates', () => {
+    expect(calloutText(r.guestPlayers[0], r)).toContain('Gus');
+    expect(calloutText({ ...r.guestPlayers[0], onField: false }, r)).toContain('bench');
+  });
+  test('speechText applies guest players sayAs and the opponent hint', () => {
+    expect(speechText('Welcome SV X and Gus!', r)).toBe('Welcome Ess Fau X and Goose!');
+  });
 });

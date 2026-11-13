@@ -1,6 +1,6 @@
 import { useContext, useEffect, useRef, useState } from 'preact/hooks';
-import type { AppState, Player, TemplateKey } from '../domain/model';
-import { calloutText, introText, speechText } from '../domain/template';
+import type { AppState, Player, Roster, Side, TemplateKey } from '../domain/model';
+import { calloutText, guestIntroText, introText, speechText } from '../domain/template';
 import { defaultSoundBlob } from '../audio/defaultSounds';
 import type { QueueItem } from '../audio/queue';
 import { currentRoster } from '../state/reducer';
@@ -13,6 +13,7 @@ import type { PanelProps } from './types';
 
 const PLACEHOLDERS = ['name', 'number', 'position', 'home', 'opponent'] as const;
 const TEMPLATE_KEYS: { key: TemplateKey; label: keyof UiStrings }[] = [
+  { key: 'guestIntro', label: 'guestIntroLabel' },
   { key: 'intro', label: 'templateIntro' },
   { key: 'field', label: 'templateField' },
   { key: 'bench', label: 'templateBench' },
@@ -20,12 +21,33 @@ const TEMPLATE_KEYS: { key: TemplateKey; label: keyof UiStrings }[] = [
 const fill = (tpl: string, vars: Record<string, string | number>) =>
   tpl.replace(/\{(\w+)\}/g, (m, k: string) => (k in vars ? String(vars[k]) : m));
 
-/** Intro sound (if enabled) → intro text → field players → bench players. Speech items are lazy. */
+export type LineupPart = 'both' | 'guests' | 'home';
+
+/** The texts of one team in announcing order: intro, field players, bench players. */
+function teamTexts(side: Side, roster: Roster): string[] {
+  const players = side === 'guest' ? roster.guestPlayers : roster.players;
+  return [
+    side === 'guest' ? guestIntroText(roster) : introText(roster),
+    ...players.filter(p => p.onField).map(p => calloutText(p, roster)),
+    ...players.filter(p => !p.onField).map(p => calloutText(p, roster)),
+  ];
+}
+
+/** Which teams a part covers: guests (when there are any) always come before our team. */
+function sidesFor(roster: Roster, part: LineupPart): Side[] {
+  const sides: Side[] = [];
+  if (roster.guestPlayers.length > 0 && part !== 'home') sides.push('guest');
+  if (part !== 'guests' || roster.guestPlayers.length === 0) sides.push('home');
+  return sides;
+}
+
+/** Intro sound (if enabled) → [guest intro → guest field → guest bench →] intro → field → bench. Speech items are lazy. */
 export function lineupSequence(
   state: AppState,
   speech: SpeechCache,
   introSound: Blob | null,
   onError?: (e: unknown) => void,
+  part: LineupPart = 'both',
 ): Array<Blob | (() => Promise<Blob>)> {
   const roster = currentRoster(state);
   const lazy = (text: string) => async () => {
@@ -38,12 +60,7 @@ export function lineupSequence(
   };
   const items: Array<Blob | (() => Promise<Blob>)> = [];
   if (state.soundsEnabled) items.push(introSound ?? defaultSoundBlob('intro'));
-  const texts = [
-    introText(roster),
-    ...roster.players.filter(p => p.onField).map(p => calloutText(p, roster)),
-    ...roster.players.filter(p => !p.onField).map(p => calloutText(p, roster)),
-  ];
-  for (const text of texts) if (text.trim()) items.push(lazy(text));
+  for (const text of sidesFor(roster, part).flatMap(side => teamTexts(side, roster))) if (text.trim()) items.push(lazy(text));
   return items;
 }
 
@@ -78,8 +95,10 @@ export default function CalloutPanel({ state, dispatch }: PanelProps) {
   if (!services) return null;
   const { queue, speech } = services;
 
-  const players = [...roster.players.filter(p => p.onField), ...roster.players.filter(p => !p.onField)];
+  const ordered = (list: Player[]) => [...list.filter(p => p.onField), ...list.filter(p => !p.onField)];
+  const hasGuests = roster.guestPlayers.length > 0;
   const intro = introText(roster);
+  const guestIntro = guestIntroText(roster);
   const reportError = () => setError(true);
   const refresh = () => setTick(n => n + 1);
 
@@ -96,8 +115,8 @@ export default function CalloutPanel({ state, dispatch }: PanelProps) {
       throw e;
     }
   }]);
-  const announce = () => playItems(lineupSequence(state, speech, introBlob, reportError));
-  const prepareTexts = [intro, ...players.map(p => calloutText(p, roster))].map(x => speechText(x, roster)).filter(x => x.trim());
+  const announce = (part: LineupPart) => playItems(lineupSequence(state, speech, introBlob, reportError, part));
+  const prepareTexts = sidesFor(roster, 'both').flatMap(side => teamTexts(side, roster)).map(x => speechText(x, roster)).filter(x => x.trim());
   const prepareKey = `${state.voiceId}\n${prepareTexts.map(x => x.trim()).join('\n')}`;
   const prepare = () => {
     if (preparing) return;
@@ -127,7 +146,7 @@ export default function CalloutPanel({ state, dispatch }: PanelProps) {
   const badge = (text: string) =>
     text.trim() && speech.has(state.voiceId, speechText(text, roster)) ? <span class="ready-badge"><span aria-hidden="true">✓</span> {tr('readyBadge')}</span> : null;
 
-  const row = (p: Player) => {
+  const row = (p: Player, side: Side) => {
     const text = drafts[p.id] ?? calloutText(p, roster);
     const label = fill(tr('announcementFor'), { name: p.name });
     return (
@@ -137,14 +156,14 @@ export default function CalloutPanel({ state, dispatch }: PanelProps) {
           onInput={e => {
             const v = e.currentTarget.value;
             setDrafts(d => ({ ...d, [p.id]: v }));
-            dispatch({ type: 'updatePlayer', id: p.id, patch: { customText: v } });
+            dispatch({ type: 'updatePlayer', id: p.id, patch: { customText: v }, side });
           }}
           onBlur={() => setDrafts(d => { const { [p.id]: _drop, ...rest } = d; return rest; })} />
         <span class="row-actions">
           <button type="button" aria-label={`${tr('playClip')} ${p.name}`} title={tr('playClip')} onClick={() => playText(text)}>▶</button>
           {p.customText !== null && (
             <button type="button" aria-label={tr('resetText')} title={tr('resetText')}
-              onClick={() => dispatch({ type: 'updatePlayer', id: p.id, patch: { customText: null } })}>↺</button>
+              onClick={() => dispatch({ type: 'updatePlayer', id: p.id, patch: { customText: null }, side })}>↺</button>
           )}
           {badge(text)}
         </span>
@@ -152,30 +171,49 @@ export default function CalloutPanel({ state, dispatch }: PanelProps) {
     );
   };
 
-  const hasPlayers = players.length > 0;
+  /** One team's list: its intro row, then field players, then bench players. */
+  const teamList = (side: Side, introLine: string, label: string) => (
+    <ul class="callout-list">
+      <li class="callout-row" key="intro">
+        <span class="callout-num">{label}</span>
+        <p class="intro-text">{introLine}</p>
+        <span class="row-actions">
+          <button type="button" aria-label={`${tr('playClip')} ${label}`} title={tr('playClip')} onClick={() => playText(introLine)}>▶</button>
+          {badge(introLine)}
+        </span>
+      </li>
+      {ordered(side === 'guest' ? roster.guestPlayers : roster.players).map(p => row(p, side))}
+    </ul>
+  );
+  const teamTitle = (title: string, name: string) => (name.trim() ? `${title}: ${name.trim()}` : title);
+
+  const hasPlayers = roster.players.length + roster.guestPlayers.length > 0;
   return (
     <div class="callout-panel">
       <div class="callout-actions">
-        <button type="button" class="primary big" onClick={announce}>{tr('announceLineup')}</button>
+        <button type="button" class="primary big" onClick={() => announce('both')}>{tr('announceLineup')}</button>
         {playing && <button type="button" class="stop" onClick={() => queue.stop()}>{tr('stopPlaying')}</button>}
       </div>
+      {hasGuests && (
+        <div class="callout-actions secondary">
+          <button type="button" onClick={() => announce('guests')}>{tr('announceGuestsOnly')}</button>
+          <button type="button" onClick={() => announce('home')}>{tr('announceHomeOnly')}</button>
+        </div>
+      )}
       <button type="button" disabled={preparing} onClick={prepare}>{tr('prepareVoices')}</button>
       {preparing && progress && <p role="status" class="progress">{fill(tr('prepareProgress'), progress)}</p>}
       {!preparing && doneKey === prepareKey && <p role="status" class="progress">{tr('prepareDone')}</p>}
       {error && <p role="alert" class="error">{tr('ttsError')}</p>}
       {!hasPlayers && <p class="hint">{tr('noPlayersYet')}</p>}
 
-      <ul class="callout-list">
-        <li class="callout-row" key="intro">
-          <span class="callout-num">{tr('introLabel')}</span>
-          <p class="intro-text">{intro}</p>
-          <span class="row-actions">
-            <button type="button" aria-label={`${tr('playClip')} ${tr('introLabel')}`} title={tr('playClip')} onClick={() => playText(intro)}>▶</button>
-            {badge(intro)}
-          </span>
-        </li>
-        {players.map(row)}
-      </ul>
+      {hasGuests && (
+        <>
+          <h3 class="team-list-title">{teamTitle(tr('tabGuests'), roster.opponent)}</h3>
+          {teamList('guest', guestIntro, tr('guestIntroLabel'))}
+          <h3 class="team-list-title">{teamTitle(tr('ourTeam'), roster.homeTeam)}</h3>
+        </>
+      )}
+      {teamList('home', intro, tr('introLabel'))}
 
       <details class="help templates">
         <summary>{tr('templatesTitle')}</summary>

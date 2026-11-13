@@ -24,6 +24,8 @@ Mit **🗣 Sag es so…** legst du fest, wie ein Name ausgesprochen wird. Tippe 
 
 **Tipp:** Wenn dein Verein fussball.de nutzt, öffne dort den Kader **deiner eigenen Mannschaft**, kopiere ihn und füge ihn in das Feld ein. Rückennummern und Namen werden erkannt. Fanfare verbindet sich nie mit fussball.de. Mehr dazu unter "Daten von fussball.de?" in Schritt 1.
 
+**Du spielst gegen einen anderen Fanfare-Verein? Tauscht Mannschaftsdateien aus.** Drücke in Schritt 5 auf **Unsere Mannschaft teilen** und schicke die Datei (per E-Mail oder USB-Stick) an das Trainerteam der anderen Mannschaft. Die Datei enthält nur Namen, schicke sie also an niemand anderen. Wenn du deren Datei bekommst, öffne in Schritt 1 den Reiter **Gäste**, drücke **Mannschaftsdatei importieren** und wähle sie aus. Die Gäste erscheinen in einer eigenen Liste und der Gegner wird eingetragen. Mit **Gäste entfernen** entfernst du sie wieder.
+
 ## 3. Am Spieltag
 
 1. Trage in Schritt 1 den **Gegner** ein. Das ist meist das Einzige, was sich von Spiel zu Spiel ändert.
@@ -37,6 +39,8 @@ Mit **🗣 Sag es so…** legst du fest, wie ein Name ausgesprochen wird. Tippe 
 ![Stimmen vorbereiten, Aufstellung ansagen, stoppen](media/de/announce.gif)
 
 ![Schritt 2, nachdem die Stimmen vorbereitet wurden](media/de/03-announcements.png)
+
+**Die Gäste kommen zuerst.** Wenn du eine Gastmannschaft importiert hast, begrüßt **📣 Aufstellung ansagen** zuerst die Gäste und liest ihre Aufstellung vor, danach deine. Mit **Nur Gäste** und **Nur Heimteam** wird nur eine Mannschaft angesagt. **Stimmen vorbereiten** umfasst beide Mannschaften. In Schritt 3 gibt es einen zusätzlichen Knopf **Tor für SV Sample** für die Tore der Gäste.
 
 ## 4. Während des Spiels
 

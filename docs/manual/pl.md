@@ -26,6 +26,8 @@ Każdy wiersz ma małe przyciski: **⇄** przenosi zawodnika między boiskiem a 
 
 **Wskazówka:** jeśli Twój klub korzysta z fussball.de, otwórz tam skład **własnej drużyny**, skopiuj go i wklej w pole. Numery i nazwiska są rozpoznawane. Fanfare nigdy nie łączy się z fussball.de. Więcej w "Dane z fussball.de?" w kroku 1.
 
+**Grasz z innym klubem używającym Fanfare? Wymieńcie się plikami drużyn.** W kroku 5 naciśnij **Udostępnij naszą drużynę** i wyślij plik (e-mailem lub na pendrive) trenerowi drugiej drużyny. Plik zawiera tylko imiona i nazwiska, więc nie wysyłaj go nikomu innemu. Gdy dostaniesz ich plik, otwórz w kroku 1 kartę **Goście**, naciśnij **Importuj plik drużyny** i wybierz go. Goście pojawią się na osobnej liście, a przeciwnik zostanie wpisany. **Wyczyść gości** usuwa ich ponownie.
+
 ## 3. W dniu meczu
 
 1. W kroku 1 wpisz **Rywal**. To zwykle jedyna rzecz, która zmienia się z meczu na mecz.
@@ -39,6 +41,8 @@ Każdy wiersz ma małe przyciski: **⇄** przenosi zawodnika między boiskiem a 
 ![Przygotowanie głosów, ogłoszenie składu, zatrzymanie](media/pl/announce.gif)
 
 ![Krok 2 po przygotowaniu głosów](media/pl/03-announcements.png)
+
+**Goście są pierwsi.** Jeśli zaimportowano drużynę gości, **📣 Ogłoś skład** wita gości i odczytuje ich skład, a potem Twój. **Tylko goście** i **Tylko nasza drużyna** zapowiadają tylko jedną drużynę. **Przygotuj głosy** obejmuje obie drużyny. W kroku 3 jest dodatkowy przycisk **Gol dla SV Sample** dla goli gości.
 
 ## 4. W trakcie meczu
 

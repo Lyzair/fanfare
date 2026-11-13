@@ -41,6 +41,14 @@ export function introText(roster: Roster): string {
   return renderTemplate(roster.templates.intro, varsFor(null, roster));
 }
 
+export function guestIntroText(roster: Roster): string {
+  return renderTemplate(roster.templates.guestIntro, varsFor(null, roster));
+}
+
+export function guestScoreText(scorer: Player | null, roster: Roster): string {
+  return renderTemplate(roster.templates.guestScore, varsFor(scorer, roster));
+}
+
 const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /**
@@ -54,7 +62,7 @@ export function speechText(displayText: string, roster: Roster): string {
     const n = name.trim();
     if (n && sayAs.trim() && !hints.has(n)) hints.set(n, sayAs.trim());
   };
-  for (const p of roster.players) add(p.name, p.sayAs);
+  for (const p of [...roster.players, ...roster.guestPlayers]) add(p.name, p.sayAs);
   add(roster.homeTeam, roster.homeSayAs);
   add(roster.opponent, roster.opponentSayAs);
   if (hints.size === 0) return displayText;

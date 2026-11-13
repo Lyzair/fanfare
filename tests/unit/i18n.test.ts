@@ -11,6 +11,7 @@ test.each(LANGS)('%s pack is complete', lang => {
     const tpl = p.templates(id);
     expect(tpl.field).toContain('{name}'); expect(tpl.bench).toContain('{name}');
     expect(tpl.intro).toContain('{home}'); expect(tpl.intro).toContain('{opponent}');
+    expect(tpl.guestIntro).toContain('{opponent}'); expect(tpl.guestScore).toContain('{opponent}'); expect(tpl.guestScore).toContain('{name}');
     expect(Object.values(tpl).join(' ')).not.toMatch(/\{(?!name\}|number\}|position\}|home\}|opponent\})[^}]*\}/);
   }
 });

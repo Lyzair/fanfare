@@ -26,6 +26,8 @@ Her satırda küçük düğmeler vardır: **⇄** oyuncuyu saha ile yedekler ara
 
 **İpucu:** kulübünüz fussball.de kullanıyorsa orada **kendi takımınızın** kadrosunu açın, kopyalayın ve kutuya yapıştırın. Forma numaraları ve isimler tanınır. Fanfare fussball.de'ye asla bağlanmaz. Ayrıntılar için 1. adımdaki "fussball.de'den mi geliyorsunuz?" bölümüne bakın.
 
+**Fanfare kullanan başka bir kulüple mi oynuyorsunuz? Takım dosyalarını değiş tokuş edin.** 5. adımda **Takımımızı paylaş** düğmesine basın ve dosyayı (e-posta ile ya da USB bellekle) diğer takımın antrenörüne gönderin. Dosya yalnızca isimler içerir, bu yüzden başka kimseye göndermeyin. Onların dosyasını aldığınızda 1. adımda **Konuklar** sekmesini açın, **Takım dosyasını içe aktar** düğmesine basın ve dosyayı seçin. Konuklar kendi listesinde görünür ve rakip alanı doldurulur. **Konukları temizle** onları yeniden kaldırır.
+
 ## 3. Maç günü
 
 1. 1. adımda **Rakip** alanını doldurun. Maçtan maça genellikle değişen tek şey budur.
@@ -39,6 +41,8 @@ Her satırda küçük düğmeler vardır: **⇄** oyuncuyu saha ile yedekler ara
 ![Sesleri hazırlama, kadroyu duyurma, durdurma](media/tr/announce.gif)
 
 ![Sesler hazırlandıktan sonra 2. adım](media/tr/03-announcements.png)
+
+**Önce konuklar.** Bir konuk takım içe aktardıysanız **📣 Kadroyu duyur** önce konukları karşılar ve kadrolarını okur, ardından sizinkini. **Yalnız konuklar** ve **Yalnız kendi takımımız** yalnızca bir takımı anons eder. **Sesleri hazırla** iki takımı da kapsar. 3. adımda konukların golleri için ek bir düğme vardır: **Gol: SV Sample**.
 
 ## 4. Maç sırasında
 

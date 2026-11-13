@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/preact';
+import { render, screen, waitFor, within } from '@testing-library/preact';
 import userEvent from '@testing-library/user-event';
 import { useReducer } from 'preact/hooks';
 import GamePanel from '../../src/ui/GamePanel';
@@ -91,4 +91,55 @@ test('score still plays its sound when TTS fails', async () => {
   const items = queue.play.mock.calls[0][0];
   expect(items[0]).toBeInstanceOf(Blob);
   expect(await screen.findByRole('alert')).toHaveTextContent(/sounds still work/);
+});
+
+describe('guest goals', () => {
+  const withGuests = (s: AppState) => {
+    const st = reducer(s, { type: 'addPlayers', text: '3 Gus\n5 Gina', onField: true, side: 'guest' });
+    return reducer(st, { type: 'addPlayers', text: '14 Gabi', onField: false, side: 'guest' });
+  };
+  test('no guest button or chips without guests', () => {
+    const { services } = makeServices();
+    render(<Harness services={services} />);
+    expect(screen.queryByRole('button', { name: /for SV Gegner/ })).toBeNull();
+    expect(screen.queryByText('Who scored for the guests? (optional)')).toBeNull();
+  });
+  test('a second, smaller button announces a goal for the opponent with the guest template', async () => {
+    const { services, queue, speech } = makeServices();
+    render(<Harness services={services} init={withGuests} />);
+    const btn = screen.getByRole('button', { name: '⚽ Goal for SV Gegner' });
+    expect(btn).not.toHaveClass('primary');
+    await userEvent.click(btn);
+    expect(queue.unlock.mock.invocationCallOrder[0]).toBeLessThan(queue.play.mock.invocationCallOrder[0]);
+    const items = queue.play.mock.calls[0][0];
+    expect(items).toHaveLength(2);
+    expect(items[0]).toBeInstanceOf(Blob);
+    await waitFor(() => expect(speech.get).toHaveBeenCalled());
+    expect(speech.get.mock.calls[0][1]).toBe('Goal for SV Gegner!');
+  });
+  test('guest scorer chips list guest field players only and name the scorer', async () => {
+    const { services, speech } = makeServices();
+    render(<Harness services={services} init={withGuests} />);
+    const group = screen.getByRole('group', { name: 'Who scored for the guests? (optional)' });
+    expect(within(group).getAllByRole('button').map(b => b.textContent)).toEqual(['3 Gus', '5 Gina', 'SV Gegner']);
+    await userEvent.click(within(group).getByRole('button', { name: '5 Gina' }));
+    expect(within(group).getByRole('button', { name: '5 Gina' })).toHaveAttribute('aria-pressed', 'true');
+    // the home scorer selection is independent
+    expect(screen.getByRole('button', { name: /7 Lea/ })).toHaveAttribute('aria-pressed', 'false');
+    await userEvent.click(screen.getByRole('button', { name: '⚽ Goal for SV Gegner' }));
+    await waitFor(() => expect(speech.get).toHaveBeenCalled());
+    expect(speech.get.mock.calls[0][1]).toBe('Goal for SV Gegner! Well played, Gina!');
+  });
+  test('guest sayAs is spoken; the button falls back to "Guests" without a team name', async () => {
+    const { services, speech } = makeServices();
+    const init = (s: AppState) => {
+      const st = reducer(withGuests(s), { type: 'setMatch', opponent: '' });
+      return reducer(st, { type: 'updatePlayer', id: st.rosters.football!.guestPlayers[0].id, patch: { sayAs: 'Goose' }, side: 'guest' });
+    };
+    render(<Harness services={services} init={init} />);
+    await userEvent.click(screen.getByRole('button', { name: '3 Gus' }));
+    await userEvent.click(screen.getByRole('button', { name: '⚽ Goal for Guests' }));
+    await waitFor(() => expect(speech.get).toHaveBeenCalled());
+    expect(speech.get.mock.calls[0][1]).toBe('Goal! Well played, Goose!');
+  });
 });

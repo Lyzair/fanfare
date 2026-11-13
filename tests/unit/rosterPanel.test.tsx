@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { render, screen, within, act } from '@testing-library/preact';
+import { render, screen, within, act, waitFor } from '@testing-library/preact';
 import userEvent from '@testing-library/user-event';
 import { useReducer } from 'preact/hooks';
 import RosterPanel from '../../src/ui/RosterPanel';
@@ -208,4 +208,129 @@ test('▶ speaks a hint that contains its own name exactly as written (player an
   expect(await heard(0)).toBe('FC-eff');
   expect(await heard(1)).toBe('Bay-ern');
   expect(await heard(2)).toBe('P1-ah');
+});
+
+describe('guest team tab', () => {
+  const team = { fanfareTeam: 1, sport: 'football', teamName: 'SV Sample', teamSayAs: '', players: [
+    { name: 'Pat Gast', number: '3', position: '', onField: true, sayAs: '' }, { name: 'Mika Besuch', number: '8', position: '', onField: false, sayAs: '' }] };
+  const jsonFile = (o: unknown, name = 'team.json') => new File([typeof o === 'string' ? o : JSON.stringify(o)], name, { type: 'application/json' });
+  const guestsTab = () => screen.getByRole('tab', { name: /^Guests/ });
+  const upload = (f: File) => userEvent.upload(document.querySelector('input[type=file]') as HTMLInputElement, f);
+
+  test('two tabs in a tablist with counts; the selected one controls the tabpanel', async () => {
+    render(<Harness init={withPlayers(2)} />);
+    const list = screen.getByRole('tablist');
+    expect(within(list).getAllByRole('tab').map(t => t.textContent)).toEqual(['Our team (2)', 'Guests (0)']);
+    const ours = screen.getByRole('tab', { name: 'Our team (2)' });
+    expect(ours).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tabpanel')).toHaveAccessibleName('Our team (2)');
+    expect(screen.queryByRole('button', { name: 'Import team file' })).toBeNull();
+    await userEvent.click(guestsTab());
+    expect(guestsTab()).toHaveAttribute('aria-selected', 'true');
+    expect(guestsTab()).toHaveAttribute('tabindex', '0');
+    expect(ours).toHaveAttribute('tabindex', '-1');
+    expect(screen.getByRole('tabpanel')).toHaveAccessibleName('Guests (0)');
+    expect(screen.getByLabelText('Import team file')).toHaveAttribute('accept', '.json,application/json');
+  });
+
+  test('arrow keys, Home and End move between tabs', async () => {
+    render(<Harness />);
+    screen.getByRole('tab', { name: /^Our team/ }).focus();
+    await userEvent.keyboard('{ArrowRight}');
+    expect(guestsTab()).toHaveAttribute('aria-selected', 'true');
+    expect(guestsTab()).toHaveFocus();
+    await userEvent.keyboard('{ArrowRight}');
+    expect(screen.getByRole('tab', { name: /^Our team/ })).toHaveAttribute('aria-selected', 'true');
+    await userEvent.keyboard('{End}');
+    expect(guestsTab()).toHaveFocus();
+    await userEvent.keyboard('{Home}');
+    expect(screen.getByRole('tab', { name: /^Our team/ })).toHaveFocus();
+    await userEvent.keyboard('{ArrowLeft}');
+    expect(guestsTab()).toHaveAttribute('aria-selected', 'true');
+  });
+
+  test('the guests tab reuses the editor: guests are added to the guest list only', async () => {
+    render(<Harness init={withPlayers(1)} />);
+    await userEvent.click(guestsTab());
+    expect(screen.queryByDisplayValue('P1')).toBeNull();
+    await userEvent.type(screen.getByLabelText('Paste or type a list of players'), '3 Pat{Enter}8 Mika');
+    await userEvent.click(screen.getByRole('button', { name: 'Add' }));
+    expect(currentRoster(latest).guestPlayers.map(p => p.name)).toEqual(['Pat', 'Mika']);
+    expect(currentRoster(latest).players.map(p => p.name)).toEqual(['P1']);
+    await userEvent.type(screen.getByLabelText('Add one player'), 'Zed{Enter}');
+    expect(currentRoster(latest).guestPlayers.map(p => p.name)).toEqual(['Pat', 'Mika', 'Zed']);
+    const row = screen.getByDisplayValue('Pat').closest('li')!;
+    await userEvent.click(within(row).getByRole('button', { name: 'Move to bench' }));
+    expect(currentRoster(latest).guestPlayers[0].onField).toBe(false);
+    await userEvent.click(within(screen.getByDisplayValue('Mika').closest('li')!).getByRole('button', { name: 'Remove' }));
+    expect(screen.getByRole('status')).toHaveTextContent('Removed Mika');
+    await userEvent.click(screen.getByRole('button', { name: 'Undo' }));
+    expect(currentRoster(latest).guestPlayers.map(p => p.name)).toContain('Mika');
+    expect(screen.getByRole('tab', { name: 'Guests (3)' })).toBeInTheDocument();
+  });
+
+  test('importing a team file sets guests and opponent without a confirm when there are no guests', async () => {
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    render(<Harness />);
+    await userEvent.click(guestsTab());
+    await upload(jsonFile(team));
+    await screen.findByText('Guest team imported: 2 players.');
+    expect(confirm).not.toHaveBeenCalled();
+    expect(currentRoster(latest).guestPlayers.map(p => p.name)).toEqual(['Pat Gast', 'Mika Besuch']);
+    expect(currentRoster(latest).opponent).toBe('SV Sample');
+    expect(screen.getByDisplayValue('Pat Gast')).toBeInTheDocument();
+  });
+
+  test('replacing existing guests asks first; cancelling keeps them', async () => {
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    render(<Harness init={s => reducer(s, { type: 'addPlayers', text: 'Old', onField: true, side: 'guest' })} />);
+    await userEvent.click(guestsTab());
+    await upload(jsonFile(team));
+    await waitFor(() => expect(confirm).toHaveBeenCalledWith('Importing replaces the 1 guest players you have now. Continue?'));
+    expect(currentRoster(latest).guestPlayers.map(p => p.name)).toEqual(['Old']);
+    confirm.mockReturnValue(true);
+    await upload(jsonFile(team, 'again.json'));
+    await screen.findByText('Guest team imported: 2 players.');
+    expect(currentRoster(latest).guestPlayers.map(p => p.name)).toEqual(['Pat Gast', 'Mika Besuch']);
+  });
+
+  test.each([
+    ['not json', 'not json {', 'This is not a valid Fanfare team file.'],
+    ['wrong marker', { ...team, fanfareTeam: undefined }, 'This is not a valid Fanfare team file.'],
+    ['future version', { ...team, fanfareTeam: 2 }, 'This team file has an unsupported version and cannot be imported.'],
+    ['wrong sport', { ...team, sport: 'handball' }, 'This team file is for Handball. Switch the sport at the top to Handball, then import it again.'],
+  ])('%s shows a readable alert and changes nothing', async (_n, content, message) => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    render(<Harness />);
+    await userEvent.click(guestsTab());
+    await upload(jsonFile(content));
+    expect(await screen.findByRole('alert')).toHaveTextContent(message);
+    expect(currentRoster(latest).guestPlayers).toEqual([]);
+    expect(currentRoster(latest).opponent).toBe('');
+  });
+
+  test('files over 1 MB are refused', async () => {
+    render(<Harness />);
+    await userEvent.click(guestsTab());
+    await upload(jsonFile('x'.repeat(1024 * 1024 + 1)));
+    expect(await screen.findByRole('alert')).toHaveTextContent('larger than 1 MB');
+  });
+
+  test('Clear guests asks, then empties only the guests', async () => {
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValue(true);
+    render(<Harness init={s => reducer(withPlayers(1)(s), { type: 'importGuestTeam', team: team as never })} />);
+    await userEvent.click(guestsTab());
+    await userEvent.click(screen.getByRole('button', { name: 'Clear guests' }));
+    expect(currentRoster(latest).guestPlayers).toHaveLength(2);
+    await userEvent.click(screen.getByRole('button', { name: 'Clear guests' }));
+    expect(confirm).toHaveBeenCalledWith('Remove all guest players?');
+    expect(currentRoster(latest).guestPlayers).toEqual([]);
+    expect(currentRoster(latest).players).toHaveLength(1);
+  });
+
+  test('labels are translated', () => {
+    render(<Harness lang="de" />);
+    expect(screen.getByRole('tab', { name: 'Gäste (0)' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Unser Team (0)' })).toBeInTheDocument();
+  });
 });

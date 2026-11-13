@@ -197,3 +197,38 @@ test('privacy note is visible and says nothing leaves the device', () => {
   expect(screen.getByText(/never sent to any server/)).toBeVisible();
   expect(screen.getByText(/Everything stays on this device/)).toBeInTheDocument();
 });
+
+describe('share our team', () => {
+  const grab = () => {
+    let blob: Blob | undefined; let download = ''; let inDom = false;
+    URL.createObjectURL = vi.fn((b: Blob) => { blob = b; return 'blob:team'; }); URL.revokeObjectURL = vi.fn();
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) { download = this.download; inDom = document.body.contains(this); });
+    return { get: () => ({ blob, download, inDom }) };
+  };
+  test('downloads a names-only team file with the safe pattern and shows the privacy note', async () => {
+    const g = grab();
+    setup('en', s => reducer(withPlayer(s), { type: 'setMatch', home: 'FC Beispiel', opponent: 'Other' }));
+    expect(screen.getByText("This file contains names. Only send it to the other team's coach.")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Share our team' }));
+    const { blob, download, inDom } = g.get();
+    const d = new Date(); const p = (n: number) => String(n).padStart(2, '0');
+    expect(download).toBe(`fanfare-team-fc-beispiel-${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}.json`);
+    expect(inDom).toBe(true);
+    expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+    const json = JSON.parse(await new Promise<string>(res => { const r = new FileReader(); r.onload = () => res(r.result as string); r.readAsText(blob!); }));
+    expect(json).toMatchObject({ fanfareTeam: 1, sport: 'football', teamName: 'FC Beispiel', players: [{ name: 'Lea', onField: true }] });
+    expect(json).not.toHaveProperty('opponent');
+    await waitFor(() => expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:team'), { timeout: 3000 });
+  });
+  test('without players it explains instead of downloading', async () => {
+    const g = grab();
+    setup('en');
+    await userEvent.click(screen.getByRole('button', { name: 'Share our team' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('Add players in step 1 first.');
+    expect(g.get().blob).toBeUndefined();
+  });
+  test('the note is translated', () => {
+    setup('de');
+    expect(screen.getByText('Diese Datei enthält Namen. Schick sie nur an das Trainerteam der anderen Mannschaft.')).toBeInTheDocument();
+  });
+});

@@ -26,6 +26,8 @@ Chaque ligne a de petits boutons : **⇄** déplace un joueur entre le terrain e
 
 **Astuce :** si votre club utilise fussball.de, ouvrez l'effectif de **votre propre équipe** sur ce site, copiez-le et collez-le dans la zone. Les numéros et les noms sont reconnus. Fanfare ne se connecte jamais à fussball.de. Voir "Vous venez de fussball.de ?" à l'étape 1.
 
+**Vous jouez contre un autre club Fanfare ? Échangez vos fichiers d'équipe.** À l'étape 5, appuyez sur **Partager notre équipe** et envoyez le fichier (par e-mail ou clé USB) à l'entraîneur de l'autre équipe. Le fichier ne contient que des noms : ne l'envoyez à personne d'autre. Quand vous recevez leur fichier, ouvrez l'onglet **Invités** à l'étape 1, appuyez sur **Importer un fichier d'équipe** et choisissez-le. Les invités apparaissent dans leur propre liste et l'adversaire est rempli. **Effacer les invités** les supprime à nouveau.
+
 ## 3. Le jour du match
 
 1. À l'étape 1, saisissez l'**Adversaire**. C'est généralement la seule chose qui change d'un match à l'autre.
@@ -39,6 +41,8 @@ Chaque ligne a de petits boutons : **⇄** déplace un joueur entre le terrain e
 ![Préparer les voix, annoncer la composition, arrêter](media/fr/announce.gif)
 
 ![L'étape 2 une fois les voix préparées](media/fr/03-announcements.png)
+
+**Les invités passent en premier.** Si vous avez importé une équipe invitée, **📣 Annoncer la composition** accueille d'abord les invités et lit leur composition, puis la vôtre. **Invités seulement** et **Notre équipe seulement** n'annoncent qu'une seule équipe. **Préparer les voix** couvre les deux équipes. À l'étape 3, un bouton supplémentaire **But pour SV Sample** annonce les buts des invités.
 
 ## 4. Pendant le match
 
