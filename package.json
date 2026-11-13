@@ -12,7 +12,7 @@
     "test:e2e": "playwright test",
     "fetch-assets": "node scripts/fetch-assets.mjs",
     "prebuild": "node scripts/fetch-assets.mjs",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package --error-on-fail"
   },
   "dependencies": {
     "@mintplex-labs/piper-tts-web": "1.0.5",

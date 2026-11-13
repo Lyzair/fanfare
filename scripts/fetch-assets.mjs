@@ -12,6 +12,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Readable, Transform } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
+import { assertPiperPatched, PIPER_DIST } from './check-piper-patch.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const pub = join(root, 'public');
@@ -79,6 +80,9 @@ async function download(url, dest) {
 }
 
 async function main() {
+  console.log('fetch-assets: checking the piper-tts-web patch');
+  await assertPiperPatched(join(root, PIPER_DIST));
+
   console.log('fetch-assets: ONNX Runtime WASM -> public/ort/');
   const ortDist = join(root, 'node_modules/onnxruntime-web/dist');
   for (const f of ['ort-wasm.wasm', 'ort-wasm-simd.wasm', 'ort-wasm-threaded.wasm', 'ort-wasm-simd-threaded.wasm']) {
