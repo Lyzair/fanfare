@@ -51,7 +51,9 @@ test('export downloads sports-caller-YYYY-MM-DD.zip', async () => {
   let download = '';
   vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) { download = this.download; });
   await userEvent.click(screen.getByRole('button', { name: t('en', 'exportData') }));
-  await waitFor(() => expect(revoke).toHaveBeenCalledWith('blob:x'));
+  await waitFor(() => expect(create).toHaveBeenCalled());
+  expect(revoke).not.toHaveBeenCalled();
+  await waitFor(() => expect(revoke).toHaveBeenCalledWith('blob:x'), { timeout: 3000 });
   const d = new Date(); const p = (n: number) => String(n).padStart(2, '0');
   expect(download).toBe(`sports-caller-${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}.zip`);
   expect(create).toHaveBeenCalledTimes(1);
@@ -131,10 +133,27 @@ test('unexpected errors during import give a generic alert and keep state', asyn
   setup('en', withPlayer);
   vi.spyOn(window, 'confirm').mockReturnValue(true);
   const file = new File([await exportArchive({ state: initialState('en'), sounds: {}, speech: new Map() })], 'x.zip');
-  vi.spyOn(speech, 'load').mockImplementation(() => { throw new Error('boom'); });
+  rememberSound('score', new Blob(['keep']));
+  const keep = recalledSound('score');
+  speech.load(new Map([['v|old', new Blob(['o'])]]));
+  const spy = vi.spyOn(speech, 'replace').mockImplementationOnce(() => { throw new Error('boom'); });
   await userEvent.upload(fileInput(), file);
   expect(await screen.findByRole('alert')).toHaveTextContent(t('en', 'import.failed'));
   expect(names()).toEqual(['Lea']);
+  expect(saveSoundBlob).not.toHaveBeenCalled();
+  expect(recalledSound('score')).toBe(keep);
+  expect(spy).toHaveBeenCalledTimes(2);
+  expect([...speech.entries().keys()]).toEqual(['v|old']);
+});
+
+test('successful import replaces (not merges) speech entries', async () => {
+  const file = new File([await exportArchive({ state: initialState('en'), sounds: {}, speech: new Map([['v|new', new Blob(['n'])]]) })], 'x.zip');
+  setup('en');
+  speech.load(new Map([['v|old', new Blob(['o'])]]));
+  vi.spyOn(window, 'confirm').mockReturnValue(true);
+  await userEvent.upload(fileInput(), file);
+  await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent(t('en', 'importDone')));
+  expect([...speech.entries().keys()]).toEqual(['v|new']);
 });
 
 test.each(LANGS)('%s has a message for every ImportError code', lang => {

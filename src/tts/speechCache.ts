@@ -57,6 +57,12 @@ export class SpeechCache {
     this.pending.clear();
   }
 
+  /** Replace all in-memory clips with `entries` (and persist them). */
+  replace(entries: Map<string, Blob>): void {
+    this.mem.clear();
+    this.load(entries);
+  }
+
   load(entries: Map<string, Blob>): void {
     for (const [k, b] of entries) {
       this.mem.set(k, b);

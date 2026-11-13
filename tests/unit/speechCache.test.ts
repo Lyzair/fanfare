@@ -165,3 +165,10 @@ test('clear forgets in-memory clips', () => {
   c.clear();
   expect(c.entries().size).toBe(0);
 });
+
+test('replace swaps all in-memory clips', () => {
+  const c = new SpeechCache({ synthesize: async () => new Blob(['x']) } as unknown as TtsEngine, { save: async () => {}, load: async () => null });
+  c.load(new Map([['v|a', new Blob(['x'])]]));
+  c.replace(new Map([['v|b', new Blob(['y'])]]));
+  expect([...c.entries().keys()]).toEqual(['v|b']);
+});

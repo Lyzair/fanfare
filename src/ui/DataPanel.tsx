@@ -11,6 +11,7 @@ import { ServicesContext } from './types';
 import type { PanelProps } from './types';
 
 const SLOTS: SoundSlot[] = ['score', 'intro'];
+const REVOKE_DELAY_MS = 1000;
 
 function todayStamp(): string {
   const d = new Date();
@@ -41,8 +42,11 @@ export default function DataPanel({ state, dispatch }: PanelProps) {
       const a = document.createElement('a');
       a.href = url;
       a.download = `sports-caller-${todayStamp()}.zip`;
+      a.style.display = 'none';
+      document.body.appendChild(a);
       a.click();
-      URL.revokeObjectURL(url);
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), REVOKE_DELAY_MS);
     } catch {
       setMessage({ kind: 'error', key: 'exportFailed' });
     }
@@ -59,21 +63,21 @@ export default function DataPanel({ state, dispatch }: PanelProps) {
       return;
     }
     if (!window.confirm(tr('importConfirm'))) return;
+    // All-or-nothing: speech + state first (revertible), sounds only afterwards.
+    const previousSpeech = speech.entries();
     try {
-      for (const slot of SLOTS) rememberSound(slot, null);
-      for (const slot of SLOTS) {
-        const blob = content.sounds[slot];
-        if (blob) rememberSound(slot, blob);
-      }
-      for (const slot of SLOTS) {
-        try { await saveSoundBlob(slot, content.sounds[slot] ?? null); } catch { /* private mode: in-memory copy is used */ }
-      }
-      speech.load(content.speech); // also persists each clip, logging failures
+      speech.replace(content.speech);
       dispatch({ type: 'replaceAll', state: content.state });
-      setMessage({ kind: 'ok', key: 'importDone' });
     } catch {
+      speech.replace(previousSpeech);
       setMessage({ kind: 'error', key: 'import.failed' });
+      return;
     }
+    for (const slot of SLOTS) rememberSound(slot, content.sounds[slot] ?? null);
+    for (const slot of SLOTS) {
+      try { await saveSoundBlob(slot, content.sounds[slot] ?? null); } catch { /* private mode: in-memory copy is used */ }
+    }
+    setMessage({ kind: 'ok', key: 'importDone' });
   };
 
   const deleteAll = async () => {
