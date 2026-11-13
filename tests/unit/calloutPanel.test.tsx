@@ -251,3 +251,17 @@ test('changing a hint changes the cache key: the Ready badge disappears for that
   act(() => latestDispatch({ type: 'updatePlayer', id: lea.id, patch: { sayAs: 'Lay-ah' } }));
   expect(within(row()).queryByText('Ready')).toBeNull();
 });
+
+test('a hint containing its own name is spoken once, not re-replaced', async () => {
+  const { services, queue, speech } = makeServices();
+  render(<Harness services={services} init={s => {
+    const st = setup(s);
+    return reducer(st, { type: 'updatePlayer', id: currentRoster(st).players[0].id, patch: { sayAs: 'Lea-ah' } });
+  }} />);
+  await userEvent.click(screen.getByRole('button', { name: 'Play Lea' }));
+  await (queue.play.mock.calls[0][0] as QueueItem[])[0]!.valueOf();
+  const got = speech.get.mock.calls.at(-1)![1];
+  expect(got).toContain('Lea-ah');
+  expect(got).not.toContain('Lea-ah-ah');
+  expect(got.match(/Lea-ah/g)).toHaveLength(1);
+});

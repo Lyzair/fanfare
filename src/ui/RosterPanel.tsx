@@ -4,7 +4,6 @@ import { parseSinglePlayer } from '../domain/roster';
 import { SPORTS } from '../domain/sports';
 import { getPack, t } from '../i18n';
 import type { UiStrings } from '../i18n';
-import { speechText } from '../domain/template';
 import { currentRoster } from '../state/reducer';
 import { ServicesContext } from './types';
 import type { PanelProps } from './types';
@@ -78,7 +77,7 @@ export default function RosterPanel({ state, dispatch }: PanelProps) {
     if (!services) return;
     services.queue.unlock(); // synchronously inside the click, before anything async
     setHearError(false);
-    const text = speechText(sayAs.trim() || name, roster);
+    const text = sayAs.trim() || name;
     void services.queue.play([async () => {
       try {
         return await services.speech.get(state.voiceId, text);

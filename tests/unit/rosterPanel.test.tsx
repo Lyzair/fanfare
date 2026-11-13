@@ -191,3 +191,21 @@ test('▶ next to a hint unlocks, then speaks just the hint (or the name if empt
   expect(queue.unlock).toHaveBeenCalledTimes(2);
   expect(queue.unlock.mock.invocationCallOrder[0]).toBeLessThan(queue.play.mock.invocationCallOrder[0]);
 });
+
+test('▶ speaks a hint that contains its own name exactly as written (player and teams)', async () => {
+  const { services, queue, speech } = makeServices();
+  render(<WithServices services={services} init={s => reducer(withPlayers(1)(s), { type: 'setMatch', home: 'FC', homeSayAs: 'FC-eff', opponent: 'Bay', opponentSayAs: 'Bay-ern' })} />);
+  const id = currentRoster(latest).players[0].id;
+  void id;
+  const toggles = screen.getAllByRole('button', { name: 'Pronunciation' });
+  for (const t of toggles) await userEvent.click(t);
+  await userEvent.type(screen.getByLabelText('Say it like…'), 'P1-ah');
+  const heard = async (i: number) => {
+    await userEvent.click(screen.getAllByRole('button', { name: 'Hear it' })[i]);
+    await (queue.play.mock.calls.at(-1)![0] as Array<() => Promise<Blob>>)[0]();
+    return speech.get.mock.calls.at(-1)![1];
+  };
+  expect(await heard(0)).toBe('FC-eff');
+  expect(await heard(1)).toBe('Bay-ern');
+  expect(await heard(2)).toBe('P1-ah');
+});
