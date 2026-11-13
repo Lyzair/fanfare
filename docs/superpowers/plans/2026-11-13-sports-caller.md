@@ -792,3 +792,47 @@ test('mobile viewport has no horizontal scroll', async ({ page }) => {
 - [ ] **Step 4:** Validate with `npx --yes @action-validator/cli .github/workflows/pages.yml` — Expected: no errors.
 - [ ] **Step 5: README:** add a "Live demo" link placeholder `https://<user>.github.io/<repo>/` and a "Publish your own copy" section: fork → Settings → Pages → Source: **GitHub Actions** → push to `main`. Add one privacy sentence: the host (GitHub) sees ordinary page-request logs like any web host; the app itself never sends names, sounds or settings anywhere.
 - [ ] **Step 6: Commit** — `ci: deploy demo to GitHub Pages`
+
+---
+
+### Task 17: Getting-started manuals in every language, with screenshots and GIFs
+
+**Files:**
+- Create: `docs/manual/<code>.md` for every code in `LANGS`, `docs/manual/README.md` (index linking each language by native name), `scripts/make-docs-media.mjs`, `scripts/build-manual.mjs`, `tests/unit/manual.test.ts`
+- Generated (committed): `docs/manual/media/<code>/*.png`, `docs/manual/media/<code>/*.gif`
+- Modify: `package.json` (devDeps `gifenc`, `pngjs`, `marked`; scripts `docs:media`, `postbuild`), `src/ui/App.tsx` (help link), all `src/i18n/*.ts` (`manualLink` string), `README.md` (link to `docs/manual/README.md`)
+
+**Interfaces:**
+- Consumes: the whole app (Tasks 10–14) via Playwright; `LANGS`, `getPack`
+- Produces: `npm run docs:media` regenerates all screenshots/GIFs; `postbuild` renders `docs/manual/<code>.md` to `dist/manual/<code>.html` (+ media), so the manual is served from the same origin and works on GitHub Pages; header link "📖 <manualLink>" opens `./manual/<lang>.html` in the current language.
+
+- [ ] **Step 1: Write failing test** `tests/unit/manual.test.ts`:
+```ts
+test.each(LANGS)('%s manual exists, has all sections and only existing media', lang => {
+  const md = readFileSync(`docs/manual/${lang}.md`, 'utf8');
+  expect(md.match(/^## /gm)?.length).toBe(7);                     // same section count in every language
+  for (const [, src] of md.matchAll(/!\[[^\]]*\]\(([^)]+)\)/g)) expect(existsSync(`docs/manual/${src}`)).toBe(true);
+  expect(md).not.toMatch(/https?:\/\/(?!github\.com)/);            // no third-party links
+});
+test('index links every language', () => { /* docs/manual/README.md contains `(${lang}.md)` for each LANGS entry */ });
+```
+- [ ] **Step 2:** Run `npx vitest run tests/unit/manual.test.ts` — Expected: FAIL.
+- [ ] **Step 3: Write `scripts/make-docs-media.mjs`** (Node, Playwright Chromium, viewport 390×844 phone + 1280×800 desktop, `deviceScaleFactor: 2` for PNG, 1 for GIF). For each language, against `vite preview`:
+  - fresh context, set language via the dropdown, load demo data: home `FC Example`, opponent `SV Sample`, players `1 Alex Demo`, `4 Sam Test`, `7 Kim Muster`, `9 Robin Probe` on the field and `12 Jo Beispiel` on the bench (fictional names only)
+  - PNG screenshots: `01-overview.png` (desktop, full page), `02-players.png` (step 1), `03-announcements.png` (step 2), `04-game.png` (step 3 score button), `05-sounds.png` (step 4), `06-save.png` (step 5 with privacy note)
+  - GIFs (phone viewport, ~6 fps, max 12 s, ≤ 1.5 MB each): `add-players.gif` (paste a list → players appear), `announce.gif` (Prepare voices → progress → Announce lineup → Stop), `score.gif` (pick scorer → press score button)
+  - capture frames with `page.screenshot()` in a timed loop, encode with `gifenc` (256-colour palette per GIF) and `pngjs`; no system tools (no ffmpeg) needed
+  - voice synthesis in GIF runs is replaced by the app's normal flow; if it takes long, cut the waiting frames (only keep every 10th frame while the progress counter runs)
+- [ ] **Step 4:** Run `npm run build && npm run docs:media` — Expected: 6 PNG + 3 GIF per language under `docs/manual/media/<code>/`, every GIF ≤ 1.5 MB, total media ≤ 40 MB.
+- [ ] **Step 5: Write the manuals.** Same 7 `##` sections in every language, short sentences, one image per step:
+  1. What is Sports Caller? (one paragraph + `01-overview.png`)
+  2. Before the first game: pick sport and language, enter your team (`02-players.png`, `add-players.gif`), tip: paste your own squad from fussball.de
+  3. On game day: fill in **Opponent**, press **Prepare voices** while you still have Wi-Fi, then **Announce lineup** (`03-announcements.png`, `announce.gif`)
+  4. During the game: score button and scorer (`04-game.png`, `score.gif`)
+  5. Your own sounds and voice (`05-sounds.png`)
+  6. Save, move to another device, delete (`06-save.png`) + the privacy note in plain words
+  7. Troubleshooting: no sound on iPhone (silent switch, tap once more), voice download slow (prepare at home), private window doesn't save (use Export), speaker via Bluetooth/cable
+  en and de are written fully; the other languages translate the en manual, each file starting with `<!-- Translation: machine-assisted — native speakers, please review. -->`. Arabic manual starts with `<div dir="rtl">` and ends with `</div>`.
+- [ ] **Step 6: Write `scripts/build-manual.mjs`** (`postbuild`): render each `docs/manual/<code>.md` with `marked` into `dist/manual/<code>.html` using a minimal same-origin HTML shell (system fonts, `lang`/`dir` set, the same CSP meta as `index.html`, max-width 720 px, images max-width 100%), copy `docs/manual/media/` to `dist/manual/media/`. Add the header link and `manualLink` string (en `Manual`, de `Anleitung`, others translated).
+- [ ] **Step 7:** Run `npx vitest run tests/unit/manual.test.ts && npm run build && npm run check:dist && npm run test:e2e` — Expected: all PASS; open `dist/manual/de.html` via `vite preview` and confirm images and GIFs load.
+- [ ] **Step 8: Commit** — `docs: add illustrated getting-started manuals in all languages`
