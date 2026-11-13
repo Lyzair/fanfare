@@ -1,0 +1,5 @@
+Spieler	Einsätze	Einsatzminuten	Tore
+Müller, Lea	12	840	3
+Özdemir, Can	10	700	0
+k.A.	3	120	0
+O'Neil, Zoë	8	560	1
