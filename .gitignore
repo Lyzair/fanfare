@@ -1,3 +1,8 @@
 node_modules
 dist
 .superpowers
+public/voices/*.onnx*
+public/ort
+public/piper
+test-results
+playwright-report
