@@ -105,3 +105,15 @@ button, input, textarea { min-height: 44px; font: inherit; }
 .error { margin: 0; padding: 8px 12px; border-radius: 8px; color: #7f1d1d; background: #fee2e2; border: 1px solid #b91c1c; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-block: 8px; }
 .templates .stack { margin-block-end: 8px; }
+
+/* Game + sounds panels */
+.game-panel, .sounds-panel { display: grid; gap: 12px; }
+.game-panel button, .sounds-panel button, .sounds-panel select, .file-button { min-height: 44px; }
+.game-panel .score-button { flex: 1 1 200px; min-height: 120px; font-size: 1.6rem; font-weight: 700; color: #fff; background: var(--accent); border-color: var(--accent); }
+.game-panel .stop { color: #fff; background: #b91c1c; border-color: #b91c1c; }
+.game-panel .chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.sounds-panel .check { display: flex; align-items: center; gap: 8px; min-height: 44px; }
+.sound-slot { display: grid; gap: 6px; padding: 8px; border: 1px solid var(--border); border-radius: 8px; }
+.sound-name { color: var(--muted); overflow-wrap: anywhere; }
+.file-button { display: inline-flex; align-items: center; padding-inline: 12px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; position: relative; }
+.file-button input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
