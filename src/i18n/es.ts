@@ -239,7 +239,7 @@ export const es = {
     remoteEnterCode: "Escribe el código de 6 dígitos del portátil",
     remoteConnect: "Conectar",
     remoteWrongCode: "Código incorrecto. Inténtalo de nuevo.",
-    remoteLocked: "Demasiados intentos fallidos. Termina el mando en el portátil y vuelve a iniciarlo.",
+    remoteLocked: "Demasiados intentos fallidos. Pulsa «Código nuevo» en el portátil y escribe el código nuevo.",
     remoteFull: "Ya hay tres móviles conectados.",
     remoteConnectFail: "No se pudo conectar con el portátil. ¿Estás en la misma Wi-Fi?",
     remotePlaying: "Reproduciendo…",

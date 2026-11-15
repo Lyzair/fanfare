@@ -238,7 +238,7 @@ export const de = {
     remoteEnterCode: "Gib den 6-stelligen Code vom Laptop ein",
     remoteConnect: "Verbinden",
     remoteWrongCode: "Falscher Code. Versuche es erneut.",
-    remoteLocked: "Zu viele Fehlversuche. Beende die Fernbedienung auf dem Laptop und starte sie neu.",
+    remoteLocked: "Zu viele Fehlversuche. Drück auf dem Laptop „Neuer Code“ und gib dann den neuen Code ein.",
     remoteFull: "Es sind schon drei Handys verbunden.",
     remoteConnectFail: "Der Laptop ist nicht erreichbar. Bist du im selben WLAN?",
     remotePlaying: "Läuft …",

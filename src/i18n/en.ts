@@ -237,7 +237,7 @@ export const en = {
     remoteEnterCode: "Enter the 6-digit code from the laptop",
     remoteConnect: "Connect",
     remoteWrongCode: "Wrong code. Try again.",
-    remoteLocked: "Too many wrong tries. End the remote on the laptop and start it again.",
+    remoteLocked: "Too many wrong tries. Press New code on the laptop, then enter the new code.",
     remoteFull: "Three phones are already connected.",
     remoteConnectFail: "Could not reach the laptop. Are you on the same Wi-Fi?",
     remotePlaying: "Playing…",

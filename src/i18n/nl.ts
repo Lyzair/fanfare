@@ -239,7 +239,7 @@ export const nl = {
     remoteEnterCode: "Voer de code van 6 cijfers van de laptop in",
     remoteConnect: "Verbinden",
     remoteWrongCode: "Verkeerde code. Probeer het opnieuw.",
-    remoteLocked: "Te veel foute pogingen. Stop de afstandsbediening op de laptop en start opnieuw.",
+    remoteLocked: "Te veel foute pogingen. Druk op de laptop op 'Nieuwe code' en voer dan de nieuwe code in.",
     remoteFull: "Er zijn al drie telefoons verbonden.",
     remoteConnectFail: "De laptop is niet bereikbaar. Zit je op hetzelfde wifi?",
     remotePlaying: "Speelt af…",

@@ -239,7 +239,7 @@ export const pl = {
     remoteEnterCode: "Wpisz 6-cyfrowy kod z laptopa",
     remoteConnect: "Połącz",
     remoteWrongCode: "Zły kod. Spróbuj ponownie.",
-    remoteLocked: "Za dużo błędnych prób. Zakończ pilota na laptopie i uruchom go ponownie.",
+    remoteLocked: "Za dużo błędnych prób. Naciśnij „Nowy kod” na laptopie, a potem wpisz nowy kod.",
     remoteFull: "Połączone są już trzy telefony.",
     remoteConnectFail: "Nie można połączyć się z laptopem. Czy jesteś w tej samej sieci Wi-Fi?",
     remotePlaying: "Odtwarzanie…",

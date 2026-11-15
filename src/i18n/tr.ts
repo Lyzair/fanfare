@@ -239,7 +239,7 @@ export const tr = {
     remoteEnterCode: "Dizüstü bilgisayardaki 6 haneli kodu gir",
     remoteConnect: "Bağlan",
     remoteWrongCode: "Yanlış kod. Tekrar dene.",
-    remoteLocked: "Çok fazla yanlış deneme. Kumandayı dizüstü bilgisayarda bitir ve yeniden başlat.",
+    remoteLocked: "Çok fazla yanlış deneme. Dizüstü bilgisayarda \"Yeni kod\"a bas, sonra yeni kodu gir.",
     remoteFull: "Üç telefon zaten bağlı.",
     remoteConnectFail: "Dizüstü bilgisayara ulaşılamadı. Aynı Wi-Fi'de misin?",
     remotePlaying: "Çalıyor…",

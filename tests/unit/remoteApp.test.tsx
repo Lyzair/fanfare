@@ -74,7 +74,7 @@ test('pairing posts the code, opens the stream with the token, then shows the so
 
 test.each([
   [403, { error: 'wrong-code', attemptsLeft: 3 }, 'Wrong code. Try again.'],
-  [423, { error: 'locked' }, 'Too many wrong tries. End the remote on the laptop and start it again.'],
+  [423, { error: 'locked' }, 'Too many wrong tries. Press New code on the laptop, then enter the new code.'],
   [410, { error: 'expired' }, 'This code has expired. Get a new one on the laptop.'],
   [429, { error: 'full' }, 'Three phones are already connected.'],
   [400, { error: 'bad-code' }, 'Wrong code. Try again.'],

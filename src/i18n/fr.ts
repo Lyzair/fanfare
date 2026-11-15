@@ -239,7 +239,7 @@ export const fr = {
     remoteEnterCode: "Saisis le code à 6 chiffres affiché sur l'ordinateur",
     remoteConnect: "Se connecter",
     remoteWrongCode: "Code incorrect. Réessaie.",
-    remoteLocked: "Trop d'essais ratés. Arrête la télécommande sur l'ordinateur et relance-la.",
+    remoteLocked: "Trop d'essais ratés. Appuie sur « Nouveau code » sur l'ordinateur, puis saisis le nouveau code.",
     remoteFull: "Trois téléphones sont déjà connectés.",
     remoteConnectFail: "Impossible de joindre l'ordinateur. Es-tu sur le même Wi-Fi ?",
     remotePlaying: "Lecture en cours…",

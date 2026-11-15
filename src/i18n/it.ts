@@ -239,7 +239,7 @@ export const it = {
     remoteEnterCode: "Inserisci il codice di 6 cifre dal portatile",
     remoteConnect: "Connetti",
     remoteWrongCode: "Codice errato. Riprova.",
-    remoteLocked: "Troppi tentativi sbagliati. Termina il telecomando sul portatile e riavvialo.",
+    remoteLocked: "Troppi tentativi sbagliati. Premi «Nuovo codice» sul portatile, poi inserisci il nuovo codice.",
     remoteFull: "Ci sono già tre telefoni connessi.",
     remoteConnectFail: "Impossibile raggiungere il portatile. Sei sullo stesso Wi-Fi?",
     remotePlaying: "In riproduzione…",
