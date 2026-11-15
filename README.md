@@ -13,6 +13,16 @@ Fanfare is a single static web page where a sports club enters its players and a
 3. Tap "Prepare voices" once, before the game, so announcements work without waiting.
 4. Tap "Announce lineup", and use the Goal/Point button during the game.
 
+What else it does (each is explained in the manual):
+
+- **Guest team:** the other coach sends a team file (step 5, "Share our team"); import it in step 1 and both teams are announced, guests first.
+- **Say it like… and ✨ Suggest:** fix how the voice says a name without changing how it is shown; Suggest proposes spellings (German and English voices so far).
+- **Your own texts:** every announcement and the standard texts, including the score calls, can be edited (step 2).
+- **Offline:** on an https address (the demo, or your own host) the page installs itself and works without a network once the voices are prepared.
+- **Export, Import, Delete all** (step 5): move your team, settings, sounds and prepared voice clips to another device as one zip file, or remove everything from this device.
+- **Phone as remote:** with Fanfare running on a laptop (see below), a phone on the same Wi-Fi is the soundboard and the laptop plays the sound.
+- **Local voice server and club voice (advanced):** better voices from Fanfare Studio on your own computer, and your club's own announcer voice, recorded with consent.
+
 **Manual:** an illustrated getting-started guide in ten languages is in [docs/manual/README.md](docs/manual/README.md). The built site includes it too (the "Manual" link in the page header).
 
 ## Privacy
@@ -22,8 +32,8 @@ Everything stays on this device. Names and sounds are stored only in this browse
 ## Build
 
 ```sh
-npm install
-npm run fetch-assets && npm run build
+npm ci
+npm run build        # downloads the voices first (about 660 MB, once), then builds into dist/
 ```
 
 ## Deploy
@@ -44,7 +54,7 @@ No internet at all? Fanfare also runs from a laptop with a tiny local server (Py
 
 ```sh
 npm run build && npm run serve:local        # http://localhost:8080 (8081..8099 if busy)
-npm run serve:local -- --lan                # phones on the same Wi-Fi, over HTTPS
+npm run serve:local -- --lan                # phones on the same Wi-Fi, over plain http (add --https for HTTPS: optional, see below)
 npm run package:local                       # release/fanfare-local-<version>.zip for people without Node
 ```
 

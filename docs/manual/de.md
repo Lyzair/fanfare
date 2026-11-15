@@ -78,7 +78,7 @@ Wenn der Torschütze genannt werden soll, tippe vorher unter dem Knopf auf den S
 
 Öffne Schritt 5 **Speichern & Datenschutz**.
 
-- **Exportieren (zip)** speichert Mannschaft, Einstellungen und Sounds als Datei mit einem Namen wie `fanfare-2026-11-13.zip`.
+- **Exportieren (zip)** speichert Mannschaft, Einstellungen, Sounds und die vorbereiteten Stimmen-Clips als Datei mit einem Namen wie `fanfare-2026-11-13.zip`.
 - **Importieren (zip)** lädt so eine Datei auf einem anderen Gerät oder nach einem Zurücksetzen. Es ersetzt, was auf dem Gerät ist.
 - **Alle Daten auf diesem Gerät löschen** entfernt alles endgültig.
 - Exportiere ab und zu, als Sicherung.

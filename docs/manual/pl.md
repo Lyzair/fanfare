@@ -80,7 +80,7 @@ Otwórz krok 4 **Dźwięki i głos**. Tutaj możesz:
 
 Otwórz krok 5 **Zapis i prywatność**.
 
-- **Eksportuj (zip)** zapisuje drużynę, ustawienia i dźwięki w pliku o nazwie takiej jak `fanfare-2026-11-13.zip`.
+- **Eksportuj (zip)** zapisuje drużynę, ustawienia, dźwięki i przygotowane nagrania głosu w pliku o nazwie takiej jak `fanfare-2026-11-13.zip`.
 - **Importuj (zip)** wczytuje taki plik na innym urządzeniu lub po zresetowaniu. Zastępuje to, co jest na urządzeniu.
 - **Usuń wszystkie dane z tego urządzenia** usuwa wszystko na stałe.
 - Eksportuj od czasu do czasu, jako kopię zapasową.

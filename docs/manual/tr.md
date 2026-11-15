@@ -80,7 +80,7 @@ Golü atanı söyletmek için önce düğmenin altındaki oyuncuya dokunun, örn
 
 5. adımı **Kaydet ve gizlilik** açın.
 
-- **Dışa aktar (zip)** takımınızı, ayarlarınızı ve seslerinizi `fanfare-2026-11-13.zip` gibi adlı bir dosyaya kaydeder.
+- **Dışa aktar (zip)** takımınızı, ayarlarınızı, seslerinizi ve hazırlanan ses kliplerini `fanfare-2026-11-13.zip` gibi adlı bir dosyaya kaydeder.
 - **İçe aktar (zip)** böyle bir dosyayı başka bir cihaza veya sıfırlamadan sonra yükler. Cihazdakinin yerine geçer.
 - **Bu cihazdaki tüm verileri sil** her şeyi kalıcı olarak siler.
 - Yedek olarak ara sıra dışa aktarın.

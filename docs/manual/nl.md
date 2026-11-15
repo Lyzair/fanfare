@@ -80,7 +80,7 @@ Open stap 4 **Geluiden en stem**. Hier kun je:
 
 Open stap 5 **Opslaan en privacy**.
 
-- **Exporteren (zip)** bewaart je team, instellingen en geluiden in een bestand met een naam als `fanfare-2026-11-13.zip`.
+- **Exporteren (zip)** bewaart je team, instellingen, geluiden en de voorbereide stemclips in een bestand met een naam als `fanfare-2026-11-13.zip`.
 - **Importeren (zip)** laadt zo'n bestand op een ander apparaat of na een reset. Het vervangt wat er op het apparaat staat.
 - **Alle gegevens op dit apparaat verwijderen** wist alles definitief.
 - Exporteer af en toe, als back-up.

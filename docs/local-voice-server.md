@@ -21,9 +21,10 @@ This document is the protocol Fanfare speaks. The reference implementation is **
 
 ## Rules for the client (Fanfare)
 
-- The only address Fanfare accepts is `http://localhost[:port]` or `http://127.0.0.1[:port]`
-  (also `https`), with no user name, path, query or fragment. The page's Content-Security-Policy
-  allows exactly `http://localhost:*` and `http://127.0.0.1:*` besides its own origin.
+- The only address that works is `http://localhost[:port]` or `http://127.0.0.1[:port]`, with no
+  user name, path, query or fragment. The page's Content-Security-Policy allows exactly
+  `http://localhost:*` and `http://127.0.0.1:*` besides its own origin, so an `https://` address
+  on this computer is blocked by the browser: the server must speak plain http.
 - Fanfare never contacts the server before you press **Connect** (or Record/Save/Delete in the
   club-voice dialog, or Prepare/Play with a `local:` voice).
 - Every request carries the header `X-Fanfare: 1`.

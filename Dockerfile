@@ -29,7 +29,7 @@ FROM caddy:2.11.7-alpine
 ARG SOURCE_URL=""
 LABEL org.opencontainers.image.source="${SOURCE_URL}" \
       org.opencontainers.image.title="Fanfare" \
-      org.opencontainers.image.description="Fanfare: stadium-style announcements for youth football, served as a static site. Nothing leaves the browser; no access logs." \
+      org.opencontainers.image.description="Fanfare: a single static web page where a sports club enters its players and an in-browser AI voice announces the lineup, like a stadium announcer. Nothing leaves the browser; no access logs." \
       org.opencontainers.image.licenses="MIT"
 
 # The official binary carries a file capability (bind to ports below 1024); it cannot start when all

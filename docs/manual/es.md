@@ -80,7 +80,7 @@ Abre el paso 4 **Sonidos y voz**. Aquí puedes:
 
 Abre el paso 5 **Guardar y privacidad**.
 
-- **Exportar (zip)** guarda tu equipo, ajustes y sonidos en un archivo con un nombre como `fanfare-2026-11-13.zip`.
+- **Exportar (zip)** guarda tu equipo, ajustes, sonidos y los clips de voz preparados en un archivo con un nombre como `fanfare-2026-11-13.zip`.
 - **Importar (zip)** carga ese archivo en otro dispositivo o tras un reinicio. Sustituye lo que hay en el dispositivo.
 - **Borrar todos los datos de este dispositivo** lo elimina todo para siempre.
 - Exporta de vez en cuando, como copia de seguridad.

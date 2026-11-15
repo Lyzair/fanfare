@@ -67,3 +67,34 @@ optional scorer callout. Built for friendly club games, not pro stadiums.
 
 Offline/PWA install, match timer, substitution tracking, languages beyond the ten listed, MP3 export,
 Web Speech fallback, any live fussball.de or DFBnet connection.
+
+## Amendments (after this spec was written)
+
+Decisions made during the build that change or extend the text above. The numbers are the rulings
+(R..) in the build ledger; where this list and the text above disagree, this list is what was built.
+
+- **Offline / PWA is in scope** (R36, R42, R44, R45): on an https origin a service worker precaches the
+  app shell; the voice is kept by the speech library in the browser's private file system, not cached
+  twice. "Out of scope: Offline/PWA install" above no longer holds.
+- **One exception to "every request goes to the page's own origin"** (R16, R35): the optional local
+  voice server. The Content-Security-Policy also allows `http://localhost:*` and `http://127.0.0.1:*`
+  in `connect-src`; nothing is sent there before the user connects a server in step 4. Club voice
+  recordings go only to that server and are never stored or exported (R29).
+- **Guest team** (R33, R39): a team file (names, numbers, positions, hints; no clips or settings)
+  shared by one coach and imported by the other; guests are announced first; a second score button.
+- **"Say it like…" and ✨ Suggest** (R28, R34): pronunciation hints per name; suggestions for German
+  and English voices.
+- **In-app help and manuals** (R31, R32): welcome card, "Show me" per step, manuals in ten languages
+  without absolute links.
+- **Running it yourself** (R36, R40, R43, R48, R52 to R55): `fanfare-local.py`, Docker, reverse-proxy
+  examples and the Raspberry Pi appliance.
+- **HTTPS on the LAN is opt-in** (R46, R47, R53, R54): plain http by default; HTTPS only after the
+  printed risk list is accepted, with a name-constrained local certificate authority.
+- **Phone remote** (R38, R49, R50): only with `fanfare-local.py`, no third-party relay; the phone is
+  sent only what the soundboard shows.
+- **Licences** (R13, R18): project code MIT, provided as is; eSpeak NG inside the phonemizer under
+  GPL-3.0-or-later with its corresponding source listed in `public/voices/LICENSES.md`; the Arabic
+  voice is included by maintainer decision although its licence is unclear.
+- **Every callout is editable** (final review, MF10): the two score callouts have their own text
+  fields under "Change the standard texts", next to intro, field and bench.
+

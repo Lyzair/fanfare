@@ -78,7 +78,7 @@ Open step 4 **Sounds & voice**. Here you can:
 
 Open step 5 **Save & privacy**.
 
-- **Export (zip)** saves your team, settings and sounds as a file named like `fanfare-2026-11-13.zip`.
+- **Export (zip)** saves your team, settings, sounds and the prepared voice clips as a file named like `fanfare-2026-11-13.zip`.
 - **Import (zip)** loads such a file on another device, or after a reset. It replaces what is on the device.
 - **Delete all data on this device** removes everything for good.
 - Please export once in a while, as a backup.

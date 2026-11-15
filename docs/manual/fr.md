@@ -80,7 +80,7 @@ Ouvrez l'étape 4 **Sons et voix**. Vous pouvez :
 
 Ouvrez l'étape 5 **Sauvegarde et confidentialité**.
 
-- **Exporter (zip)** enregistre votre équipe, vos réglages et vos sons dans un fichier nommé par exemple `fanfare-2026-11-13.zip`.
+- **Exporter (zip)** enregistre votre équipe, vos réglages, vos sons et les clips de voix préparés dans un fichier nommé par exemple `fanfare-2026-11-13.zip`.
 - **Importer (zip)** charge un tel fichier sur un autre appareil ou après une réinitialisation. Il remplace ce qui se trouve sur l'appareil.
 - **Supprimer toutes les données de cet appareil** efface tout définitivement.
 - Exportez de temps en temps, comme sauvegarde.

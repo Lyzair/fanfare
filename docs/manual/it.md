@@ -80,7 +80,7 @@ Apri il passaggio 4 **Suoni e voce**. Qui puoi:
 
 Apri il passaggio 5 **Salvataggio e privacy**.
 
-- **Esporta (zip)** salva squadra, impostazioni e suoni in un file con un nome come `fanfare-2026-11-13.zip`.
+- **Esporta (zip)** salva squadra, impostazioni, suoni e le clip vocali preparate in un file con un nome come `fanfare-2026-11-13.zip`.
 - **Importa (zip)** carica un file simile su un altro dispositivo o dopo un ripristino. Sostituisce ciò che c'è sul dispositivo.
 - **Elimina tutti i dati su questo dispositivo** cancella tutto definitivamente.
 - Esporta ogni tanto, come copia di sicurezza.
