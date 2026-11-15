@@ -20,10 +20,7 @@ import RemotePanel from './RemotePanel';
 import RosterPanel from './RosterPanel';
 import SoundsPanel from './SoundsPanel';
 import { ServicesContext } from './types';
-import type { PanelProps, Services } from './types';
-
-export { ServicesContext };
-export type { PanelProps, Services };
+import type { Services } from './types';
 
 const STEPS = [1, 2, 3, 4, 5] as const;
 const SAVE_DELAY_MS = 300;

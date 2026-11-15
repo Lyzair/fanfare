@@ -26,7 +26,6 @@ export type EmscriptenFactory = (arg: {
   locateFile: (file: string) => string;
 }) => Promise<EmscriptenModule>;
 
-export { ESPEAK_VOICES, defaultEspeakVoice, isEspeakVoice } from './espeakVoices';
 import { isEspeakVoice } from './espeakVoices';
 
 const messageOf = (e: unknown): string => (e instanceof Error ? e.message : String(e));

@@ -12,7 +12,7 @@ import { recalledSound, rememberSound } from './soundMemory';
 import { offlineStatus, voiceInOpfs } from '../pwa/offline';
 import type { OfflineStatus } from '../pwa/offline';
 import { usePwaState } from '../pwa/register';
-import { lineupTexts } from './CalloutPanel';
+import { lineupTexts } from './actions';
 import { ServicesContext } from './types';
 import type { PanelProps } from './types';
 

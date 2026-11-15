@@ -2,7 +2,8 @@
 import { existsSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
-import { Phonemizer, PhonemizeError, ESPEAK_VOICES, isEspeakVoice, type EmscriptenFactory } from '../../src/tts/phonemize';
+import { Phonemizer, PhonemizeError, type EmscriptenFactory } from '../../src/tts/phonemize';
+import { ESPEAK_VOICES, isEspeakVoice } from '../../src/tts/espeakVoices';
 
 const dir = resolve(process.cwd(), 'public/piper');
 const have = existsSync(resolve(dir, 'piper_phonemize.wasm')) && existsSync(resolve(dir, 'piper_phonemize.data'));

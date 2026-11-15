@@ -21,9 +21,6 @@ const TEMPLATE_KEYS: { key: TemplateKey; label: keyof UiStrings }[] = [
   { key: 'guestScore', label: 'templateGuestScore' },
 ];
 
-export { lineupSequence, lineupTexts } from './actions';
-export type { LineupPart } from './actions';
-
 export default function CalloutPanel({ state, dispatch }: PanelProps) {
   const lang = state.lang;
   const tr = (k: keyof UiStrings) => t(lang, k);

@@ -1,7 +1,8 @@
 import { render, screen, within, waitFor, act } from '@testing-library/preact';
 import userEvent from '@testing-library/user-event';
 import { useReducer } from 'preact/hooks';
-import CalloutPanel, { lineupSequence } from '../../src/ui/CalloutPanel';
+import CalloutPanel from '../../src/ui/CalloutPanel';
+import { lineupSequence } from '../../src/ui/actions';
 import { ServicesContext } from '../../src/ui/types';
 import type { Services } from '../../src/ui/types';
 import type { Action } from '../../src/state/reducer';
