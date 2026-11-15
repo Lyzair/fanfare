@@ -1,7 +1,8 @@
 import type { AppState, CustomSound, Lang, Player, Roster, Side, SoundSlot, SportId, TeamFile, TemplateKey } from '../domain/model';
 import { newId } from '../domain/id';
 import { parsePlayerLines } from '../domain/roster';
-import { defaultTemplates, getPack } from '../i18n';
+import { SPORT_IDS } from '../domain/sports';
+import { LANGS, defaultTemplates, getPack } from '../i18n';
 import { isLocalUrl } from '../tts/httpEngine';
 import { VOICES, defaultVoiceFor } from '../tts/voices';
 
@@ -37,38 +38,52 @@ export function currentRoster(s: AppState): Roster {
 }
 
 const strOr = (v: unknown): string => (typeof v === 'string' ? v : '');
+const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 
-function normalizePlayer(raw: Partial<Player>): Player {
-  return {
-    ...raw as Player,
-    sayAs: strOr(raw.sayAs), origSpelling: strOr(raw.origSpelling), nameLang: strOr(raw.nameLang),
-    customText: typeof raw.customText === 'string' ? raw.customText : null,
-  };
+function normalizePlayers(raw: unknown): Player[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.filter(isObj).map(p => ({
+    id: typeof p.id === 'string' && p.id ? p.id : newId(),
+    name: strOr(p.name), number: strOr(p.number), position: strOr(p.position), onField: p.onField !== false,
+    customText: typeof p.customText === 'string' ? p.customText : null,
+    sayAs: strOr(p.sayAs), origSpelling: strOr(p.origSpelling), nameLang: strOr(p.nameLang),
+  }));
 }
 
 /**
- * Fills every field added after the first model version with its default, for every roster, so
- * saved states and imports from older versions are safe to use. Applied by `replaceAll`.
+ * Fills every missing or damaged field with its default, at the top level and in every roster, so
+ * a saved state or an import from any earlier version is safe to use. Applied by `replaceAll`.
  */
-export function normalizeState(raw: AppState): AppState {
+export function normalizeState(saved: AppState): AppState {
+  const raw: Record<string, unknown> = isObj(saved) ? saved : {};
+  const lang = LANGS.includes(raw.lang as Lang) ? (raw.lang as Lang) : 'en';
+  const base = initialState(lang);
   const rosters: AppState['rosters'] = {};
-  for (const [sport, r] of Object.entries(raw.rosters ?? {}) as [SportId, Partial<Roster>][]) {
-    const defaults = defaultTemplates(sport, raw.lang);
-    const t: Partial<Record<TemplateKey, string>> = r.templates ?? {};
-    const templates = { ...defaults } as Record<TemplateKey, string>;
-    for (const k of Object.keys(defaults) as TemplateKey[]) if (typeof t[k] === 'string') templates[k] = t[k];
+  for (const sport of SPORT_IDS) {
+    const r = isObj(raw.rosters) ? raw.rosters[sport] : undefined;
+    if (!isObj(r)) continue;
+    const templates = defaultTemplates(sport, lang);
+    const t = isObj(r.templates) ? r.templates : {};
+    for (const k of Object.keys(templates) as TemplateKey[]) if (typeof t[k] === 'string') templates[k] = t[k];
     rosters[sport] = {
       homeTeam: strOr(r.homeTeam), homeSayAs: strOr(r.homeSayAs), homeOrigSpelling: strOr(r.homeOrigSpelling), homeNameLang: strOr(r.homeNameLang),
       opponent: strOr(r.opponent), opponentSayAs: strOr(r.opponentSayAs), opponentOrigSpelling: strOr(r.opponentOrigSpelling), opponentNameLang: strOr(r.opponentNameLang),
       showPositions: r.showPositions === true,
-      players: (r.players ?? []).map(normalizePlayer),
-      guestPlayers: (r.guestPlayers ?? []).map(normalizePlayer),
+      players: normalizePlayers(r.players),
+      guestPlayers: normalizePlayers(r.guestPlayers),
       templates,
     };
   }
-  const url = (raw.localTts as { url?: unknown } | null | undefined)?.url;
-  const localTts = typeof url === 'string' && isLocalUrl(url) ? { url } : null;
-  return { ...raw, rosters, localTts };
+  const url = isObj(raw.localTts) ? raw.localTts.url : undefined;
+  return {
+    ...base,
+    sport: SPORT_IDS.includes(raw.sport as SportId) ? (raw.sport as SportId) : base.sport,
+    voiceId: typeof raw.voiceId === 'string' ? raw.voiceId : base.voiceId,
+    soundsEnabled: raw.soundsEnabled !== false,
+    rosters,
+    customSounds: isObj(raw.customSounds) ? (raw.customSounds as AppState['customSounds']) : {},
+    localTts: typeof url === 'string' && isLocalUrl(url) ? { url } : null,
+  };
 }
 
 const listKey = (side: Side | undefined) => (side === 'guest' ? 'guestPlayers' : 'players');

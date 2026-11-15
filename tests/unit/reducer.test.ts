@@ -182,3 +182,59 @@ describe('normalizeState via replaceAll', () => {
     expect(speechText('Lea 7', r)).toBe('Lea 7');
   });
 });
+
+describe('normalizeState: a damaged or old stored state never throws at start', () => {
+  const load = (state: unknown) => reducer(initialState('en'), { type: 'replaceAll', state: state as never });
+  const good = () => reducer(reducer(initialState('de'), { type: 'addPlayers', text: '7 Lea', onField: true }), { type: 'setSoundsEnabled', on: false });
+
+  test('a valid state comes back unchanged', () => {
+    const g = good();
+    expect(load(g)).toEqual(g);
+  });
+
+  test.each(['sport', 'lang', 'voiceId', 'soundsEnabled', 'rosters', 'customSounds', 'localTts'] as const)('missing top-level field %s gets its default', field => {
+    const { [field]: _dropped, ...rest } = good();
+    const s = load(rest);
+    const lang = field === 'lang' ? 'en' : 'de';
+    const defaults = initialState(lang);
+    expect(s.version).toBe(1);
+    expect(s.lang).toBe(lang);
+    expect(s.sport).toBe('football');
+    expect(typeof s.voiceId).toBe('string');
+    if (field === 'voiceId') expect(s.voiceId).toBe(defaults.voiceId);
+    expect(s.soundsEnabled).toBe(field === 'soundsEnabled');
+    expect(s.customSounds).toEqual({});
+    expect(s.localTts).toBeNull();
+    expect(currentRoster(s).players.map(p => p.name)).toEqual(field === 'rosters' ? [] : ['Lea']);
+    expect(currentRoster(s).templates.intro.length).toBeGreaterThan(0);
+  });
+
+  test('wrong types at the top level fall back to defaults', () => {
+    const s = load({ ...good(), sport: 'chess', lang: 'xx', voiceId: 7, soundsEnabled: 'no', customSounds: null, rosters: [] });
+    expect(s.sport).toBe('football');
+    expect(s.lang).toBe('en');
+    expect(s.voiceId).toBe(initialState('en').voiceId);
+    expect(s.soundsEnabled).toBe(true);
+    expect(s.customSounds).toEqual({});
+    expect(currentRoster(s).players).toEqual([]);
+  });
+
+  test('null or non-object players are skipped and damaged player fields are filled', () => {
+    const g = good();
+    const lea = currentRoster(g).players[0];
+    const s = load({ ...g, rosters: { football: { ...currentRoster(g), players: [null, lea, 'x', { name: 'Tom' }], guestPlayers: [undefined, 5] } } });
+    const r = currentRoster(s);
+    expect(r.players.map(p => p.name)).toEqual(['Lea', 'Tom']);
+    expect(r.players[0]).toEqual(lea);
+    const tom = r.players[1];
+    expect(tom).toMatchObject({ number: '', position: '', onField: true, customText: null, sayAs: '', origSpelling: '', nameLang: '' });
+    expect(tom.id.length).toBeGreaterThan(0);
+    expect(r.guestPlayers).toEqual([]);
+  });
+
+  test('rosters under unknown sport keys and non-object rosters are dropped', () => {
+    const g = good();
+    const s = load({ ...g, rosters: { ...g.rosters, chess: currentRoster(g), handball: null } });
+    expect(Object.keys(s.rosters)).toEqual(['football']);
+  });
+});
