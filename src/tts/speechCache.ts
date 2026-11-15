@@ -50,6 +50,7 @@ export class SpeechCache {
     const epoch = this.epoch;
     for (let i = 0; i < unique.length && epoch === this.epoch; i++) {
       await this.get(voiceId, unique[i]);
+      if (epoch !== this.epoch) return; // cleared or replaced meanwhile: this clip was dropped
       onProgress(i + 1, unique.length);
     }
   }
@@ -89,9 +90,10 @@ export class SpeechCache {
 
   /** Adds `entries` to memory and storage. */
   load(entries: Map<string, Blob>): void {
+    const epoch = this.epoch;
     for (const [k, b] of entries) {
       this.mem.set(k, b);
-      this.store.save(k, b).catch((e: unknown) => console.warn('Could not persist speech clip', e));
+      void this.persist(epoch, k, b);
     }
   }
 
@@ -112,9 +114,14 @@ export class SpeechCache {
   private async keep(epoch: number, key: string, blob: Blob): Promise<void> {
     if (epoch !== this.epoch) return;
     this.mem.set(key, blob);
+    await this.persist(epoch, key, blob);
+  }
+
+  /** Stores a clip, and takes it out again when the cache was cleared or replaced while the write was under way. */
+  private async persist(epoch: number, key: string, blob: Blob): Promise<void> {
     try {
       await this.store.save(key, blob);
-      // cleared while the write was under way: the write may have landed after the storage was emptied
+      // the write may have landed after the storage was emptied
       if (epoch !== this.epoch && !this.mem.has(key)) await this.store.remove(key);
     } catch (e) {
       console.warn('Could not persist speech clip', e);

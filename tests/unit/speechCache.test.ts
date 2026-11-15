@@ -316,3 +316,47 @@ test('a storage write that is under way when the cache is cleared is undone', as
   expect(s.m.size).toBe(0);
   expect(c.entries().size).toBe(0);
 });
+
+test('an import write that is under way when the cache is cleared is undone', async () => {
+  const s = memStore();
+  let release!: () => void;
+  const gate = new Promise<void>(r => { release = r; });
+  const slow = { ...s, async save(k: string, b: Blob) { await gate; s.m.set(k, b); } };
+  const c = new SpeechCache(new FakeEngine(), slow);
+  c.replace(new Map([['v|Lea', new Blob(['a'])], ['v|Tom', new Blob(['b'])]])); // an import: writes started
+  await flush();
+  c.clear(); // "Delete all data"
+  s.m.clear(); // clearAll()
+  release();
+  await flush();
+  expect(s.m.size).toBe(0);
+  expect(c.entries().size).toBe(0);
+});
+
+test('a second import during the writes of the first keeps only its own clips in storage', async () => {
+  const s = memStore();
+  let release!: () => void;
+  const gate = new Promise<void>(r => { release = r; });
+  const slow = { ...s, async save(k: string, b: Blob) { await gate; s.m.set(k, b); } };
+  const c = new SpeechCache(new FakeEngine(), slow);
+  c.replace(new Map([['v|Old', new Blob(['a'])], ['v|Both', new Blob(['b'])]]));
+  await flush();
+  c.replace(new Map([['v|Both', new Blob(['c'])], ['v|New', new Blob(['d'])]]));
+  release();
+  await flush();
+  expect([...s.m.keys()].sort()).toEqual(['v|Both', 'v|New']);
+  expect(await s.m.get('v|Both')!.text()).toBe('c');
+});
+
+test('prepare reports no progress for the clip that was in flight when the cache was cleared', async () => {
+  const e = new FakeEngine();
+  const c = new SpeechCache(e, memStore());
+  const progress: number[] = [];
+  e.hold();
+  const run = c.prepare('v', ['A', 'B'], (done) => progress.push(done));
+  await flush();
+  c.clear();
+  e.open();
+  await run;
+  expect(progress).toEqual([]);
+});
