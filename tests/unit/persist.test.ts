@@ -61,3 +61,12 @@ describe('persist', () => {
     expect(await listSpeechKeys()).toEqual([]);
   });
 });
+
+test('deleteSpeech removes one stored clip', async () => {
+  const { saveSpeech, loadSpeech, deleteSpeech } = await import('../../src/state/persist');
+  await saveSpeech('v|a', new Blob(['a']));
+  await saveSpeech('v|b', new Blob(['b']));
+  await deleteSpeech('v|a');
+  expect(await loadSpeech('v|a')).toBeNull();
+  expect(await loadSpeech('v|b')).not.toBeNull();
+});

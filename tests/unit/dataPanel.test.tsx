@@ -19,13 +19,14 @@ vi.mock('../../src/state/persist', () => ({
   saveSoundBlob: vi.fn(async () => {}),
   saveSpeech: vi.fn(async () => {}),
   loadSpeech: vi.fn(async () => null),
+  deleteSpeech: vi.fn(async () => {}),
   clearAll: vi.fn(async () => {}),
 }));
 
 let latest: AppState;
 let speech: SpeechCache;
 function setup(lang: Lang = 'en', init?: (s: AppState) => AppState) {
-  speech = new SpeechCache({ synthesize: async () => new Blob(['x']) } as never, { save: async () => {}, load: async () => null });
+  speech = new SpeechCache({ synthesize: async () => new Blob(['x']) } as never, { save: async () => {}, load: async () => null, remove: async () => {} });
   const services = { queue: {}, speech } as unknown as Services;
   function H() {
     const [state, dispatch] = useReducer(reducer, undefined, () => (init ? init(initialState(lang)) : initialState(lang)));

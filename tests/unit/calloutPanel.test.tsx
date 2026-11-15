@@ -7,6 +7,7 @@ import type { Services } from '../../src/ui/types';
 import type { Action } from '../../src/state/reducer';
 import { initialState, reducer, currentRoster } from '../../src/state/reducer';
 import { TtsUnavailableError } from '../../src/tts/engine';
+import { LocalAccessError } from '../../src/tts/httpEngine';
 import type { AppState } from '../../src/domain/model';
 import type { QueueItem } from '../../src/audio/queue';
 
@@ -24,6 +25,7 @@ function makeServices(opts: { fail?: boolean } = {}) {
       ready.add(`${v}|${t.trim()}`);
       return blobFor(t);
     }),
+    evict: vi.fn(async (v: string, t: string) => { ready.delete(`${v}|${t.trim()}`); }),
     prepare: vi.fn(async (v: string, texts: string[], onProgress: (d: number, t: number) => void) => {
       const u = [...new Set(texts)];
       for (let i = 0; i < u.length; i++) { ready.add(`${v}|${u[i].trim()}`); onProgress(i + 1, u.length); }
@@ -87,6 +89,32 @@ test('▶ on a row calls queue.unlock() synchronously, then plays that clip', as
   expect(items).toHaveLength(1);
   await (items[0] as () => Promise<Blob>)();
   expect(speech.get).toHaveBeenCalledWith(latest.voiceId, expect.stringContaining('Lea'));
+});
+
+test('↻ Regenerate evicts the clip, synthesizes it again and works for the intro row too', async () => {
+  const { services, speech } = makeServices();
+  render(<Harness services={services} init={setup} />);
+  await userEvent.click(screen.getByRole('button', { name: 'Prepare voices (recommended before the game)' }));
+  const row = screen.getByLabelText('Announcement text for Lea').closest('li')!;
+  expect(within(row).getByText(/Ready/)).toBeInTheDocument();
+  speech.get.mockClear();
+  await userEvent.click(screen.getByRole('button', { name: 'Regenerate Lea' }));
+  await waitFor(() => expect(speech.get).toHaveBeenCalledTimes(1));
+  expect(speech.evict).toHaveBeenCalledWith(latest.voiceId, expect.stringContaining('Lea'));
+  expect(speech.evict.mock.invocationCallOrder[0]).toBeLessThan(speech.get.mock.invocationCallOrder[0]);
+  expect(calls).not.toContain('play'); // it only makes the clip, nothing is played
+  await waitFor(() => expect(within(row).getByText(/Ready/)).toBeInTheDocument());
+  speech.get.mockClear();
+  await userEvent.click(screen.getByRole('button', { name: 'Regenerate Intro' }));
+  await waitFor(() => expect(speech.get).toHaveBeenCalledWith(latest.voiceId, expect.stringContaining('FC Test')));
+});
+
+test('a local server that refuses this website shows the allow command on a failing clip', async () => {
+  const { services, speech } = makeServices();
+  render(<Harness services={services} init={setup} />);
+  speech.get.mockRejectedValueOnce(new LocalAccessError('https://club.example'));
+  await userEvent.click(screen.getByRole('button', { name: 'Play Lea' }));
+  expect(await screen.findByText('fanfare-studio allow https://club.example')).toBeInTheDocument();
 });
 
 test('lineupSequence: intro sound, intro text, field then bench', async () => {

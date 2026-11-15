@@ -25,6 +25,14 @@ describe('check-dist URL detector', () => {
   });
 });
 
+describe('check-dist local voice server', () => {
+  test('allows loopback addresses only', () => {
+    expect(findProblems('x="http://127.0.0.1:5123"; y="http://localhost:*;"', '.js')).toEqual([]);
+    expect(findProblems('x="http://localhost.evil.com/a"', '.js')).toHaveLength(1);
+    expect(findProblems('x="http://192.168.1.5:5123"', '.js')).toHaveLength(1);
+  });
+});
+
 describe('check-dist manifest and service worker', () => {
   test('accepts a relative manifest', () => {
     expect(findProblems('{"start_url":"./","icons":[{"src":"icons/a.png"}]}', '.webmanifest')).toEqual([]);

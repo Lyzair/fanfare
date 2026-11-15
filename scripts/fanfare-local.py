@@ -42,7 +42,7 @@ HTTP_PORTS = range(8080, 8100)    # default 8080, then 8081..8099 if busy
 HTTPS_PORTS = range(8443, 8464)   # default 8443, then 8444..8463 if busy
 
 # Same policy as index.html (the page also carries it as a <meta> tag).
-CSP = ("default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self'; "
+CSP = ("default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self' http://localhost:* http://127.0.0.1:*; "
        "media-src 'self' blob:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; "
        "worker-src 'self' blob:; object-src 'none'; base-uri 'self'")
 

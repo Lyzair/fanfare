@@ -61,4 +61,6 @@ export interface AppState {
   soundsEnabled: boolean;
   rosters: Partial<Record<SportId, Roster>>;
   customSounds: Partial<Record<SoundSlot, CustomSound>>;
+  /** The user's own local voice server (Fanfare Studio), or null. Only ever a localhost URL. */
+  localTts: { url: string } | null;
 }

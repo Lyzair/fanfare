@@ -150,6 +150,8 @@ class HttpServerTests(TempDirCase):
         self.assertTrue(resp.getheader('Content-Type').startswith('text/html'))
         self.assertEqual(resp.getheader('X-Content-Type-Options'), 'nosniff')
         self.assertEqual(resp.getheader('Content-Security-Policy'), index_csp())
+        # ruling R16: besides itself, only the user's own local voice server
+        self.assertIn("connect-src 'self' http://localhost:* http://127.0.0.1:*;", resp.getheader('Content-Security-Policy'))
         resp, body = self.get(r, '/a.txt?x=1')
         self.assertEqual((resp.status, body), (200, b'A'))
 

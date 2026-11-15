@@ -1,12 +1,14 @@
 import { useContext, useEffect, useRef, useState } from 'preact/hooks';
 import type { Player, Side, TemplateKey } from '../domain/model';
 import { calloutText, guestIntroText, introText, speechText } from '../domain/template';
+import { LocalAccessError } from '../tts/httpEngine';
 import { currentRoster } from '../state/reducer';
 import { t } from '../i18n';
 import type { UiStrings } from '../i18n';
 import { announce as announceAction, lineupTexts, playText as playTextAction } from './actions';
 import type { ActionEnv, LineupPart } from './actions';
 import { useCustomSoundBlob } from './soundMemory';
+import { LocalError } from './LocalError';
 import { ServicesContext } from './types';
 import type { PanelProps } from './types';
 
@@ -29,7 +31,8 @@ export default function CalloutPanel({ state, dispatch }: PanelProps) {
   const tr = (k: keyof UiStrings) => t(lang, k);
   const roster = currentRoster(state);
   const [playing, setPlaying] = useState(false);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<unknown>(null);
+  const [regenerating, setRegenerating] = useState<ReadonlySet<string>>(new Set());
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [preparing, setPreparing] = useState(false);
   const [doneKey, setDoneKey] = useState<string | null>(null);
@@ -58,12 +61,12 @@ export default function CalloutPanel({ state, dispatch }: PanelProps) {
   const hasGuests = roster.guestPlayers.length > 0;
   const intro = introText(roster);
   const guestIntro = guestIntroText(roster);
-  const reportError = () => setError(true);
+  const reportError = (e?: unknown) => setError(e ?? true);
   const refresh = () => setTick(n => n + 1);
 
   const env: ActionEnv = {
     state, queue, speech, blobs: { intro: introBlob },
-    onStart: () => setError(false), onError: reportError, onDone: refresh,
+    onStart: () => setError(null), onError: reportError, onDone: refresh,
   };
   const playText = (text: string) => playTextAction(env, text);
   const announce = (part: LineupPart) => announceAction(env, part);
@@ -73,14 +76,35 @@ export default function CalloutPanel({ state, dispatch }: PanelProps) {
     if (preparing) return;
     const key = prepareKey;
     const safe = (fn: () => void) => { if (mounted.current) fn(); };
-    setError(false);
+    setError(null);
     setDoneKey(null);
     setPreparing(true);
     setProgress({ done: 0, total: new Set(prepareTexts.map(x => x.trim())).size });
     speech.prepare(state.voiceId, prepareTexts, (done, total) => safe(() => { setProgress({ done, total }); refresh(); }))
-      .then(() => safe(() => setDoneKey(key)), () => safe(reportError))
+      .then(() => safe(() => setDoneKey(key)), (e: unknown) => safe(() => reportError(e)))
       .finally(() => safe(() => { setPreparing(false); setProgress(null); refresh(); }));
   };
+
+  /** Throws the clip away (memory and storage) and makes it again, e.g. after a stray syllable. */
+  const regenerate = (text: string) => {
+    const spoken = speechText(text, roster).trim();
+    if (!spoken || regenerating.has(spoken)) return;
+    const mark = (on: boolean) => setRegenerating(prev => {
+      const next = new Set(prev);
+      if (on) next.add(spoken); else next.delete(spoken);
+      return next;
+    });
+    setError(null);
+    mark(true);
+    speech.evict(state.voiceId, spoken)
+      .then(() => speech.get(state.voiceId, spoken))
+      .then(() => undefined, (e: unknown) => { if (mounted.current) reportError(e); })
+      .finally(() => { if (mounted.current) { mark(false); refresh(); } });
+  };
+  const regenerateButton = (text: string, name: string) => text.trim() ? (
+    <button type="button" aria-label={`${tr('regenerateClip')} ${name}`} title={tr('regenerateClip')}
+      disabled={regenerating.has(speechText(text, roster).trim())} onClick={() => regenerate(text)}>↻</button>
+  ) : null;
 
   const insertChip = (name: string) => {
     const key = lastTpl.current;
@@ -112,6 +136,7 @@ export default function CalloutPanel({ state, dispatch }: PanelProps) {
           onBlur={() => setDrafts(d => { const { [p.id]: _drop, ...rest } = d; return rest; })} />
         <span class="row-actions">
           <button type="button" aria-label={`${tr('playClip')} ${p.name}`} title={tr('playClip')} onClick={() => playText(text)}>▶</button>
+          {regenerateButton(text, p.name)}
           {p.customText !== null && (
             <button type="button" aria-label={tr('resetText')} title={tr('resetText')}
               onClick={() => dispatch({ type: 'updatePlayer', id: p.id, patch: { customText: null }, side })}>↺</button>
@@ -130,6 +155,7 @@ export default function CalloutPanel({ state, dispatch }: PanelProps) {
         <p class="intro-text">{introLine}</p>
         <span class="row-actions">
           <button type="button" aria-label={`${tr('playClip')} ${label}`} title={tr('playClip')} onClick={() => playText(introLine)}>▶</button>
+          {regenerateButton(introLine, label)}
           {badge(introLine)}
         </span>
       </li>
@@ -154,7 +180,9 @@ export default function CalloutPanel({ state, dispatch }: PanelProps) {
       <button type="button" disabled={preparing} onClick={prepare}>{tr('prepareVoices')}</button>
       {preparing && progress && <p role="status" class="progress">{fill(tr('prepareProgress'), progress)}</p>}
       {!preparing && doneKey === prepareKey && <p role="status" class="progress">{tr('prepareDone')}</p>}
-      {error && <p role="alert" class="error">{tr('ttsError')}</p>}
+      {error !== null && (error instanceof LocalAccessError
+        ? <LocalError lang={lang} error={error} prefix={() => ''} />
+        : <p role="alert" class="error">{tr('ttsError')}</p>)}
       {!hasPlayers && <p class="hint">{tr('noPlayersYet')}</p>}
 
       {hasGuests && (

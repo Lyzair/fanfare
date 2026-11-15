@@ -6,6 +6,8 @@ import { initialState, reducer } from '../state/reducer';
 import { loadState, saveState } from '../state/persist';
 import { applyUpdate, usePwaState } from '../pwa/register';
 import { PiperEngine } from '../tts/engine';
+import { HttpTtsEngine } from '../tts/httpEngine';
+import { RoutingEngine } from '../tts/routingEngine';
 import { SpeechCache } from '../tts/speechCache';
 import { ACCENT_CSS } from './accent';
 import { Header } from './Header';
@@ -44,7 +46,13 @@ export function App() {
   const [updateWait, setUpdateWait] = useState(false);
   const [showWelcome, setShowWelcome] = useState(() => !welcomeDismissedBefore());
   const services = useRef<Services | null>(null);
-  services.current ??= { queue: new AudioQueue(), speech: new SpeechCache(new PiperEngine('./')) };
+  // the engine reads the current local server through a ref, so the cache is never rebuilt
+  const stateRef = useRef(state);
+  stateRef.current = state;
+  services.current ??= {
+    queue: new AudioQueue(),
+    speech: new SpeechCache(new RoutingEngine(new PiperEngine('./'), () => (stateRef.current.localTts ? new HttpTtsEngine(stateRef.current.localTts.url) : null))),
+  };
   const value = useMemo(() => services.current!, []);
 
   useEffect(() => {

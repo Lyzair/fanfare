@@ -1,12 +1,13 @@
-import { loadSpeech, saveSpeech } from '../state/persist';
+import { deleteSpeech, loadSpeech, saveSpeech } from '../state/persist';
 import { TtsUnavailableError, type TtsEngine } from './engine';
 
 export interface SpeechStore {
   save(k: string, b: Blob): Promise<void>;
   load(k: string): Promise<Blob | null>;
+  remove(k: string): Promise<void>;
 }
 
-const idbStore: SpeechStore = { save: saveSpeech, load: loadSpeech };
+const idbStore: SpeechStore = { save: saveSpeech, load: loadSpeech, remove: deleteSpeech };
 
 /** Speech clips by `${voiceId}|${trimmed text}`: memory → store → engine. */
 export class SpeechCache {
@@ -44,6 +45,19 @@ export class SpeechCache {
     for (let i = 0; i < unique.length; i++) {
       await this.get(voiceId, unique[i]);
       onProgress(i + 1, unique.length);
+    }
+  }
+
+  /** Forgets one clip (memory and storage) so the next `get` synthesizes it again. */
+  async evict(voiceId: string, text: string): Promise<void> {
+    const key = SpeechCache.key(voiceId, text);
+    const inflight = this.pending.get(key);
+    if (inflight) await inflight.catch(() => undefined); // let a running synthesis finish first
+    this.mem.delete(key);
+    try {
+      await this.store.remove(key);
+    } catch (e) {
+      console.warn('Could not remove speech clip from storage', e);
     }
   }
 

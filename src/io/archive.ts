@@ -2,6 +2,7 @@ import { unzip, zip, strFromU8, strToU8, type Unzipped } from 'fflate';
 import type { AppState, Lang, Player, Roster, SoundSlot, SportId, TemplateKey, CustomSound } from '../domain/model';
 import { SPORT_IDS } from '../domain/sports';
 import { LANGS, defaultTemplates } from '../i18n';
+import { isLocalUrl } from '../tts/httpEngine';
 
 export interface ArchiveContent {
   state: AppState;
@@ -162,8 +163,13 @@ function parseState(j: unknown): { state: AppState; speechIndex: Record<string, 
       speechIndex[k] = v;
     }
   }
+  let localTts: AppState['localTts'] = null;
+  if (j.localTts !== undefined && j.localTts !== null) {
+    if (!isObj(j.localTts) || typeof j.localTts.url !== 'string' || !isLocalUrl(j.localTts.url)) throw bad();
+    localTts = { url: j.localTts.url };
+  }
   return {
-    state: { version: 1, sport: j.sport as SportId, lang, voiceId: j.voiceId, soundsEnabled: j.soundsEnabled, rosters, customSounds },
+    state: { version: 1, sport: j.sport as SportId, lang, voiceId: j.voiceId, soundsEnabled: j.soundsEnabled, rosters, customSounds, localTts },
     speechIndex,
   };
 }

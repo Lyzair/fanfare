@@ -9,12 +9,14 @@ import { fileURLToPath } from 'node:url';
 const MAX_FILE = 100 * 1024 * 1024;
 const MAX_TOTAL = 1024 * 1024 * 1024;
 const CSP =
-  "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self'; media-src 'self' blob:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'";
+  "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self' http://localhost:* http://127.0.0.1:*; media-src 'self' blob:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'";
 // Identifiers and message text that are never requested: XML/MathML/SVG
 // namespace names, and a documentation link ONNX Runtime prints in a warning.
 const HARMLESS_URLS = [
   /^https?:\/\/www\.w3\.org\/(?:\d{4}\/[\w./-]+|XML\/1998\/namespace)$/,
   /^https:\/\/web\.dev\/cross-origin-isolation-guide\/?$/,
+  // The user's own local voice server (ruling R16): the CSP allows it and the UI names it.
+  /^https?:\/\/(?:localhost|127\.0\.0\.1)(?::(?:\*|\d+))?;?$/,
 ];
 
 /** Replace comments with spaces, leaving string contents and code intact. */

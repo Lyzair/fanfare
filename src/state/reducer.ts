@@ -1,6 +1,7 @@
 import type { AppState, CustomSound, Lang, Player, Roster, Side, SoundSlot, SportId, TeamFile, TemplateKey } from '../domain/model';
 import { parsePlayerLines } from '../domain/roster';
 import { defaultTemplates, getPack } from '../i18n';
+import { isLocalUrl } from '../tts/httpEngine';
 import { VOICES, defaultVoiceFor } from '../tts/voices';
 
 export type Action =
@@ -16,6 +17,7 @@ export type Action =
   | { type: 'setTemplate'; key: TemplateKey; text: string } | { type: 'resetTemplates' }
   | { type: 'setSoundsEnabled'; on: boolean }
   | { type: 'setCustomSound'; slot: SoundSlot; sound: CustomSound | null }
+  | { type: 'setLocalTts'; url: string | null }
   | { type: 'replaceAll'; state: AppState };
 
 function defaultRoster(sport: SportId, lang: Lang): Roster {
@@ -25,7 +27,7 @@ function defaultRoster(sport: SportId, lang: Lang): Roster {
 export function initialState(lang: Lang = 'en'): AppState {
   return {
     version: 1, sport: 'football', lang, voiceId: defaultVoiceFor(lang), soundsEnabled: true,
-    rosters: { football: defaultRoster('football', lang) }, customSounds: {},
+    rosters: { football: defaultRoster('football', lang) }, customSounds: {}, localTts: null,
   };
 }
 
@@ -63,7 +65,9 @@ export function normalizeState(raw: AppState): AppState {
       templates,
     };
   }
-  return { ...raw, rosters };
+  const url = (raw.localTts as { url?: unknown } | null | undefined)?.url;
+  const localTts = typeof url === 'string' && isLocalUrl(url) ? { url } : null;
+  return { ...raw, rosters, localTts };
 }
 
 const listKey = (side: Side | undefined) => (side === 'guest' ? 'guestPlayers' : 'players');
@@ -158,6 +162,14 @@ export function reducer(s: AppState, a: Action): AppState {
       const customSounds = { ...s.customSounds };
       if (a.sound) customSounds[a.slot] = a.sound; else delete customSounds[a.slot];
       return { ...s, customSounds };
+    }
+    case 'setLocalTts': {
+      if (a.url === null) {
+        // a voice that lived on the server cannot be selected any more
+        const voiceId = s.voiceId.startsWith('local:') ? defaultVoiceFor(s.lang) : s.voiceId;
+        return { ...s, localTts: null, voiceId };
+      }
+      return isLocalUrl(a.url) ? { ...s, localTts: { url: a.url } } : s;
     }
     case 'replaceAll': return normalizeState(a.state);
   }

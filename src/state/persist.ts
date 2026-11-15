@@ -61,6 +61,10 @@ export function loadSpeech(key: string): Promise<Blob | null> {
   return getBlob(`speech:${key}`);
 }
 
+export async function deleteSpeech(key: string): Promise<void> {
+  await del(`speech:${key}`, store);
+}
+
 export async function listSpeechKeys(): Promise<string[]> {
   const all = await keys(store);
   return all

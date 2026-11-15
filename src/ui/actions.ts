@@ -18,7 +18,7 @@ export interface ActionEnv {
   /** The user's custom sounds (null/missing = the default sound). */
   blobs: Partial<Record<SoundSlot, Blob | null>>;
   /** Called when a speech clip could not be made. */
-  onError?: () => void;
+  onError?: (e?: unknown) => void;
   /** Called right before playing starts (clears an old error). */
   onStart?: () => void;
   /** Called when the queue has finished (or was replaced). */

@@ -10,7 +10,7 @@ async function bytes(b: Blob): Promise<Uint8Array> {
 
 function state(): AppState {
   return {
-    version: 1, sport: 'football', lang: 'en', voiceId: 'v1', soundsEnabled: true,
+    version: 1, sport: 'football', lang: 'en', voiceId: 'v1', soundsEnabled: true, localTts: null,
     rosters: {
       football: {
         homeTeam: 'A', homeSayAs: 'Ay', homeOrigSpelling: 'Эй', homeNameLang: 'ru', opponent: 'B', opponentSayAs: 'Bee', opponentOrigSpelling: '', opponentNameLang: '', showPositions: true,
