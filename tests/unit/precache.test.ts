@@ -3,14 +3,15 @@ import { buildPrecache, isPrecached } from '../../scripts/precache.mjs';
 
 const f = (path: string, hash = 'h') => ({ path, hash });
 
-test('includes the app shell and excludes voices, licences, sw and threaded wasm', () => {
+test('includes the app shell and the licence texts, and excludes voices, sw and threaded wasm', () => {
   const { entries } = buildPrecache([
     f('index.html'), f('assets/index-1.js'), f('assets/a.css'), f('ort/ort-wasm-simd.wasm'), f('ort/ort-wasm.wasm'), f('ort/ort-wasm-simd-threaded.wasm'),
     f('piper/piper_phonemize.data'), f('manual/en.html'), f('manual/media/en/a.png'), f('manual/media/de/a.gif'), f('manifest.webmanifest'), f('icons/icon-192.png'),
-    f('voices/de/x.onnx'), f('voices/LICENSES.md'), f('licenses/GPL-3.0.txt'), f('sw.js'), f('assets/a.js.map'),
+    f('voices/de/x.onnx'), f('voices/LICENSES.md'), f('licenses/GPL-3.0.txt'), f('licenses/VOICE-LICENSES.txt'), f('sw.js'), f('assets/a.js.map'),
   ]);
   expect(entries.map((e: { url: string }) => e.url)).toEqual([
-    './assets/a.css', './assets/index-1.js', './icons/icon-192.png', './index.html', './manifest.webmanifest',
+    './assets/a.css', './assets/index-1.js', './icons/icon-192.png', './index.html',
+    './licenses/GPL-3.0.txt', './licenses/VOICE-LICENSES.txt', './manifest.webmanifest',
     './manual/en.html', './ort/ort-wasm-simd.wasm', './piper/piper_phonemize.data',
   ]);
 });

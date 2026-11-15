@@ -1,7 +1,7 @@
 // Pure helpers that decide what the service worker precaches (see tests/unit/precache.test.ts).
 import { createHash } from 'node:crypto';
 
-const INCLUDE = [/^index\.html$/, /^assets\//, /^ort\/ort-wasm-simd\.wasm$/, /^piper\//, /^manual\/[^/]+\.html$/, /^manifest\.webmanifest$/, /^icons\//];
+const INCLUDE = [/^index\.html$/, /^assets\//, /^ort\/ort-wasm-simd\.wasm$/, /^piper\//, /^manual\/[^/]+\.html$/, /^manifest\.webmanifest$/, /^icons\//, /^licenses\//];
 // Voices are cached by the speech library in OPFS. ORT 1.18 uses only the SIMD
 // build (other non-threaded variants and manual/media are cached when first
 // requested, see src/sw/route.ts).

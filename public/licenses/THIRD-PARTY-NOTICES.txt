@@ -4,7 +4,8 @@ THIRD-PARTY NOTICES
 Fanfare bundles the software listed below. This file carries the copyright and
 permission notices their licences ask to be kept with copies. The voices and
 the eSpeak NG components (GPL-3.0-or-later) are described in
-../voices/LICENSES.md; the GPL text is in GPL-3.0.txt next to this file.
+../voices/LICENSES.md (the same text: VOICE-LICENSES.txt next to this file);
+the GPL text is in GPL-3.0.txt next to this file.
 
 
 1. Fanfare (this app)

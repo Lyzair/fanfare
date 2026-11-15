@@ -65,6 +65,20 @@ test('after one online visit the app reloads and announces offline', async ({ pa
   await expect(page.locator('h1').first()).toBeVisible();
   await expect(page.locator('img').first()).toBeVisible();
 
+  // The licence notice (step 5) opens offline as readable text, and so does the GPL text it names.
+  await page.goBack();
+  const [licencePage] = await Promise.all([
+    context.waitForEvent('page'),
+    page.getByRole('link', { name: 'Licences of voices and software' }).click(),
+  ]);
+  await expect(licencePage).toHaveURL(/licenses\/VOICE-LICENSES\.txt$/);
+  await expect(licencePage.locator('body')).toContainText('eSpeak NG (GPL-3.0-or-later)');
+  await licencePage.goto(new URL('GPL-3.0.txt', licencePage.url()).href);
+  await expect(licencePage.locator('body')).toContainText('GNU GENERAL PUBLIC LICENSE');
+  await licencePage.goto(new URL('THIRD-PARTY-NOTICES.txt', licencePage.url()).href);
+  await expect(licencePage.locator('body')).toContainText('END OF TERMS AND CONDITIONS');
+  await licencePage.close();
+
   expect(foreign).toEqual([]);
   expect(failed).toEqual([]);
 });

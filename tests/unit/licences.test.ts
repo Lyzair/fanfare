@@ -54,3 +54,7 @@ test('the licence notice is reachable: app string in every language, local zip R
   expect(readme.match(/licenses\/GPL-3\.0\.txt/g)).toHaveLength(2);
   expect(read('scripts/package-local.mjs')).toContain("['LICENSE', `${top}/LICENSE`");
 });
+
+test('the licence page the app links to is a plain-text copy of voices/LICENSES.md, kept in step', () => {
+  expect(read('public/licenses/VOICE-LICENSES.txt')).toBe(licenses);
+});

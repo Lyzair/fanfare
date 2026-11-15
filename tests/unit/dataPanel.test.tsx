@@ -254,7 +254,8 @@ test('delete all empties the speech cache before storage is wiped, so a running 
 test('step 5 links to the licences of the voices and the bundled software', () => {
   setup('de');
   const link = screen.getByRole('link', { name: t('de', 'licencesLink') });
-  expect(link).toHaveAttribute('href', './voices/LICENSES.md');
+  // plain text under licenses/: precached, so it opens offline (voices/ is never handled by the service worker)
+  expect(link).toHaveAttribute('href', './licenses/VOICE-LICENSES.txt');
   expect(link).toHaveAttribute('rel', 'noopener');
 });
 
