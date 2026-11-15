@@ -257,3 +257,13 @@ test('step 5 links to the licences of the voices and the bundled software', () =
   expect(link).toHaveAttribute('href', './voices/LICENSES.md');
   expect(link).toHaveAttribute('rel', 'noopener');
 });
+
+test('without the offline shell (plain http) the offline status is checked once, not every two seconds', async () => {
+  setup('en', withPlayer);
+  const has = vi.spyOn(speech, 'has');
+  expect(await screen.findByText(t('en', 'offlineNoShell'))).toBeInTheDocument();
+  await new Promise(r => setTimeout(r, 300));
+  const afterFirstCheck = has.mock.calls.length;
+  await new Promise(r => setTimeout(r, 2300));
+  expect(has.mock.calls.length).toBe(afterFirstCheck);
+});
