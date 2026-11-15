@@ -3,7 +3,10 @@ import userEvent from '@testing-library/user-event';
 import { IDBFactory } from 'fake-indexeddb';
 import App from '../../src/ui/App';
 import { t } from '../../src/i18n';
-import { initialState } from '../../src/state/reducer';
+import { initialState, reducer } from '../../src/state/reducer';
+import { importArchive } from '../../src/io/archive';
+import { SpeechCache } from '../../src/tts/speechCache';
+import { lineupTexts } from '../../src/ui/actions';
 import * as persist from '../../src/state/persist';
 
 beforeEach(async () => {
@@ -89,3 +92,57 @@ test('storage failure: app still works, one notice shown', async () => {
   expect(screen.getAllByRole('status')).toHaveLength(1);
 });
 
+
+test('prepared clips survive a reload: Ready badges and Export see them', async () => {
+  localStorage.setItem('fanfare.welcomeDismissed', '1');
+  const saved = reducer(initialState('en'), { type: 'addPlayers', text: 'Lea', onField: true });
+  await persist.saveState(saved);
+  const texts = lineupTexts(saved);
+  expect(texts.length).toBeGreaterThan(1);
+  for (const x of texts) await persist.saveSpeech(SpeechCache.key(saved.voiceId, x), new Blob(['w'], { type: 'audio/wav' }));
+  render(<App />); // a fresh page: nothing is in memory yet
+  await waitFor(() => expect(document.querySelectorAll('.ready-badge')).toHaveLength(texts.length));
+  let exported: Blob | undefined;
+  URL.createObjectURL = vi.fn((b: Blob) => { exported = b; return 'blob:z'; }); URL.revokeObjectURL = vi.fn();
+  vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+  await userEvent.click(screen.getByRole('button', { name: t('en', 'exportData') }));
+  await waitFor(() => expect(exported).toBeDefined());
+  const back = await importArchive(exported!);
+  expect([...back.speech.keys()].sort()).toEqual(texts.map(x => SpeechCache.key(saved.voiceId, x)).sort());
+});
+
+test('a pending save is written at once when the page is hidden or closed', async () => {
+  const save = vi.spyOn(persist, 'saveState').mockResolvedValue();
+  render(<App />);
+  const sel = await screen.findByLabelText(/sport/i);
+  await act(async () => { await new Promise(r => setTimeout(r, 400)); }); // the save after loading is through
+  save.mockClear();
+  await userEvent.selectOptions(sel, 'handball');
+  expect(save).not.toHaveBeenCalled(); // still inside the 300 ms debounce
+  window.dispatchEvent(new Event('pagehide'));
+  expect(save).toHaveBeenCalledTimes(1);
+  expect(save.mock.calls[0][0].sport).toBe('handball');
+  await act(async () => { await new Promise(r => setTimeout(r, 400)); });
+  expect(save).toHaveBeenCalledTimes(1); // the debounced save does not run a second time
+
+  await userEvent.selectOptions(sel, 'basketball');
+  const visibility = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+  document.dispatchEvent(new Event('visibilitychange'));
+  expect(save).toHaveBeenCalledTimes(2);
+  expect(save.mock.calls[1][0].sport).toBe('basketball');
+  visibility.mockRestore();
+  window.dispatchEvent(new Event('pagehide')); // nothing pending: nothing written
+  expect(save).toHaveBeenCalledTimes(2);
+});
+
+test('a failed load never overwrites the stored data with defaults', async () => {
+  vi.spyOn(persist, 'loadState').mockRejectedValue(new Error('transient'));
+  const save = vi.spyOn(persist, 'saveState').mockResolvedValue();
+  render(<App />);
+  const sel = await screen.findByLabelText(/sport/i);
+  expect(await screen.findByRole('status')).toHaveTextContent(t('en', 'saveUnavailable'));
+  await userEvent.selectOptions(sel, 'handball');
+  window.dispatchEvent(new Event('pagehide'));
+  await act(async () => { await new Promise(r => setTimeout(r, 450)); });
+  expect(save).not.toHaveBeenCalled();
+});

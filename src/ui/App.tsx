@@ -42,6 +42,7 @@ export function App() {
   const [state, dispatch] = useReducer(reducer, undefined, () => initialState(firstRunLang()));
   const [loaded, setLoaded] = useState(false);
   const [storageFailed, setStorageFailed] = useState(false);
+  const [, setClipsLoaded] = useState(false);
   const pwa = usePwaState();
   const [updateWait, setUpdateWait] = useState(false);
   const [showWelcome, setShowWelcome] = useState(() => !welcomeDismissedBefore());
@@ -57,20 +58,42 @@ export function App() {
 
   useEffect(() => {
     let cancelled = false;
+    // autosave starts only after a successful load: a failed one must not be followed by a save of the defaults
     loadState().then(
-      saved => { if (!cancelled && saved) dispatch({ type: 'replaceAll', state: saved }); },
+      saved => {
+        if (cancelled) return;
+        if (saved) dispatch({ type: 'replaceAll', state: saved });
+        setLoaded(true);
+      },
       () => { if (!cancelled) setStorageFailed(true); },
-    ).finally(() => { if (!cancelled) setLoaded(true); });
+    );
+    // clips prepared in an earlier visit: Export and the Ready badges read them from memory
+    void value.speech.hydrate().then(() => { if (!cancelled) setClipsLoaded(true); });
     return () => { cancelled = true; };
-  }, []);
+  }, [value]);
 
+  const savePending = useRef(false);
+  const saveNow = () => {
+    if (!savePending.current) return;
+    savePending.current = false;
+    saveState(stateRef.current).catch(() => setStorageFailed(true));
+  };
   useEffect(() => {
     if (!loaded) return;
-    const id = setTimeout(() => {
-      saveState(state).catch(() => setStorageFailed(true));
-    }, SAVE_DELAY_MS);
+    savePending.current = true;
+    const id = setTimeout(saveNow, SAVE_DELAY_MS);
     return () => clearTimeout(id);
   }, [state, loaded]);
+  // closing the tab or switching apps cancels the timer: write the pending save right away
+  useEffect(() => {
+    const onHidden = () => { if (document.visibilityState === 'hidden') saveNow(); };
+    window.addEventListener('pagehide', saveNow);
+    document.addEventListener('visibilitychange', onHidden);
+    return () => {
+      window.removeEventListener('pagehide', saveNow);
+      document.removeEventListener('visibilitychange', onHidden);
+    };
+  }, []);
 
   const dismissWelcome = () => {
     setShowWelcome(false);
