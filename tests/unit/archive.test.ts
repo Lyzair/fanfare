@@ -143,3 +143,51 @@ describe('archive', () => {
     expect(e.name).toBe('ImportError');
   });
 });
+
+describe('archive hardening', () => {
+  const player = (id: unknown, name: string) => ({ id, name, number: '', position: '', onField: true, customText: null });
+  const withPlayers = (players: unknown[], guestPlayers: unknown[] = []) => {
+    const s = state();
+    return { ...s, customSounds: {}, rosters: { football: { ...s.rosters.football, players, guestPlayers } } };
+  };
+
+  test('a repeated player id within one list gets a fresh id', async () => {
+    const out = await importArchive(zipJson(withPlayers([player('x', 'Ann'), player('x', 'Bea')])));
+    const ps = out.state.rosters.football!.players;
+    expect(ps[0].id).toBe('x');
+    expect(ps[1].id).not.toBe('x');
+    expect(ps[1].id).not.toBe('');
+  });
+
+  test('an id shared between home and guests gets a fresh id on the guest side', async () => {
+    const out = await importArchive(zipJson(withPlayers([player('x', 'Ann')], [player('x', 'Gus'), player('', 'Hal')])));
+    const r = out.state.rosters.football!;
+    const ids = [...r.players, ...r.guestPlayers].map(p => p.id);
+    expect(r.players[0].id).toBe('x');
+    expect(new Set(ids).size).toBe(3);
+    expect(ids.every(id => id !== '')).toBe(true);
+  });
+
+  test('entries outside the allow-list are never inflated', async () => {
+    // 3 MB of zeros under a foreign name: with a 1 MB cap it would be "too large" if it were counted
+    const out = await importArchive(zipJson(withPlayers([]), {
+      'evil.bin': new Uint8Array(3 * 1024 * 1024), 'speech/../x.wav': new Uint8Array(4), 'sounds/other.mp3': new Uint8Array(4),
+    }), { bytes: 1024 * 1024, entries: 10 });
+    expect(out.speech.size).toBe(0);
+    expect(out.sounds).toEqual({});
+  });
+
+  test('a small file that inflates past the cap is rejected as too large', async () => {
+    const file = zipJson(withPlayers([]), { 'speech/0.wav': new Uint8Array(3 * 1024 * 1024) });
+    expect(file.size).toBeLessThan(100 * 1024);
+    await expect(importArchive(file, { bytes: 1024 * 1024, entries: 10 })).rejects.toMatchObject({ code: 'too-large' });
+    // the default cap is far above this file
+    await expect(importArchive(file)).resolves.toBeTruthy();
+  });
+
+  test('too many entries are rejected as too large', async () => {
+    const extra: Record<string, Uint8Array> = {};
+    for (let i = 0; i < 10; i++) extra[`speech/${i}.wav`] = new Uint8Array(1);
+    await expect(importArchive(zipJson(withPlayers([]), extra), { bytes: 1024 * 1024, entries: 10 })).rejects.toMatchObject({ code: 'too-large' });
+  });
+});

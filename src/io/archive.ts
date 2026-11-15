@@ -24,6 +24,11 @@ export class ImportError extends Error {
 }
 
 export const MAX_IMPORT_BYTES = 200 * 1024 * 1024;
+/** Caps on what one import may inflate to: a small crafted zip must not exhaust the tab's memory. */
+export interface ImportLimits { bytes: number; entries: number }
+const IMPORT_LIMITS: ImportLimits = { bytes: 400 * 1024 * 1024, entries: 5000 };
+/** The only entries an export contains; everything else in a zip is skipped without inflating it. */
+const ENTRY_NAME = /^(fanfare\.json|sounds\/(score|intro)\.[^/]+|speech\/\d+\.wav)$/;
 
 const SLOTS: SoundSlot[] = ['score', 'intro'];
 /** The templates every export has; the guest ones are optional for older files. */
@@ -52,9 +57,22 @@ function zipAsync(files: Record<string, Uint8Array>): Promise<Uint8Array> {
   });
 }
 
-function unzipAsync(data: Uint8Array): Promise<Unzipped> {
+/** Inflates the allow-listed entries; fflate never writes more than an entry's declared size. */
+function unzipAsync(data: Uint8Array, limits: ImportLimits): Promise<Unzipped> {
   return new Promise((resolve, reject) => {
-    unzip(data, (err, out) => (err ? reject(err) : resolve(out)));
+    let bytes = 0, entries = 0, tooLarge = false;
+    const filter = (f: { name: string; originalSize: number }) => {
+      if (tooLarge || !ENTRY_NAME.test(f.name)) return false;
+      bytes += f.originalSize;
+      entries++;
+      tooLarge = bytes > limits.bytes || entries > limits.entries;
+      return !tooLarge;
+    };
+    unzip(data, { filter }, (err, out) => {
+      if (tooLarge) reject(new ImportError('too-large'));
+      else if (err) reject(err);
+      else resolve(out);
+    });
   });
 }
 
@@ -83,15 +101,18 @@ export async function exportArchive(c: ArchiveContent): Promise<Blob> {
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 const bad = () => new ImportError('invalid-data');
 
-export function parsePlayer(v: unknown): Player {
+/** `seen` holds the ids used so far in this roster: a missing or repeated id gets a fresh one. */
+function parsePlayer(v: unknown, seen: Set<string>): Player {
   if (!isObj(v)) throw bad();
   const { name, number, position, onField, customText, id } = v;
   if (typeof name !== 'string' || typeof number !== 'string' || typeof position !== 'string') throw bad();
   if (typeof onField !== 'boolean') throw bad();
   if (customText !== null && typeof customText !== 'string') throw bad();
   for (const k of ['sayAs', 'origSpelling', 'nameLang'] as const) if (v[k] !== undefined && typeof v[k] !== 'string') throw bad();
+  const ownId = typeof id === 'string' && id && !seen.has(id) ? id : newId();
+  seen.add(ownId);
   return {
-    id: typeof id === 'string' && id ? id : newId(), name, number, position, onField, customText,
+    id: ownId, name, number, position, onField, customText,
     sayAs: typeof v.sayAs === 'string' ? v.sayAs : '',
     origSpelling: typeof v.origSpelling === 'string' ? v.origSpelling : '',
     nameLang: typeof v.nameLang === 'string' ? v.nameLang : '',
@@ -119,6 +140,8 @@ function parseRoster(v: unknown, sport: SportId, lang: Lang): Roster {
       } as Record<TemplateKey, string>)
     : defaults;
   if (v.guestPlayers !== undefined && !Array.isArray(v.guestPlayers)) throw bad();
+  const seen = new Set<string>();
+  const player = (p: unknown) => parsePlayer(p, seen);
   return {
     homeTeam: str(v.homeTeam),
     homeSayAs: str(v.homeSayAs),
@@ -129,8 +152,8 @@ function parseRoster(v: unknown, sport: SportId, lang: Lang): Roster {
     opponentOrigSpelling: str(v.opponentOrigSpelling),
     opponentNameLang: str(v.opponentNameLang),
     showPositions: v.showPositions === true,
-    players: v.players.map(parsePlayer),
-    guestPlayers: Array.isArray(v.guestPlayers) ? v.guestPlayers.map(parsePlayer) : [],
+    players: v.players.map(player),
+    guestPlayers: Array.isArray(v.guestPlayers) ? v.guestPlayers.map(player) : [],
     templates,
   };
 }
@@ -175,13 +198,13 @@ function parseState(j: unknown): { state: AppState; speechIndex: Record<string, 
   };
 }
 
-export async function importArchive(file: Blob): Promise<ArchiveContent> {
+export async function importArchive(file: Blob, limits: ImportLimits = IMPORT_LIMITS): Promise<ArchiveContent> {
   if (file.size > MAX_IMPORT_BYTES) throw new ImportError('too-large');
   let files: Unzipped;
   try {
-    files = await unzipAsync(new Uint8Array(await blobBytes(file)));
-  } catch {
-    throw new ImportError('not-zip');
+    files = await unzipAsync(new Uint8Array(await blobBytes(file)), limits);
+  } catch (e) {
+    throw e instanceof ImportError ? e : new ImportError('not-zip');
   }
   const jsonBytes = files['fanfare.json'];
   if (!jsonBytes) throw new ImportError('missing-json');
