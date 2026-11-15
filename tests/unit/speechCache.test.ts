@@ -33,6 +33,7 @@ function memStore() {
     async save(k: string, b: Blob) { m.set(k, b); },
     async load(k: string) { return m.get(k) ?? null; },
     async remove(k: string) { m.delete(k); },
+    async keys() { return [...m.keys()]; },
   };
 }
 
@@ -160,7 +161,7 @@ test('every voice is known to the piper library and has a licence', () => {
 });
 
 test('clear forgets in-memory clips', () => {
-  const c = new SpeechCache({ synthesize: async () => new Blob(['x']) } as unknown as TtsEngine, { save: async () => {}, load: async () => null, remove: async () => {} });
+  const c = new SpeechCache({ synthesize: async () => new Blob(['x']) } as unknown as TtsEngine, { save: async () => {}, load: async () => null, remove: async () => {}, keys: async () => [] });
   c.load(new Map([['v|a', new Blob(['x'])]]));
   expect(c.entries().size).toBe(1);
   c.clear();
@@ -168,7 +169,7 @@ test('clear forgets in-memory clips', () => {
 });
 
 test('replace swaps all in-memory clips', () => {
-  const c = new SpeechCache({ synthesize: async () => new Blob(['x']) } as unknown as TtsEngine, { save: async () => {}, load: async () => null, remove: async () => {} });
+  const c = new SpeechCache({ synthesize: async () => new Blob(['x']) } as unknown as TtsEngine, { save: async () => {}, load: async () => null, remove: async () => {}, keys: async () => [] });
   c.load(new Map([['v|a', new Blob(['x'])]]));
   c.replace(new Map([['v|b', new Blob(['y'])]]));
   expect([...c.entries().keys()]).toEqual(['v|b']);
@@ -229,4 +230,129 @@ test('regenerate replaces the clip only on success; a failing engine keeps the o
   expect(fresh).not.toBe(old);
   expect(await c.get('v', 'Hallo')).toBe(fresh);
   expect(s.m.get('v|Hallo')).toBe(fresh);
+});
+
+const flush = () => new Promise(r => setTimeout(r, 0));
+
+test('hydrate loads every stored clip, so has/entries see them after a reload', async () => {
+  const s = memStore();
+  const first = new SpeechCache(new FakeEngine(), s);
+  await first.get('v', 'A');
+  await first.get('v', 'B');
+  // "reload": a new cache over the same storage
+  const e = new FakeEngine();
+  const c = new SpeechCache(e, s);
+  expect(c.has('v', 'A')).toBe(false);
+  await c.hydrate();
+  expect(c.has('v', 'A')).toBe(true);
+  expect([...c.entries().keys()].sort()).toEqual(['v|A', 'v|B']);
+  expect(e.calls).toHaveLength(0);
+});
+
+test('hydrate survives a failing store and never replaces a newer clip in memory', async () => {
+  const broken = { ...memStore(), async keys(): Promise<string[]> { throw new Error('idb'); } };
+  await expect(new SpeechCache(new FakeEngine(), broken).hydrate()).resolves.toBeUndefined();
+  const s = memStore();
+  s.m.set('v|A', new Blob(['old']));
+  const c = new SpeechCache(new FakeEngine(), s);
+  const fresh = await c.regenerate('v', 'A');
+  await c.hydrate();
+  expect(await c.get('v', 'A')).toBe(fresh);
+});
+
+test('replace prunes stored clips that are not in the new set', async () => {
+  const s = memStore();
+  const c = new SpeechCache(new FakeEngine(), s);
+  await c.get('v', 'Old team');
+  const kept = new Blob(['k']);
+  c.replace(new Map([['v|New team', kept]]));
+  await flush();
+  expect([...s.m.keys()]).toEqual(['v|New team']);
+  // after a reload the previous team's clip does not come back
+  const again = new SpeechCache(new FakeEngine(), s);
+  await again.hydrate();
+  expect([...again.entries().keys()]).toEqual(['v|New team']);
+});
+
+test('clear during a running synthesis keeps the clip out of memory and storage', async () => {
+  const e = new FakeEngine();
+  const s = memStore();
+  const c = new SpeechCache(e, s);
+  e.hold();
+  const running = c.get('v', 'Lea');
+  await flush(); // the store lookup is done, the engine is working
+  c.clear();
+  s.m.clear(); // what clearAll() does
+  e.open();
+  await running;
+  await flush();
+  expect(c.has('v', 'Lea')).toBe(false);
+  expect(c.entries().size).toBe(0);
+  expect(s.m.size).toBe(0);
+});
+
+test('clear during regenerate and replace during a get drop the late result too', async () => {
+  const e = new FakeEngine();
+  const s = memStore();
+  const c = new SpeechCache(e, s);
+  e.hold();
+  const regen = c.regenerate('v', 'Lea');
+  await flush();
+  c.clear();
+  const get = c.get('v', 'Tom');
+  await flush();
+  c.replace(new Map());
+  e.open();
+  await Promise.all([regen, get]);
+  await flush();
+  expect(c.entries().size).toBe(0);
+  expect(s.m.size).toBe(0);
+});
+
+test('prepare stops after clear: no further clips are made', async () => {
+  const e = new FakeEngine();
+  const s = memStore();
+  const c = new SpeechCache(e, s);
+  e.hold();
+  const run = c.prepare('v', ['A', 'B', 'C'], () => undefined);
+  await flush();
+  c.clear();
+  e.open();
+  await run;
+  await flush();
+  expect(e.calls.map(x => x.text)).toEqual(['A']);
+  expect(s.m.size).toBe(0);
+});
+
+test('a get started after clear is not removed from pending by the cleared one', async () => {
+  const e = new FakeEngine();
+  const c = new SpeechCache(e, memStore());
+  e.hold();
+  const before = c.get('v', 'A');
+  await flush();
+  c.clear();
+  const after1 = c.get('v', 'A');
+  await flush();
+  e.open();
+  await before;
+  const after2 = c.get('v', 'A'); // still the same running request, not a third synthesis
+  await Promise.all([after1, after2]);
+  expect(e.calls).toHaveLength(2);
+});
+
+test('a storage write that is under way when the cache is cleared is undone', async () => {
+  const s = memStore();
+  let release!: () => void;
+  const gate = new Promise<void>(r => { release = r; });
+  const slow = { ...s, async save(k: string, b: Blob) { await gate; s.m.set(k, b); } };
+  const c = new SpeechCache(new FakeEngine(), slow);
+  const running = c.get('v', 'Lea'); // synthesized, now writing
+  await flush();
+  c.clear();
+  s.m.clear(); // clearAll()
+  release();
+  await running;
+  await flush();
+  expect(s.m.size).toBe(0);
+  expect(c.entries().size).toBe(0);
 });

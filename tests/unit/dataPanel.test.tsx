@@ -20,13 +20,14 @@ vi.mock('../../src/state/persist', () => ({
   saveSpeech: vi.fn(async () => {}),
   loadSpeech: vi.fn(async () => null),
   deleteSpeech: vi.fn(async () => {}),
+  listSpeechKeys: vi.fn(async () => []),
   clearAll: vi.fn(async () => {}),
 }));
 
 let latest: AppState;
 let speech: SpeechCache;
 function setup(lang: Lang = 'en', init?: (s: AppState) => AppState) {
-  speech = new SpeechCache({ synthesize: async () => new Blob(['x']) } as never, { save: async () => {}, load: async () => null, remove: async () => {} });
+  speech = new SpeechCache({ synthesize: async () => new Blob(['x']) } as never, { save: async () => {}, load: async () => null, remove: async () => {}, keys: async () => [] });
   const services = { queue: {}, speech } as unknown as Services;
   function H() {
     const [state, dispatch] = useReducer(reducer, undefined, () => (init ? init(initialState(lang)) : initialState(lang)));
@@ -237,4 +238,15 @@ describe('share our team', () => {
 test('offline status line explains what is missing', async () => {
   setup();
   expect(await screen.findByText(t('en', 'offlineNoShell'))).toBeInTheDocument();
+});
+
+test('delete all empties the speech cache before storage is wiped, so a running Prepare cannot store clips afterwards', async () => {
+  setup('en', withPlayer);
+  speech.load(new Map([['v|hi', new Blob(['w'])]]));
+  let clipsAtWipe = -1;
+  vi.mocked(clearAll).mockImplementationOnce(async () => { clipsAtWipe = speech.entries().size; });
+  vi.spyOn(window, 'confirm').mockReturnValue(true);
+  await userEvent.click(screen.getByRole('button', { name: t('en', 'deleteAll') }));
+  await waitFor(() => expect(names()).toEqual([]));
+  expect(clipsAtWipe).toBe(0);
 });

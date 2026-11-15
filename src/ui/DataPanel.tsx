@@ -109,9 +109,9 @@ export default function DataPanel({ state, dispatch }: PanelProps) {
   const deleteAll = async () => {
     if (!window.confirm(tr('deleteConfirm'))) return;
     setMessage(null);
+    speech.clear(); // first: a clip still being made must not be stored after the wipe
     try { await clearAll(); } catch { /* nothing stored or storage unavailable */ }
     for (const slot of SLOTS) rememberSound(slot, null);
-    speech.clear();
     dispatch({ type: 'replaceAll', state: initialState(lang) });
     setMessage({ kind: 'ok', key: 'deleteDone' });
   };
