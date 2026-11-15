@@ -44,26 +44,46 @@ run_dry() { # args to install.sh; stdin is passed through
   if [ -n "$ARM_ROOT" ]; then
     qemu-aarch64 -L "$ARM_ROOT" -E PATH=/usr/bin:/bin "$ARM_ROOT/bin/bash" deploy/raspberry-pi/install.sh --dry-run "$@" 2>&1
   else
-    $ENGINE run --rm -i "${PLATFORM_ARGS[@]}" -v "$REPO:/repo:ro" docker.io/library/debian:bookworm \
+    # --read-only: a dry run that tried to change anything outside /tmp would fail here
+    $ENGINE run --rm -i --read-only --tmpfs /tmp "${PLATFORM_ARGS[@]}" -v "$REPO:/repo:ro" docker.io/library/debian:bookworm \
       bash /repo/deploy/raspberry-pi/install.sh --dry-run "$@" 2>&1
   fi
 }
 
+tree_hash() { [ -n "$ARM_ROOT" ] && (cd "$ARM_ROOT" && find etc var opt -type f -print0 2>/dev/null | sort -z | xargs -0 sha256sum 2>/dev/null | sha256sum); }
+before=$(tree_hash)
+
 echo "test: install.sh --dry-run (${PLATFORM:-$NATIVE}) in debian:bookworm"
-out=$(run_dry </dev/null); rc=$?
+out=$(run_dry --hostname fanfare </dev/null); rc=$?
 echo "$out" > "$TMP/dry.txt"
 expect "dry run exits 0" "$rc" 0
 for step in 'apt-get update' 'apt-get install' 'unattended-upgrades' 'Remove-Unused-Dependencies' '04:00' \
             'docker.io' 'avahi-daemon' 'fanfare.local' 'log-driver' 'SystemMaxUse' 'docker compose' \
-            'fanfare-update.timer' 'HTTP on port 80'; do
+            'fanfare-update.timer' 'HTTP on port 80' '/opt/fanfare'; do
   echo "$out" | grep -q -- "$step" && ok "prints: $step" || bad "missing step: $step"
 done
 echo "$out" | grep -qi 'DRY RUN' && ok "says it is a dry run" || bad "no dry-run notice"
 echo "$out" | grep -q -- '--issue-certs' && bad "default run mentions issuing certificates" || ok "default is HTTP: no certificates"
 echo "$out" | grep -q 'Thanks to name constraints' && bad "default run printed the CA risk text" || ok "no CA risk text without --https"
+# root-owned layout: everything runs from /opt/fanfare, nothing from the user's folder (/repo here)
+echo "$out" | grep -q 'chown -R root:root /opt/fanfare' && ok "files are made root-owned in /opt/fanfare" || bad "no chown of /opt/fanfare"
+echo "$out" | grep -q -- '--project-directory /opt/fanfare/deploy/raspberry-pi' && ok "compose runs from /opt/fanfare" || bad "compose does not run from /opt/fanfare"
+echo "$out" | grep -Eq 'git -C "?/opt/fanfare"? pull --ff-only' && ok "update is git pull on the root-owned copy" || bad "no pull on /opt/fanfare"
+echo "$out" | grep -E 'git( -C)? /repo|safe.directory|pull.*/repo' && bad "a git operation touches the user's folder" || ok "no git operation in the user's folder"
+echo "$out" | grep -E '^\s+\+ .*(/home/|/repo)' | grep -vE 'tar -C |git clone' && bad "a step uses the user's folder" || ok "no step runs files from the user's folder"
+echo "$out" | grep -q 'hostnamectl set-hostname fanfare' && ok "--hostname sets the host name" || bad "--hostname ignored"
+echo "$out" | grep -q 'docker restarts only if\|only when daemon.json changed' && ok "docker restarts only when daemon.json changed" || bad "unconditional docker restart"
 
 out=$(run_dry --no-update)
 echo "$out" | grep -q 'fanfare-update.timer' && bad "--no-update still installs the timer" || ok "--no-update skips the update timer"
+
+out=$(run_dry --image-tar /tmp/x.tar)
+echo "$out" | grep -q 'docker load -i /tmp/x.tar' && ok "--image-tar loads the tar" || bad "--image-tar: no docker load"
+echo "$out" | grep -q 'write /etc/systemd/system/fanfare-update.timer' && bad "--image-tar still installs the timer" || ok "--image-tar installs no update timer"
+echo "$out" | grep -q 'MODE=tar' && ok "mode recorded for the update script (MODE=tar)" || bad "no MODE=tar in the config file"
+echo "$out" | grep -q 'hostnamectl' && bad "host name changed without --hostname" || ok "host name is kept without --hostname"
+out=$(run_dry)
+echo "$out" | grep -q 'MODE=build' && ok "mode recorded (MODE=build)" || bad "no MODE=build"
 
 out=$(run_dry --https --accept-ca-risk)
 echo "$out" | grep -q 'Thanks to name constraints' && ok "--https prints the risk list" || bad "--https: no risk list"
@@ -73,6 +93,9 @@ out=$(printf 'no\n' | run_dry --https); rc=$?
 echo "$out" | grep -q -- '--issue-certs' && bad "certificates were issued without yes" || ok "no certificates without yes"
 out=$(run_dry --bogus); rc=$?
 [ "$rc" -ne 0 ] && ok "unknown option is refused" || bad "unknown option accepted"
+
+after=$(tree_hash)
+[ "$before" = "$after" ] && ok "dry run changed nothing (read-only container / unchanged etc, var, opt)" || bad "the dry run changed files"
 
 # shellcheck disable=SC2154
 [ -n "${SKIP_COMPOSE:-}" ] && { echo "test: $pass passed, $fail failed"; [ "$fail" -eq 0 ]; exit; }

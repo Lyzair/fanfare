@@ -1,5 +1,6 @@
 # Traefik static configuration for the Fanfare appliance (same as deploy/traefik/traefik.yml).
-# talks to the Docker socket (mounting that socket would give the proxy root on the host).
+# File provider only: Traefik reads dynamic.yml and never talks to the Docker socket (mounting that socket
+# would give the proxy root on the host). No api, dashboard or insecure option: nothing to log in to.
 global:
   checkNewVersion: false      # no call home
   sendAnonymousUsage: false   # no call home

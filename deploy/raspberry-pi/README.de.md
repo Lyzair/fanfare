@@ -52,9 +52,13 @@ Der Installer kann gefahrlos mehrfach laufen. Er
 2. installiert **Docker aus den Raspberry-Pi-OS-Paketquellen** (`docker.io` plus das Compose-Paket) und **avahi** (der Name `fanfare.local`). Es wird kein Skript per Pipe in eine Shell geladen,
 3. begrenzt die Protokollgröße (journald, Docker-Log-Treiber `local`), um die SD-Karte zu schonen,
 4. baut das Fanfare-Image aus diesem Ordner (der erste Bau lädt etwa 660 MB Stimmen und dauert auf einem Pi 20 Minuten oder länger) und startet **Traefik + Fanfare** auf Port 80,
-5. richtet einen wöchentlichen Timer (`fanfare-update.timer`) ein, der den Ordner aktualisiert, neu baut und Fanfare **nur bei Änderungen** neu startet.
+5. richtet einen wöchentlichen Timer (`fanfare-update.timer`) ein, der die Kopie in `/opt/fanfare` aktualisiert, neu baut und Fanfare **nur bei Änderungen** neu startet.
 
-Optionen: `--no-update` (kein Wochen-Timer), `--dry-run` (nur anzeigen), `--image-tar DATEI` (siehe unten), `--https` (optional, siehe Ende).
+**Wo was liegt.** Der Installer legt Fanfare in **`/opt/fanfare`** ab, Besitzer root, für normale Benutzer nicht beschreibbar: Der wöchentliche Job läuft als root und darf nie Code aus einem Ordner ausführen, den ein Benutzer ändern kann. Hat dein Ordner ein git-Remote, ist `/opt/fanfare` ein Klon davon (der Installer zeigt die Adresse) und der Timer führt `git -C /opt/fanfare pull --ff-only` aus. Ohne Remote werden die Dateien nur kopiert, und der Timer baut nur neu. Dein eigener Ordner wird danach nicht mehr benutzt und kann gelöscht werden. Um eine Fanfare-Datei zu ändern, bearbeite sie in `/opt/fanfare` mit `sudo`. Der Zertifikatsstand (nur HTTPS) liegt in `/var/lib/fanfare`, die Installer-Einstellungen in `/etc/fanfare/install.conf`.
+
+**Sicherheitshinweis:** Mitglied der Gruppe `docker` zu sein, ist dasselbe wie root auf dem Pi. Füge keine Benutzer dieser Gruppe hinzu; nutze `sudo docker ...` wie in dieser Anleitung.
+
+Optionen: `--no-update` (kein Wochen-Timer), `--dry-run` (nur anzeigen), `--image-tar DATEI` (siehe unten), `--https` (optional, siehe Ende), `--hostname NAME` (Hostnamen setzen; standardmäßig bleibt der aktuelle, die Handys nutzen `<Hostname>.local`; mit der Imager-Einstellung `fanfare` ist das `fanfare.local`).
 
 **Schneller bauen:** Baue das Image auf einem Laptop und gib dem Pi das Ergebnis:
 
@@ -64,17 +68,19 @@ docker save fanfare:local -o fanfare-arm64.tar                           # Datei
 sudo ./deploy/raspberry-pi/install.sh --image-tar fanfare-arm64.tar      # auf dem Pi
 ```
 
+Mit `--image-tar` gibt es **keinen Wochen-Timer** (auf dem Pi wird nichts gebaut). Zum Aktualisieren baust du auf dieselbe Weise eine neue tar-Datei und startest den Installer erneut mit `--image-tar NEUEDATEI`.
+
 ## 3. Benutzen
 
 Auf einem Handy im Vereins-WLAN **`http://fanfare.local`** öffnen. Kennt ein Handy `fanfare.local` nicht (manche älteren
 Android-Versionen), nimm die Adresse des Pi aus der Geräteliste deines Routers, zum Beispiel `http://192.168.1.20`.
 Dann der Anleitung folgen: einmal *Stimmen vorbereiten*, danach sind die Stimmen auf dem Handy.
 
-Prüfen auf dem Pi: `docker ps` zeigt zwei Container (`traefik`, `fanfare`, letzterer `healthy`).
+Prüfen auf dem Pi: `sudo docker ps` zeigt zwei Container (`traefik`, `fanfare`, letzterer `healthy`).
 
 ## Aktuell bleiben
 
-Du musst nichts tun. Systemupdates kommen von unattended-upgrades, Fanfare-Updates vom Wochen-Timer.
+Du musst nichts tun. Systemupdates kommen von unattended-upgrades, Fanfare-Updates vom Wochen-Timer. Das Caddy-Basisimage in Fanfare ist im `Dockerfile` festgelegt: Sicherheitskorrekturen daran kommen mit einer neuen Version dieses Repositorys, die das Wochen-Update holt.
 Sofort aktualisieren: `sudo /usr/local/sbin/fanfare-update`. Timer anhalten: `sudo systemctl disable --now fanfare-update.timer`.
 `journalctl -u fanfare-update` zeigt, was passiert ist.
 
@@ -86,13 +92,13 @@ liegen in `/var/lib/fanfare` die Zertifizierungsstelle und das Zertifikat.
 ## Entfernen
 
 ```sh
-cd fanfare
-docker compose --project-directory deploy/raspberry-pi down -v     # (docker-compose auf älteren Systemen)
+sudo docker compose --project-directory /opt/fanfare/deploy/raspberry-pi down -v     # (docker-compose auf älteren Systemen)
 sudo systemctl disable --now fanfare-update.timer
 sudo rm -f /usr/local/sbin/fanfare-update /etc/systemd/system/fanfare-update.*
+sudo rm -rf /opt/fanfare /etc/fanfare
 ```
 
-Falls du HTTPS genutzt hast: zuerst `sudo python3 scripts/fanfare-local.py --config-dir /var/lib/fanfare/ca --forget-ca`, dann `sudo rm -rf /var/lib/fanfare`.
+Falls du HTTPS genutzt hast: zuerst `sudo python3 /opt/fanfare/scripts/fanfare-local.py --config-dir /var/lib/fanfare/ca --forget-ca`, dann `sudo rm -rf /var/lib/fanfare`.
 
 ## HTTPS für Handys (optional, mit Risiken)
 
@@ -110,10 +116,10 @@ Nach dem Installer schickst du `/var/lib/fanfare/ca/ca.crt` (das Zertifikat, **n
 (Android: Einstellungen > Sicherheit > Verschlüsselung und Anmeldedaten > Zertifikat installieren > CA-Zertifikat; iPhone: Datei öffnen, Profil installieren, dann
 Einstellungen > Allgemein > Info > Zertifikatsvertrauenseinstellungen > einschalten), vergleichst den Fingerabdruck mit dem, den der Installer angezeigt hat,
 und öffnest `https://fanfare.local`. Das einfache `http://fanfare.local` funktioniert weiter. Das Zertifikat gilt höchstens 825 Tage; starte den Installer
-vor Ablauf nochmals mit `--https`.
+vor Ablauf nochmals mit `--https`. Es gilt für den Hostnamen und die Adresse, die der Pi bei der Installation hatte: Gib dem Pi eine feste Adresse (DHCP-Reservierung im Router); ändert sich die Adresse, starte den Installer erneut mit `--https`, um ein neues Zertifikat zu erzeugen.
 
 ## Probleme
 
 - `fanfare.local` wird nicht gefunden: Der Hostname muss `fanfare` sein (Imager-Einstellung), das Handy muss im selben Netz wie der Pi sein, und manche Gast-WLANs verhindern, dass Geräte sich sehen. Nimm die IP-Adresse des Pi.
-- Port 80 ist belegt: Auf dem Pi läuft ein anderer Webserver. Beende ihn (oder starte das Gerät von Hand auf einem anderen Port mit `FANFARE_HTTP_PORT=8088 docker compose --project-directory deploy/raspberry-pi up -d`; die Adresse endet dann auf `:8088`).
+- Port 80 ist belegt: Auf dem Pi läuft ein anderer Webserver. Beende ihn (oder starte das Gerät von Hand auf einem anderen Port mit `FANFARE_HTTP_PORT=8088 sudo -E docker compose --project-directory /opt/fanfare/deploy/raspberry-pi up -d`; die Adresse endet dann auf `:8088`).
 - Der Bau geht auf einem Pi mit 2 GB der Speicher aus: auf einem Laptop bauen und `--image-tar` nutzen.

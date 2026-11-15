@@ -63,6 +63,7 @@ and takes several minutes. The port is published on `127.0.0.1` only: this compu
 
 ## HTTPS without a public domain: risks and steps ("HTTPS on the LAN", optional)
 
+**If you have a real domain, Let's Encrypt (Caddy, Traefik or Nginx Proxy Manager) is the cleaner option: no local CA, nothing to install on phones.**
 This section applies to every setup in this manual that uses a local certificate: Docker, Caddy, Traefik, Nginx
 Proxy Manager and the Raspberry Pi appliance. **Self-signed HTTPS is opt-in everywhere and never the default.**
 There is exactly one local CA route: `fanfare-local.py --issue-certs` (a CA limited by name constraints to local
@@ -199,7 +200,7 @@ cd deploy/traefik && docker compose up -d --build          # then http://fanfare
 - **TLS, real domain:** add a `websecure` entry point (already in `traefik.yml`), publish port 443 and a
   `certificatesResolvers` entry with the HTTP or DNS challenge of Let's Encrypt in `traefik.yml`, then add `tls: {certResolver: ...}` to the router.
   Not tested here.
-- **TLS, self-signed, three levels:** (a) Traefik's built-in default certificate: a browser warning on every device,
+- **TLS, self-signed, two options:** (a) Traefik's built-in default certificate: a browser warning on every device,
   nothing to install, but then no offline mode or microphone on phones; (b) a file-provider certificate from the
   name-constrained local CA: make it with `python3 scripts/fanfare-local.py --issue-certs ./certs --name fanfare.local --ip 192.168.1.20`,
   uncomment the `dynamic-tls.yml` and `./certs` lines in `compose.yaml`, publish `443:443`. Read the risks below first.
@@ -211,7 +212,8 @@ cd deploy/traefik && docker compose up -d --build          # then http://fanfare
 1. **Proxy host:** domain `fanfare.local` or your domain; scheme `http`; forward host name = the Fanfare container (same Docker network) or its IP,
    forward port `8080`; WebSockets are not needed. Leave "Cache Assets" **off** (the container sets the cache rules).
 2. **Advanced > Custom Nginx Configuration:** paste `deploy/nginx-proxy-manager/custom.conf`. It turns the access log off for the
-   host (`access_log off;`), replaces the four security headers once (no duplicates, `always`) and sets the CSP identical to `index.html`.
+   host (`access_log off;`). It does not touch the headers: the container's CSP, `nosniff`, `Referrer-Policy` and `Permissions-Policy` pass through
+   exactly once, even when NPM adds its own `add_header` lines such as HSTS (`tests/hosting/validate.sh` checks that).
 3. **SSL:** with a real domain, "Request a new SSL certificate" (Let's Encrypt). Without one, do not let NPM make anything
    self-signed: use "Custom" and upload the `server.crt` and `server.key` made by `fanfare-local.py --issue-certs`. The risks below apply.
 4. **Logs:** NPM's own error log can still contain client addresses when a request fails; shorten its retention (logrotate) or accept it.
@@ -230,8 +232,10 @@ sudo ./deploy/raspberry-pi/install.sh            # add --dry-run to only print t
 It installs and configures unattended-upgrades (security and stable updates, reboot window 04:00, unused dependencies removed),
 Docker from the Debian / Raspberry Pi OS repositories (`docker.io`, and `docker-compose-v2` or `docker-compose`; no `curl | sh`), avahi (`fanfare.local`),
 caps journald and uses the `local` Docker log driver with a small size (SD-card wear), builds the image from the checkout (or
-loads one with `--image-tar`) and starts Traefik + Fanfare from `deploy/raspberry-pi/compose.yaml` on port 80. A weekly
-systemd timer (`fanfare-update.timer`, skip with `--no-update`) rebuilds and restarts only when something changed. HTTPS is
+loads one with `--image-tar`) and starts Traefik + Fanfare from `deploy/raspberry-pi/compose.yaml` on port 80. Fanfare is installed to the
+root-owned folder `/opt/fanfare` (edits go there, with `sudo`), because the weekly job runs as root and must not run code from a user's folder.
+A weekly systemd timer (`fanfare-update.timer`, skip with `--no-update`; not installed with `--image-tar`) runs `git -C /opt/fanfare pull --ff-only`
+(if your checkout had a remote), rebuilds and restarts only when something changed. Membership in the `docker` group equals root: do not add users to it, use `sudo docker`. HTTPS is
 opt-in with `--https`: the installer prints the five risks below, you type `yes` (or pass `--accept-ca-risk`), and only then
 runs `fanfare-local.py --issue-certs`. **Fanfare Studio (voice server) is not recommended on a Pi**: too slow. Prepare voices on a laptop and import them.
 
@@ -267,7 +271,8 @@ docker buildx build --platform linux/arm64 --load -t fanfare:local .      # an a
 docker save fanfare:local -o fanfare-arm64.tar                            # copy to the Pi: install.sh --image-tar fanfare-arm64.tar
 ```
 
-Continuous integration builds both platforms without pushing. Publishing images to a registry is a manual
+Continuous integration builds all three platforms without pushing. The Caddy base image is pinned in the `Dockerfile`, so
+security fixes of the base image arrive with a new version of this repository (the Pi's weekly update picks it up), not by themselves. Publishing images to a registry is a manual
 decision of the maintainers and is not automated.
 
 ## Updating, backups, uninstalling
@@ -285,9 +290,9 @@ Only changed layers are rebuilt; the voices come from the build cache. Remove ol
 On the server, only the configuration (the files in `deploy/`, your `.env`) and, if you chose HTTPS, the certificate
 folder and the CA in `~/.config/fanfare-local/` (Pi: `/var/lib/fanfare`) are worth keeping.
 
-**Uninstalling:** Docker setups: see "Removing everything" below. Pi appliance: `docker compose --project-directory deploy/raspberry-pi down -v`,
-`sudo systemctl disable --now fanfare-update.timer`, delete `/usr/local/sbin/fanfare-update`, `/etc/systemd/system/fanfare-update.*`
-and `/var/lib/fanfare` (after `--forget-ca`). Unattended-upgrades and the log limits are harmless; remove them with the files
+**Uninstalling:** Docker setups: see "Removing everything" below. Pi appliance: `sudo docker compose --project-directory /opt/fanfare/deploy/raspberry-pi down -v`,
+`sudo systemctl disable --now fanfare-update.timer`, delete `/usr/local/sbin/fanfare-update`, `/etc/systemd/system/fanfare-update.*`,
+`/opt/fanfare`, `/etc/fanfare` and `/var/lib/fanfare` (after `--forget-ca`). Unattended-upgrades and the log limits are harmless; remove them with the files
 `52fanfare-unattended-upgrades` and `20auto-upgrades` in `/etc/apt/apt.conf.d/` and `/etc/systemd/journald.conf.d/fanfare.conf`.
 
 ## Removing everything

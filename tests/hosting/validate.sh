@@ -84,7 +84,8 @@ http {
     listen 8081;
     # what Nginx Proxy Manager generates for a proxy host (the access log is its default):
     access_log /dev/stdout;
-    location / { proxy_pass http://fanfare; proxy_set_header Host $host; }
+    # NPM's "HSTS Enabled" adds a header at location level: that must not hide the container's headers
+    location / { add_header Strict-Transport-Security "max-age=63072000" always; proxy_pass http://fanfare; proxy_set_header Host $host; }
     include /snippet/custom.conf;
   }
 }
@@ -103,7 +104,9 @@ marker="nginx-nolog-$$-$RANDOM"
 curl -s -o /dev/null -H 'User-Agent: smoke-ua-marker' "http://127.0.0.1:$NP/$marker?q=secret"
 sleep 1
 check_no_logs "$marker" fanfare-hosting-nginx fanfare-hosting-up
-expect "headers are not duplicated by the proxy" "$(curl -sI "http://127.0.0.1:$NP/" | grep -ci '^content-security-policy:')" 1
+for h in content-security-policy x-content-type-options referrer-policy permissions-policy strict-transport-security; do
+  expect "header $h arrives exactly once (with NPM-style location add_header)" "$(curl -sI "http://127.0.0.1:$NP/" | grep -ci "^$h:")" 1
+done
 
 echo "test: $pass passed, $fail failed"
 [ "$fail" -eq 0 ]

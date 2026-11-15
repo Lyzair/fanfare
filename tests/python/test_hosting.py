@@ -72,9 +72,26 @@ class Privacy(unittest.TestCase):
             self.assertIn('exclude http.log.error', read(f), f)
 
     def test_csp_identical(self):
-        for f in ('deploy/traefik/dynamic.yml', 'deploy/raspberry-pi/dynamic.yml',
-                  'deploy/nginx-proxy-manager/custom.conf'):
+        for f in ('deploy/traefik/dynamic.yml', 'deploy/raspberry-pi/dynamic.yml', 'deploy/traefik/compose.labels.yaml'):
             self.assertIn(CSP, read(f), f)
+
+    def test_npm_snippet_leaves_headers_alone(self):
+        conf = re.sub(r'#.*', '', read('deploy/nginx-proxy-manager/custom.conf'))
+        self.assertIn('access_log off;', conf)
+        self.assertNotIn('add_header', conf)
+        self.assertNotIn('proxy_hide_header', conf)
+
+    def test_traefik_has_no_api_or_dashboard(self):
+        for f in ('deploy/traefik/traefik.yml', 'deploy/raspberry-pi/traefik.yml', 'deploy/traefik/compose.labels.yaml',
+                  'deploy/traefik/compose.yaml', 'deploy/raspberry-pi/compose.yaml'):
+            text = re.sub(r'(?m)#.*$', '', read(f))
+            for banned in ('api:', 'insecure', 'dashboard', '--api'):
+                self.assertNotIn(banned, text, f)
+
+    def test_labels_traefik_is_hardened(self):
+        labels = read('deploy/traefik/compose.labels.yaml')
+        for word in ('read_only: true', 'cap_drop: [ALL]', 'no-new-privileges:true'):
+            self.assertIn(word, labels)
 
     def test_no_docker_socket_on_pi_or_default_traefik(self):
         for f in ('deploy/raspberry-pi/compose.yaml', 'deploy/raspberry-pi/compose.https.yaml',
@@ -104,6 +121,18 @@ class Installer(unittest.TestCase):
 
     def test_not_https_by_default(self):
         self.assertRegex(self.sh, r'HTTPS=0')
+
+    def test_root_owned_layout(self):
+        self.assertIn('REPO=/opt/fanfare', self.sh)
+        self.assertIn('chown -R root:root', self.sh)
+        self.assertIn('git -C "$REPO" pull --ff-only', self.sh)
+        self.assertNotIn('safe.directory', self.sh)
+        self.assertNotRegex(self.sh, r'(?m)^\s*git pull')
+
+    def test_image_tar_mode_and_hostname(self):
+        self.assertIn('MODE=tar', self.sh)
+        self.assertIn('--hostname', self.sh)
+        self.assertNotIn('192.168.1.20', self.sh)
 
 
 class Wiring(unittest.TestCase):

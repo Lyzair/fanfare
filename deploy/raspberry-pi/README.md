@@ -53,9 +53,13 @@ The installer is safe to run again. It
 3. limits the log size (journald, Docker log driver `local`) to spare the SD card,
 4. builds the Fanfare image from this folder (the first build downloads about 660 MB of voices and takes 20 minutes or longer on a Pi; a 2 GB Pi
    may need patience), and starts **Traefik + Fanfare** on port 80,
-5. installs a weekly timer (`fanfare-update.timer`) that updates the checkout, rebuilds and restarts Fanfare **only if something changed**.
+5. installs a weekly timer (`fanfare-update.timer`) that updates the copy in `/opt/fanfare`, rebuilds and restarts Fanfare **only if something changed**.
 
-Options: `--no-update` (no weekly timer), `--dry-run` (print only), `--image-tar FILE` (see below), `--https` (opt-in, see the end).
+**Where things live.** The installer puts Fanfare into **`/opt/fanfare`**, owned by root and not writable by normal users: the weekly job runs as root, so it must never run code from a folder a user can change. If your checkout has a git remote, `/opt/fanfare` is a clone of it (the installer shows you that address) and the timer runs `git -C /opt/fanfare pull --ff-only`. Without a remote the files are only copied and the timer just rebuilds. Your own folder is not used afterwards, so you can delete it. To change a Fanfare file, edit it in `/opt/fanfare` with `sudo`. The Docker setup runs from there; the certificate state (HTTPS only) is in `/var/lib/fanfare`, settings of the installer in `/etc/fanfare/install.conf`.
+
+**Security note:** being a member of the `docker` group is the same as being root on the Pi. Do not add users to that group; use `sudo docker ...` as in this guide.
+
+Options: `--no-update` (no weekly timer), `--dry-run` (print only), `--image-tar FILE` (see below), `--https` (opt-in, see the end), `--hostname NAME` (set the host name; by default the current one is kept and phones use `<hostname>.local`; with the Imager setting `fanfare` that is `fanfare.local`).
 
 **Faster build:** build the image on a laptop instead, and give the Pi the result:
 
@@ -65,17 +69,19 @@ docker save fanfare:local -o fanfare-arm64.tar                           # copy 
 sudo ./deploy/raspberry-pi/install.sh --image-tar fanfare-arm64.tar      # on the Pi
 ```
 
+With `--image-tar` there is **no weekly update timer** (nothing is built on the Pi). To update Fanfare, build a new tar the same way and run the installer again with `--image-tar NEWFILE`.
+
 ## 3. Use it
 
 On a phone connected to the club Wi-Fi, open **`http://fanfare.local`**. If a phone does not know `fanfare.local`
 (some older Android versions), use the Pi's address from your router's device list, for example `http://192.168.1.20`.
 Then follow the manual: *Prepare voices* once (it needs a moment and the Pi's network), after that the voices are in the phone.
 
-Check on the Pi: `docker ps` shows two containers (`traefik`, `fanfare`, the latter `healthy`).
+Check on the Pi: `sudo docker ps` shows two containers (`traefik`, `fanfare`, the latter `healthy`).
 
 ## Keeping it up to date
 
-Nothing to do. Updates of the system come from unattended-upgrades, updates of Fanfare from the weekly timer.
+Nothing to do. Updates of the system come from unattended-upgrades, updates of Fanfare from the weekly timer. The Caddy base image inside Fanfare is pinned in the `Dockerfile`: its security fixes arrive with a new version of this repository, which the weekly update fetches.
 Update now: `sudo /usr/local/sbin/fanfare-update`. Pause the Fanfare timer: `sudo systemctl disable --now fanfare-update.timer`.
 `journalctl -u fanfare-update` shows what it did.
 
@@ -87,13 +93,13 @@ There is nothing to back up: teams and recordings live in each coach's phone (us
 ## Uninstall
 
 ```sh
-cd fanfare
-docker compose --project-directory deploy/raspberry-pi down -v     # (docker-compose on older systems)
+sudo docker compose --project-directory /opt/fanfare/deploy/raspberry-pi down -v     # (docker-compose on older systems)
 sudo systemctl disable --now fanfare-update.timer
 sudo rm -f /usr/local/sbin/fanfare-update /etc/systemd/system/fanfare-update.*
+sudo rm -rf /opt/fanfare /etc/fanfare
 ```
 
-If you used HTTPS: first `sudo python3 scripts/fanfare-local.py --config-dir /var/lib/fanfare/ca --forget-ca`, then `sudo rm -rf /var/lib/fanfare`.
+If you used HTTPS: first `sudo python3 /opt/fanfare/scripts/fanfare-local.py --config-dir /var/lib/fanfare/ca --forget-ca`, then `sudo rm -rf /var/lib/fanfare`.
 
 ## HTTPS for phones (optional, has risks)
 
@@ -111,10 +117,10 @@ After the installer finishes, send `/var/lib/fanfare/ca/ca.crt` (the certificate
 (Android: Settings > Security > Encryption & credentials > Install a certificate > CA certificate; iPhone: open the file, install the profile, then
 Settings > General > About > Certificate Trust Settings > switch it on), compare the fingerprint with the one the installer printed,
 and open `https://fanfare.local`. Plain `http://fanfare.local` keeps working. The certificate is valid for at most 825 days; run the installer
-with `--https` again before it ends.
+with `--https` again before it ends. It covers the Pi's host name and the address it had during the installation: give the Pi a fixed address (a DHCP reservation in your router), and if the address changes, run the installer with `--https` again to make a new certificate.
 
 ## Problems
 
 - `fanfare.local` is not found: the host name must be `fanfare` (Imager setting), the phone must be on the same network as the Pi, and some guest Wi-Fi networks block devices from seeing each other. Use the Pi's IP address.
-- Port 80 is in use: another web server runs on the Pi. Stop it (or start the appliance by hand on another port with `FANFARE_HTTP_PORT=8088 docker compose --project-directory deploy/raspberry-pi up -d`; the address then ends in `:8088`).
+- Port 80 is in use: another web server runs on the Pi. Stop it (or start the appliance by hand on another port with `FANFARE_HTTP_PORT=8088 sudo -E docker compose --project-directory /opt/fanfare/deploy/raspberry-pi up -d`; the address then ends in `:8088`).
 - The build runs out of memory on a 2 GB Pi: build on a laptop and use `--image-tar`.

@@ -26,12 +26,11 @@ publish it as `127.0.0.1:8080` when NPM runs with host networking.
 Paste the whole file `custom.conf` from this folder into **Custom Nginx Configuration** and save. It
 
 - switches the **access log off** for this host (`access_log off;`), so no visitor address, path or User-Agent is stored (GDPR),
-- sends the Content-Security-Policy (identical to `index.html`), `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`
-  and the Permissions-Policy exactly once (the container's copy is hidden, so nothing is duplicated),
-- leaves `Content-Type` (`application/wasm` and the others) and `Cache-Control` (`no-cache` for `index.html` and `sw.js`, a long
-  cache for `assets/`) to the Fanfare container.
+- deliberately changes nothing else: the Content-Security-Policy, `nosniff`, `Referrer-Policy`, `Permissions-Policy`, `Content-Type`
+  (`application/wasm` and the others) and `Cache-Control` (`no-cache` for `index.html` and `sw.js`, a long cache for `assets/`) come from the Fanfare container
+  and pass through exactly once, even if you switch on HSTS ("HSTS Enabled") in NPM, which adds its own header line.
 
-`tests/hosting/validate.sh` runs `nginx -t` on this file and a real nginx proxy in front of the image and checks all of it.
+`tests/hosting/validate.sh` runs `nginx -t` on this file and a real nginx proxy in front of the image (with an HSTS `add_header` like NPM's) and checks all of it.
 NPM's per-host error log can still contain a client address when a request fails; keep its retention short.
 
 ## 4. SSL

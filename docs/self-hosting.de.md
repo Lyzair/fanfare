@@ -44,10 +44,11 @@ Port 8080 belegt: `FANFARE_PORT=8090 docker compose up -d`. Podman: `podman comp
 
 Images für andere Prozessoren (`linux/amd64`, `linux/arm64` für Raspberry Pi 4/5 mit 64-Bit-System, `linux/arm/v7` für ältere Pis; Letzteres ungetestet auf echter Hardware):
 `docker buildx build --platform linux/arm64 --load -t fanfare:local .` und `docker save fanfare:local -o fanfare-arm64.tar`.
-Die CI baut alle Plattformen, ohne etwas zu veröffentlichen. Das Veröffentlichen von Images ist eine manuelle Entscheidung der Maintainer.
+Die CI baut alle drei Plattformen, ohne etwas zu veröffentlichen. Das Caddy-Basisimage ist im `Dockerfile` festgelegt: Sicherheitskorrekturen daran kommen mit einer neuen Version dieses Repositorys (das wöchentliche Pi-Update holt sie), nicht von selbst. Das Veröffentlichen von Images ist eine manuelle Entscheidung der Maintainer.
 
 ## HTTPS ohne öffentliche Domain: Risiken und Schritte (optional)
 
+**Mit einer echten Domain ist Let's Encrypt (Caddy, Traefik oder Nginx Proxy Manager) die sauberere Lösung: keine lokale Zertifizierungsstelle, nichts auf den Handys zu installieren.**
 Das gilt für jede Variante mit lokalem Zertifikat: Docker, Caddy, Traefik, Nginx Proxy Manager, Raspberry-Pi-Gerät.
 **Selbstsigniertes HTTPS ist überall optional und nie die Voreinstellung.** Es gibt genau einen Weg: `fanfare-local.py --issue-certs`
 (eine durch Namensbeschränkungen auf lokale Adressen begrenzte Zertifizierungsstelle). Nicht `tls internal` von Caddy, nicht eine von Traefik erzeugte
@@ -96,7 +97,7 @@ Lege `docker/fanfare.caddy` daneben und setze darin `root * /srv` auf deinen `di
 ### Nginx Proxy Manager
 
 Details und Klickweg: `deploy/nginx-proxy-manager/README.md`. Proxy-Host: Schema `http`, Weiterleitung an den Container `fanfare` Port `8080`, „Cache Assets“ aus, WebSockets nicht nötig.
-Unter **Advanced > Custom Nginx Configuration** den Inhalt von `deploy/nginx-proxy-manager/custom.conf` einfügen: `access_log off;`, die vier Sicherheits-Header genau einmal und die CSP wie in `index.html`.
+Unter **Advanced > Custom Nginx Configuration** den Inhalt von `deploy/nginx-proxy-manager/custom.conf` einfügen: `access_log off;`. Die Header bleiben unberührt: CSP, `nosniff`, `Referrer-Policy` und `Permissions-Policy` des Containers kommen genau einmal an, auch wenn NPM eigene `add_header`-Zeilen (z. B. HSTS) ergänzt.
 SSL: mit echter Domain Let's Encrypt; ohne Domain nur mit den Risiken oben: „Custom Certificate“ mit `server.crt` und `server.key` aus `fanfare-local.py --issue-certs`, nichts von NPM selbst erzeugen lassen.
 Der Fehler-Log von NPM kann bei fehlgeschlagenen Anfragen Adressen enthalten; Aufbewahrung kurz halten.
 
@@ -105,7 +106,7 @@ Der Fehler-Log von NPM kann bei fehlgeschlagenen Anfragen Adressen enthalten; Au
 Ein Pi 4 oder 5 neben dem Router im Vereinsheim liefert `http://fanfare.local` an alle Handys im Vereins-WLAN. Schritt für Schritt für Einsteiger: `deploy/raspberry-pi/README.de.md`.
 Kurz: Ordner auf den Pi kopieren, `sudo ./deploy/raspberry-pi/install.sh` (mit `--dry-run` werden nur die Schritte angezeigt). Der Installer richtet unattended-upgrades ein (Sicherheits- und Stable-Updates, Neustartfenster 04:00),
 installiert Docker aus den Paketquellen (kein `curl | sh`), avahi (`fanfare.local`), begrenzt journald und nutzt den Docker-Log-Treiber `local` (SD-Karte schonen), baut das Image (oder lädt es mit `--image-tar`) und startet Traefik + Fanfare auf Port 80.
-Ein wöchentlicher systemd-Timer (`fanfare-update.timer`, `--no-update` überspringt ihn) baut neu und startet nur bei Änderungen neu. HTTPS nur mit `--https`: Der Installer zeigt die fünf Risiken, du tippst `yes` (oder `--accept-ca-risk`).
+Fanfare liegt danach im root-eigenen Ordner `/opt/fanfare` (Änderungen dort mit `sudo`), weil der Wochen-Job als root läuft und keinen Code aus einem Benutzerordner ausführen darf. Ein wöchentlicher systemd-Timer (`fanfare-update.timer`, `--no-update` überspringt ihn, mit `--image-tar` wird er nicht installiert) führt `git -C /opt/fanfare pull --ff-only` aus (wenn dein Ordner ein Remote hatte), baut neu und startet nur bei Änderungen neu. Mitgliedschaft in der Gruppe `docker` ist gleichbedeutend mit root: keine Benutzer hinzufügen, `sudo docker` nutzen. HTTPS nur mit `--https`: Der Installer zeigt die fünf Risiken, du tippst `yes` (oder `--accept-ca-risk`).
 
 ## Fanfare Studio (Stimmen-Server)
 
