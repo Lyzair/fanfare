@@ -7,6 +7,7 @@ import type { Services } from '../../src/ui/types';
 import { initialState, reducer } from '../../src/state/reducer';
 import type { AppState } from '../../src/domain/model';
 import type { QueueItem } from '../../src/audio/queue';
+import { queueEvents } from './queueEvents';
 
 vi.mock('../../src/state/persist', () => ({ loadSoundBlob: vi.fn(async () => null) }));
 
@@ -14,7 +15,7 @@ const speechBlob = new Blob(['speech']);
 function makeServices(fail = false) {
   const speech = { get: vi.fn(async (_v: string, _t: string) => { if (fail) throw new Error('nope'); return speechBlob; }) };
   const queue = {
-    playing: false, onChange: undefined as ((p: boolean) => void) | undefined,
+    playing: false, ...queueEvents(),
     unlock: vi.fn(), stop: vi.fn(),
     play: vi.fn(async (items: QueueItem[]) => {
       for (const it of items) if (typeof it === 'function') { try { await it(); } catch { /* skipped */ } }

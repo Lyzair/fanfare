@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'preact/hooks';
+import { useContext, useState } from 'preact/hooks';
 import type { Player } from '../domain/model';
 import { SPORTS } from '../domain/sports';
 import { getPack, t } from '../i18n';
@@ -8,6 +8,7 @@ import type { ActionEnv } from './actions';
 import { fill } from './PlayerEditor';
 import { useCustomSoundBlob } from './soundMemory';
 import { ServicesContext } from './types';
+import { useQueuePlaying } from './useQueuePlaying';
 import type { PanelProps } from './types';
 
 export default function GamePanel({ state }: PanelProps) {
@@ -17,17 +18,8 @@ export default function GamePanel({ state }: PanelProps) {
   const [scorerId, setScorerId] = useState<string | null>(null);
   const [guestScorerId, setGuestScorerId] = useState<string | null>(null);
   const [error, setError] = useState(false);
-  const [playing, setPlaying] = useState(false);
+  const playing = useQueuePlaying(services?.queue);
   const scoreBlob = useCustomSoundBlob('score', state.customSounds.score);
-
-  useEffect(() => {
-    const q = services?.queue;
-    if (!q) return;
-    const prev = q.onChange;
-    q.onChange = p => { setPlaying(p); prev?.(p); };
-    setPlaying(q.playing);
-    return () => { q.onChange = prev; };
-  }, [services]);
 
   if (!services) return null;
   const { queue, speech } = services;

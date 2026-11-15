@@ -8,6 +8,7 @@ import { initialState, reducer } from '../../src/state/reducer';
 import type { Action } from '../../src/state/reducer';
 import type { QueueItem } from '../../src/audio/queue';
 import { rememberSound } from '../../src/ui/soundMemory';
+import { queueEvents } from './queueEvents';
 
 const blobs: Record<string, Blob> = {};
 vi.mock('../../src/state/persist', () => ({
@@ -16,7 +17,7 @@ vi.mock('../../src/state/persist', () => ({
 
 function mk() {
   const played: QueueItem[][] = [];
-  const queue = { playing: false, onChange: undefined, unlock: vi.fn(), stop: vi.fn(), play: vi.fn(async (i: QueueItem[]) => { played.push(i); }) };
+  const queue = { playing: false, ...queueEvents(), unlock: vi.fn(), stop: vi.fn(), play: vi.fn(async (i: QueueItem[]) => { played.push(i); }) };
   const services = { queue, speech: { has: () => false, get: vi.fn(async () => new Blob(['x'])), prepare: vi.fn() } } as unknown as Services;
   return { played, services };
 }
@@ -24,7 +25,7 @@ function mk() {
 test('replacing the custom intro sound reloads the intro blob', async () => {
   blobs.intro = new Blob(['first']);
   const played: QueueItem[][] = [];
-  const queue = { playing: false, onChange: undefined, unlock: vi.fn(), stop: vi.fn(), play: vi.fn(async (i: QueueItem[]) => { played.push(i); }) };
+  const queue = { playing: false, ...queueEvents(), unlock: vi.fn(), stop: vi.fn(), play: vi.fn(async (i: QueueItem[]) => { played.push(i); }) };
   const speech = { has: () => false, get: vi.fn(async () => new Blob(['x'])), prepare: vi.fn() };
   const services = { queue, speech } as unknown as Services;
   let dispatchOut!: (a: Action) => void;

@@ -8,6 +8,7 @@ import { t } from '../i18n';
 import { fill } from './PlayerEditor';
 import { useCustomSoundBlob } from './soundMemory';
 import { ServicesContext } from './types';
+import { useQueuePlaying } from './useQueuePlaying';
 import type { PanelProps } from './types';
 import type { ActionEnv } from './actions';
 
@@ -27,7 +28,7 @@ export default function RemotePanel({ state }: PanelProps) {
   const [expired, setExpired] = useState(false);
   const [locked, setLocked] = useState(false);
   const [count, setCount] = useState(0);
-  const [playing, setPlaying] = useState(false);
+  const playing = useQueuePlaying(services?.queue);
   const link = useRef<SpeakerLink | null>(null);
   const activated = useRef(false);
   const env = useRef<ActionEnv | null>(null);
@@ -39,15 +40,6 @@ export default function RemotePanel({ state }: PanelProps) {
     void probeRemote().then(p => { if (!cancelled) setProbe(p ?? 'unavailable'); });
     return () => { cancelled = true; };
   }, []);
-
-  useEffect(() => {
-    const q = services?.queue;
-    if (!q) return;
-    const prev = q.onChange;
-    q.onChange = p => { setPlaying(p); prev?.(p); };
-    setPlaying(q.playing);
-    return () => { q.onChange = prev; };
-  }, [services]);
 
   useEffect(() => {
     if (!code) return;

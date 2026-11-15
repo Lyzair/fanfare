@@ -10,6 +10,7 @@ import { TtsUnavailableError } from '../../src/tts/engine';
 import { LocalAccessError } from '../../src/tts/httpEngine';
 import type { AppState } from '../../src/domain/model';
 import type { QueueItem } from '../../src/audio/queue';
+import { queueEvents } from './queueEvents';
 
 let latest: AppState;
 let latestDispatch: (a: Action) => void;
@@ -37,12 +38,12 @@ function makeServices(opts: { fail?: boolean; failRegen?: boolean } = {}) {
   };
   const queue = {
     playing: false,
-    onChange: undefined as ((p: boolean) => void) | undefined,
+    ...queueEvents(),
     unlock: vi.fn(() => { calls.push('unlock'); }),
     stop: vi.fn(),
     play: vi.fn(async (items: QueueItem[]) => {
       calls.push('play');
-      queue.playing = true; queue.onChange?.(true);
+      queue.playing = true; queue.emit(true);
       for (const it of items) { if (typeof it === 'function') { try { await it(); } catch { /* skipped */ } } }
     }),
   };

@@ -21,7 +21,7 @@ export type QueueItem = Blob | (() => Promise<Blob>);
  * awaited step bails when the counter changed.
  */
 export class AudioQueue {
-  onChange?: (playing: boolean) => void;
+  private readonly listeners = new Set<(playing: boolean) => void>();
   private audio: AudioLike;
   private urls: UrlApi;
   private seq = 0;
@@ -43,6 +43,12 @@ export class AudioQueue {
 
   get playing(): boolean {
     return this._playing;
+  }
+
+  /** Calls `fn` whenever playing starts or ends; returns the function that unsubscribes. */
+  subscribe(fn: (playing: boolean) => void): () => void {
+    this.listeners.add(fn);
+    return () => { this.listeners.delete(fn); };
   }
 
   /** Must be called synchronously inside a user gesture. */
@@ -96,7 +102,7 @@ export class AudioQueue {
   private setPlaying(v: boolean): void {
     if (this._playing === v) return;
     this._playing = v;
-    this.onChange?.(v);
+    for (const fn of this.listeners) fn(v);
   }
 
   private playOne(blob: Blob): Promise<void> {

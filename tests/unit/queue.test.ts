@@ -154,10 +154,10 @@ test('unlock() swallows play rejection', async () => {
   await tick();
 });
 
-test('onChange reports true then false', async () => {
+test('subscribers hear true then false', async () => {
   const { audio, q } = setup();
   const calls: boolean[] = [];
-  q.onChange = (v) => calls.push(v);
+  q.subscribe((v) => calls.push(v));
   const p = q.play([blob()]);
   await tick();
   expect(q.playing).toBe(true);
@@ -170,7 +170,7 @@ test('onChange reports true then false', async () => {
 test('replaced sequence never reports false while the new one runs', async () => {
   const { audio, q } = setup();
   const calls: boolean[] = [];
-  q.onChange = (v) => calls.push(v);
+  q.subscribe((v) => calls.push(v));
   const p1 = q.play([blob(), blob()]);
   await tick();
   const p2 = q.play([blob()]);
@@ -181,4 +181,18 @@ test('replaced sequence never reports false while the new one runs', async () =>
   audio.end();
   await p2;
   expect(calls).toEqual([true, false]);
+});
+
+test('every subscriber is told, and an unsubscribed one no longer', async () => {
+  const { audio, q } = setup();
+  const a: boolean[] = [], b: boolean[] = [];
+  const offA = q.subscribe((v) => a.push(v));
+  q.subscribe((v) => b.push(v));
+  const p = q.play([blob()]);
+  await tick();
+  offA();
+  audio.end();
+  await p;
+  expect(a).toEqual([true]);
+  expect(b).toEqual([true, false]);
 });

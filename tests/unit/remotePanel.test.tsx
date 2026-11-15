@@ -7,6 +7,7 @@ import type { Services } from '../../src/ui/types';
 import { initialState, reducer } from '../../src/state/reducer';
 import type { QueueItem } from '../../src/audio/queue';
 import { FakeEventSource, fakeFetch } from './remoteHarness';
+import { queueEvents } from './queueEvents';
 
 vi.mock('../../src/state/persist', () => ({ loadSoundBlob: vi.fn(async () => null) }));
 
@@ -16,7 +17,7 @@ const UNENCRYPTED = 'Connection not encrypted: others on this Wi-Fi could see pl
 
 function makeServices() {
   const queue = {
-    playing: false, onChange: undefined as ((p: boolean) => void) | undefined,
+    playing: false, ...queueEvents(),
     unlock: vi.fn(), stop: vi.fn(), play: vi.fn(async (_items: QueueItem[]) => {}),
   };
   const speech = { get: vi.fn(async () => new Blob(['s'])) };
@@ -156,7 +157,7 @@ test('the panel pushes the sanitised snapshot to the relay and updates it when p
   expect(body.home.name).toBe('FC Test');
   expect(body.home.players.map(p => p.name)).toEqual(['Lea', 'Tom']);
   expect(JSON.stringify(body)).not.toMatch(/number|position|"7"/);
-  act(() => queue.onChange?.(true));
+  act(() => queue.emit(true));
   await waitFor(() => expect(f.find('POST', '/remote/state').length).toBe(2));
   expect((f.find('POST', '/remote/state')[1].body as { playing: boolean }).playing).toBe(true);
 });

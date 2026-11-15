@@ -8,6 +8,7 @@ import { initialState, reducer } from '../../src/state/reducer';
 import type { AppState, Lang } from '../../src/domain/model';
 import type { QueueItem } from '../../src/audio/queue';
 import { saveSoundBlob } from '../../src/state/persist';
+import { queueEvents } from './queueEvents';
 
 vi.mock('../../src/state/persist', () => ({
   loadSoundBlob: vi.fn(async () => null),
@@ -16,7 +17,7 @@ vi.mock('../../src/state/persist', () => ({
 
 let latest: AppState;
 function setup(lang: Lang = 'en', init?: (s: AppState) => AppState) {
-  const queue = { playing: false, onChange: undefined, unlock: vi.fn(), stop: vi.fn(), play: vi.fn(async (_i: QueueItem[]) => {}) };
+  const queue = { playing: false, ...queueEvents(), unlock: vi.fn(), stop: vi.fn(), play: vi.fn(async (_i: QueueItem[]) => {}) };
   const services = { queue, speech: { get: vi.fn() } } as unknown as Services;
   function H() {
     const [state, dispatch] = useReducer(reducer, undefined, () => (init ? init(initialState(lang)) : initialState(lang)));

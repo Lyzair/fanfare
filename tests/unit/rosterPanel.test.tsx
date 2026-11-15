@@ -142,7 +142,7 @@ test('single-name box with "Last, First" adds exactly one player', async () => {
 });
 
 function makeServices() {
-  const queue = { unlock: vi.fn(), play: vi.fn(async (_items: unknown[]) => undefined), onChange: undefined };
+  const queue = { unlock: vi.fn(), play: vi.fn(async (_items: unknown[]) => undefined) };
   const speech = { get: vi.fn(async (_v: string, t: string) => new Blob([t])) };
   return { queue, speech, services: { queue, speech } as unknown as Services };
 }

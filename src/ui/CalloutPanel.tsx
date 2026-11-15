@@ -10,6 +10,7 @@ import type { ActionEnv, LineupPart } from './actions';
 import { useCustomSoundBlob } from './soundMemory';
 import { LocalError } from './LocalError';
 import { ServicesContext } from './types';
+import { useQueuePlaying } from './useQueuePlaying';
 import type { PanelProps } from './types';
 
 const PLACEHOLDERS = ['name', 'number', 'position', 'home', 'opponent'] as const;
@@ -32,7 +33,7 @@ export default function CalloutPanel({ state, dispatch }: PanelProps) {
   const lang = state.lang;
   const tr = (k: keyof UiStrings) => t(lang, k);
   const roster = currentRoster(state);
-  const [playing, setPlaying] = useState(false);
+  const playing = useQueuePlaying(services?.queue);
   const [error, setError] = useState<unknown>(null);
   const [regenerating, setRegenerating] = useState<ReadonlySet<string>>(new Set());
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
@@ -44,15 +45,6 @@ export default function CalloutPanel({ state, dispatch }: PanelProps) {
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const tplRefs = useRef<Partial<Record<TemplateKey, HTMLTextAreaElement | null>>>({});
   const lastTpl = useRef<TemplateKey>('field');
-
-  useEffect(() => {
-    const q = services?.queue;
-    if (!q) return;
-    const prev = q.onChange;
-    q.onChange = p => { setPlaying(p); prev?.(p); };
-    setPlaying(q.playing);
-    return () => { q.onChange = prev; };
-  }, [services]);
 
   const introBlob = useCustomSoundBlob('intro', state.customSounds.intro);
 
