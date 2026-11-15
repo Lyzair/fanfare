@@ -35,15 +35,19 @@ MSG
     cfg=/etc/caddy/Caddyfile
   else
     for f in server.crt server.key hosts.txt expires.txt; do
-      [ -r "$certs/$f" ] || fail "$certs/$f is missing or unreadable. Make the certificates first: python3 scripts/fanfare-local.py --issue-certs ./certs --name $FANFARE_HOST (see docs/self-hosting.md), and mount them with compose.https.yaml."
+      # a real read (BusyBox `test -r` is true for root even when the file cannot be opened)
+      head -c1 "$certs/$f" >/dev/null 2>&1 || fail "$certs/$f is missing or unreadable by the user the container runs as (see FANFARE_UID/FANFARE_GID in docs/self-hosting.md). Make the certificates first: python3 scripts/fanfare-local.py --issue-certs ./certs --name $FANFARE_HOST (see docs/self-hosting.md), and mount them with compose.https.yaml."
     done
     grep -qixF "$FANFARE_HOST" "$certs/hosts.txt" \
       || fail "the certificate does not cover FANFARE_HOST=$FANFARE_HOST. It covers: $(tr '\n' ' ' < "$certs/hosts.txt"). Issue it again with --name/--ip for the address phones use."
     now=$(date +%s)
     exp=$(tr -dc '0-9' < "$certs/expires.txt")
-    [ -n "$exp" ] || fail "$certs/expires.txt is not valid. Issue the certificates again."
-    [ "$exp" -gt "$now" ] || fail "the certificate has expired. Issue it again with fanfare-local.py --issue-certs."
-    [ $((exp - now)) -ge 2592000 ] || echo "fanfare: WARNING: the certificate expires in less than 30 days. Issue it again with fanfare-local.py --issue-certs." >&2
+    if [ -z "$exp" ]; then
+      echo "fanfare: WARNING: the expiry date of the certificate is unknown. Check it, and issue it again with fanfare-local.py --issue-certs before it runs out (at most 825 days)." >&2
+    else
+      [ "$exp" -gt "$now" ] || fail "the certificate has expired. Issue it again with fanfare-local.py --issue-certs."
+      [ $((exp - now)) -ge 2592000 ] || echo "fanfare: WARNING: the certificate expires in less than 30 days. Issue it again with fanfare-local.py --issue-certs." >&2
+    fi
     cfg=/etc/caddy/Caddyfile.https
     echo "fanfare: HTTPS on port 8443 for ${FANFARE_HOST}. Remove the CA again: fanfare-local.py --forget-ca, and the certificate on each phone." >&2
   fi

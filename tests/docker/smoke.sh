@@ -173,6 +173,8 @@ if command -v python3 >/dev/null && { command -v openssl >/dev/null || python3 -
   HPORT=$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1",0)); print(s.getsockname()[1])')
   export FANFARE_CERTS_DIR="$TMP/certs" FANFARE_HTTPS_BIND=127.0.0.1 FANFARE_HTTPS_PORT="$HPORT" FANFARE_HOST=fanfare.local
   chmod 755 "$TMP" "$TMP/certs"
+  # rootful Docker: the container must run as the key's owner (rootless Podman: container root is us)
+  if [ "$ENGINE" = docker ]; then export FANFARE_UID="$(id -u)" FANFARE_GID="$(id -g)"; fi
 
   # 1. without the risk acknowledgement only HTTP is served
   dch up -d >/dev/null 2>&1
@@ -197,7 +199,7 @@ if command -v python3 >/dev/null && { command -v openssl >/dev/null || python3 -
   expect "HTTPS CSP header equals the CSP in index.html" "$hcsp" "$meta_csp"
   curl -s --max-time 5 -o /dev/null --resolve "fanfare.local:$HPORT:127.0.0.1" "https://fanfare.local:$HPORT/" && bad "certificate is accepted without the CA" || ok "certificate is not trusted without the local CA"
   HCID=$($ENGINE ps -q --filter "label=com.docker.compose.project=$PROJECT" | head -n1)
-  if $ENGINE exec "$HCID" sh -c 'test -e /data/caddy/pki'; then bad "Caddy made its own CA"; else ok "Caddy made no CA of its own"; fi
+  if $ENGINE exec "$HCID" sh -c 'test -e /data/caddy/pki || test -e /tmp/caddy/pki'; then bad "Caddy made its own CA"; else ok "Caddy made no CA of its own"; fi
   dch down -v >/dev/null 2>&1
 
   # 3. a host the certificate does not cover is refused
@@ -207,7 +209,7 @@ if command -v python3 >/dev/null && { command -v openssl >/dev/null || python3 -
   dch logs 2>&1 | grep -q "does not cover FANFARE_HOST" \
     && ok "uncovered FANFARE_HOST is refused" || bad "uncovered FANFARE_HOST was not refused"
   dch down -v >/dev/null 2>&1
-  unset FANFARE_ACCEPT_CA_RISK FANFARE_CERTS_DIR FANFARE_HTTPS_BIND FANFARE_HTTPS_PORT FANFARE_HOST
+  unset FANFARE_UID FANFARE_GID FANFARE_ACCEPT_CA_RISK FANFARE_CERTS_DIR FANFARE_HTTPS_BIND FANFARE_HTTPS_PORT FANFARE_HOST
 
   # shellcheck disable=SC2086
   $FL --forget-ca --yes >/dev/null 2>&1 && [ ! -e "$TMP/cfg/ca.key" ] && ok "--forget-ca removed the temporary CA" || bad "--forget-ca failed"

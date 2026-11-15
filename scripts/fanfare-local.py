@@ -537,11 +537,11 @@ def forget_ca(cfg, yes, out, ask, interactive):
 
 
 def _not_after(path):
-    """Expiry of a PEM certificate as epoch seconds."""
+    """Expiry of a PEM certificate as epoch seconds, or None when it cannot be read."""
     try:
         return ssl.cert_time_to_seconds(ssl._ssl._test_decode_cert(str(path))['notAfter'])
-    except Exception:  # private helper missing: fall back to "issued now + SERVER_DAYS"
-        return int(Path(path).stat().st_mtime) + SERVER_DAYS * 86400
+    except Exception:  # private helper missing or unparsable: say so instead of guessing
+        return None
 
 
 def issue_certs(target, names, ips, cfg, accept_risk, out, ask, interactive):
@@ -577,10 +577,11 @@ def issue_certs(target, names, ips, cfg, accept_risk, out, ask, interactive):
     _write_private(target / 'server.key', certs.server_key.read_bytes())
     (target / 'hosts.txt').write_text('\n'.join(keep_names + keep_ips) + '\n')
     expires = _not_after(target / 'server.crt')
-    (target / 'expires.txt').write_text('%d\n' % expires)
+    (target / 'expires.txt').write_text('unknown\n' if expires is None else '%d\n' % expires)
     out('Wrote server.crt, server.key (private), hosts.txt and expires.txt to %s' % target)
     out('  Covers: %s' % ', '.join(keep_names + keep_ips))
-    out('  Valid until: %s' % datetime.datetime.fromtimestamp(expires, datetime.timezone.utc).strftime('%Y-%m-%d'))
+    out('  Valid until: %s' % ('unknown (could not read it; at most %d days from now)' % SERVER_DAYS if expires is None
+                          else datetime.datetime.fromtimestamp(expires, datetime.timezone.utc).strftime('%Y-%m-%d')))
     out('  Issue again before then (the Docker setup warns 30 days ahead and refuses an expired certificate).')
     out('  SHA-256 of the local CA: %s' % certs.fingerprint)
     out('  Phones: install %s as a CA certificate (Android: Settings > Security > Encryption & credentials > '

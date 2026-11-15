@@ -56,6 +56,14 @@ class IssueCerts(unittest.TestCase):
         self.assertLessEqual(left, 825 * 86400 + 3600)
         self.assertGreater(left, 700 * 86400)
 
+    def test_unreadable_expiry_is_written_as_unknown(self):
+        orig = fl._not_after
+        fl._not_after = lambda path: None
+        self.addCleanup(setattr, fl, '_not_after', orig)
+        self.issue('--accept-ca-risk')
+        self.assertEqual((self.out_dir / 'expires.txt').read_text().strip(), 'unknown')
+        self.assertIn('Valid until: unknown', '\n'.join(self.logs))
+
     def test_names_outside_the_constraints_are_skipped_and_printed(self):
         self.run_cli('--issue-certs', str(self.out_dir), '--name', 'fanfare.local', '--name', 'example.org',
                      '--ip', '8.8.8.8', '--accept-ca-risk')

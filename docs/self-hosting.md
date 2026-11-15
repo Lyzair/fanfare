@@ -72,8 +72,16 @@ FANFARE_HOST=fanfare.local FANFARE_ACCEPT_CA_RISK=1 \
 The certificate folder is `./certs`, or `FANFARE_CERTS_DIR`. The port is `FANFARE_HTTPS_PORT` (8443);
 `FANFARE_HTTPS_BIND` limits the address. Without `FANFARE_ACCEPT_CA_RISK=1` only HTTP is served. The
 container refuses to start HTTPS when the certificate files are missing, when `FANFARE_HOST` is not covered
-by the certificate (`hosts.txt`), or when the certificate has expired, and warns 30 days ahead. With Docker
-(not rootless Podman) add `FANFARE_UID=$(id -u) FANFARE_GID=$(id -g)` so the container can read the key.
+by the certificate (`hosts.txt`), or when the certificate has expired, and warns 30 days ahead. In this mode the
+container runs as **your own user** (all capabilities still dropped), because the key is private to you. With
+rootless Podman that is the default. With plain Docker set it explicitly:
+
+```sh
+FANFARE_UID=$(id -u) FANFARE_GID=$(id -g) FANFARE_HOST=fanfare.local FANFARE_ACCEPT_CA_RISK=1 \
+  docker compose -f compose.yaml -f compose.https.yaml up -d
+```
+
+If the container cannot read the key it stops with a message saying so.
 
 **3. Trust the CA on each phone.** Send `~/.config/fanfare-local/ca.crt` (the certificate, never `ca.key`) to
 the phone yourself and install it as a CA certificate (Android: Settings > Security > Encryption & credentials >
@@ -83,7 +91,8 @@ About > Certificate Trust Settings > switch it on). Compare the SHA-256 fingerpr
 `http://localhost:8080`, which needs no certificate.
 
 **Renewing:** run the `--issue-certs` command again before the expiry date (it makes a fresh certificate once
-the old one is about 700 days old), then `docker compose ... up -d --force-recreate`.
+the old one is about 700 days old; `--issue-certs` and `fanfare-local --lan --https` share the same server
+certificate, so re-issuing from either is harmless), then `docker compose ... up -d --force-recreate`.
 
 ### Removing the certificate authority
 
@@ -146,8 +155,9 @@ docker builder prune            # the voice download cache (Podman: podman syste
 
 - No access logs. Caddy's request log is off, its own log is limited to warnings, and the error log
   (`http.log.error`, which would carry the client address and User-Agent) is excluded, so there are no
-  addresses, user agents or paths in `docker compose logs`. `tests/docker/smoke.sh` checks this for ordinary
-  requests; I could not provoke a 5xx to check the error case.
+  addresses, user agents or paths in `docker compose logs`. Server errors are not logged either; to debug,
+  temporarily remove `exclude http.log.error` from the Caddyfiles in `docker/` (and rebuild).
+  `tests/docker/smoke.sh` checks this for ordinary requests; the error case is not covered by a test.
 - No other origin is contacted. The Content-Security-Policy is sent as an HTTP header and is identical
   to the one in `index.html` (the smoke test compares them), allowing only the page's own origin and the
   local voice server on `localhost`/`127.0.0.1`.
