@@ -1,0 +1,17 @@
+# Keep the build context small: dependencies, build output and downloads are recreated inside the image.
+node_modules
+dist
+release
+test-results
+playwright-report
+.git
+.github
+.superpowers
+public/voices/*
+!public/voices/LICENSES.md
+public/ort
+public/piper
+**/__pycache__
+*.log
+.env
+.env.*

@@ -1,0 +1,16 @@
+# Default: plain HTTP on port 8080 (compose publishes it on 127.0.0.1 only). No certificate,
+# no certificate authority. See Caddyfile.https for the opt-in LAN setup.
+{
+	admin off
+	persist_config off
+	auto_https off
+	log {
+		level WARN
+	}
+}
+
+import /etc/caddy/fanfare.caddy
+
+:8080 {
+	import fanfare
+}

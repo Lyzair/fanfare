@@ -1,0 +1,49 @@
+# Shared by every site block: headers, MIME types, caching, compression. No access log, ever
+# (no visitor IPs are stored; GDPR).
+(fanfare) {
+	root * /srv
+
+	header {
+		# Same policy as the <meta> tag in index.html (tests/docker/smoke.sh compares them).
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self' http://localhost:* http://127.0.0.1:*; media-src 'self' blob:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'"
+		X-Content-Type-Options nosniff
+		Referrer-Policy no-referrer
+		Permissions-Policy "camera=(), geolocation=(), microphone=(self)"
+		X-Frame-Options DENY
+		-Server
+	}
+
+	# Revalidate by default (ETag makes that a cheap 304); the page and the service worker must
+	# never be stale. Only content-hashed files get a long life. (Two matchers that exclude each
+	# other: Caddy does not guarantee which of two overlapping header directives runs last.)
+	@hashed path /assets/*
+	header @hashed Cache-Control "public, max-age=31536000, immutable"
+	@revalidate not path /assets/*
+	header @revalidate Cache-Control no-cache
+
+	# Types Go's built-in table does not know (file_server only fills Content-Type when it is unset).
+	@onnx path *.onnx
+	header @onnx Content-Type application/octet-stream
+	@data path *.data
+	header @data Content-Type application/octet-stream
+	@manifest path *.webmanifest
+	header @manifest Content-Type "application/manifest+json; charset=utf-8"
+	@js path *.js *.mjs
+	header @js Content-Type "text/javascript; charset=utf-8"
+	@wasm path *.wasm
+	header @wasm Content-Type application/wasm
+
+	# Only text is compressed. .wasm, .onnx, .data and media are served as they are.
+	encode {
+		zstd
+		gzip
+		match {
+			header Content-Type text/*
+			header Content-Type application/json*
+			header Content-Type application/manifest+json*
+			header Content-Type image/svg+xml*
+		}
+	}
+
+	file_server
+}

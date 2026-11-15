@@ -62,6 +62,17 @@ The zip contains the built site, `fanfare-local.py`, `start-fanfare.sh` / `.comm
 - Apart from that relay (`/remote/...`), the server answers GET and HEAD only, never lists folders, rejects path traversal, sends the same Content-Security-Policy as the page, contacts no other host, and logs only `METHOD /path STATUS` (never tokens, codes or query strings).
 - Tests: `npm run test:py` (Python), `npm run build && npm run test:e2e:local` (the e2e suite against `fanfare-local.py`).
 
+## Run Fanfare with Docker
+
+```sh
+docker compose up -d --build     # then open http://localhost:8080 (FANFARE_PORT=8090 if 8080 is taken)
+```
+
+Builds the site and serves it with Caddy: plain HTTP on this computer, no access logs. HTTPS for phones
+on your LAN is optional and **has risks** (a local certificate authority; the same risk list as
+`fanfare-local --https`, printed at start-up and in the guide). Optional Fanfare Studio, updating and
+removal: [docs/self-hosting.md](docs/self-hosting.md). The phone remote needs `fanfare-local`.
+
 ## Third-party licences
 
 - **Project code:** MIT, provided as is, without warranty (see `LICENSE`).

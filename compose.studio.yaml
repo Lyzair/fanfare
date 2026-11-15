@@ -1,0 +1,52 @@
+# Optional: also run Fanfare Studio (the local voice server) next to Fanfare.
+#   docker compose -f compose.yaml -f compose.studio.yaml up -d --build
+# Fanfare Studio is a separate project with its own Dockerfile. FANFARE_STUDIO_DIR is where its
+# source lives, relative to this file (default ../fanfare-studio; until that folder is renamed the
+# repository is called ../sports-caller-voice-server:  FANFARE_STUDIO_DIR=../sports-caller-voice-server).
+# It is published on THIS computer's 127.0.0.1:5123 only, never on the network. Open Fanfare
+# in a browser on the same computer, step 4 > Local voice server > Connect (http://127.0.0.1:5123).
+# CPU (ONNX 4-bit) by default. The first start downloads about 3 GB of models into a volume.
+services:
+  fanfare-studio:
+    build:
+      context: ${FANFARE_STUDIO_DIR:-../fanfare-studio}
+      args:
+        TORCH_EXTRA: cpu
+        EXTRAS: onnx
+    image: fanfare-studio:local
+    ports:
+      - "127.0.0.1:5123:5123"
+    environment:
+      # Pages allowed to use Studio. Add the HTTPS address when you use FANFARE_HOST, for example
+      # FANFARE_STUDIO_EXTRA_ORIGINS=,https://fanfare.lan:8443
+      FANFARE_ALLOWED_ORIGINS: "http://localhost:${FANFARE_PORT:-8080},http://127.0.0.1:${FANFARE_PORT:-8080}${FANFARE_STUDIO_EXTRA_ORIGINS:-}"
+      HF_HUB_DISABLE_TELEMETRY: "1"
+    volumes:
+      - studio-models:/models
+      - studio-references:/data
+      - studio-config:/config
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /home/fanfare:uid=10001,gid=10001
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:5123/voices', timeout=4).read()"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 900s
+    restart: unless-stopped
+
+    # GPU variants. Use the compose.rocm.yaml / compose.cuda.yaml files of the Studio repository,
+    # or add this by hand. NOT tested here, except that ROCm on the host was seen working in Studio:
+    #   AMD (ROCm):    devices: ["/dev/kfd", "/dev/dri"]  and  group_add: ["video", "render"]
+    #   NVIDIA:        gpus: all     (needs the NVIDIA container toolkit; untested)
+    # Both also need the matching Studio build args (TORCH_EXTRA); see the Studio README.
+
+volumes:
+  studio-models:
+  studio-references:
+  studio-config:

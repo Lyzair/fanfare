@@ -1,0 +1,18 @@
+# Opt-in (FANFARE_HOST=your.domain and FANFARE_ACME=1): a public certificate from Let's Encrypt.
+# The host must publish 80 -> 8080 and 443 -> 8443 and the domain must point at it.
+# Contacts Let's Encrypt (that is the one outgoing connection; the app itself contacts nobody).
+{
+	admin off
+	persist_config off
+	http_port 8080
+	https_port 8443
+	log {
+		level WARN
+	}
+}
+
+import /etc/caddy/fanfare.caddy
+
+{$FANFARE_HOST} {
+	import fanfare
+}

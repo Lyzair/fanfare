@@ -47,6 +47,15 @@ jobs:
         with:
           path: dist
 
+  # Builds the Docker image and runs tests/docker/smoke.sh against it. Nothing is published.
+  docker-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Smoke test (build image, start with compose, check headers/MIME/no logs)
+        run: tests/docker/smoke.sh
+
   deploy:
     needs: build
     runs-on: ubuntu-latest
