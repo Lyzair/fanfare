@@ -123,6 +123,8 @@ export const uk = {
     templateIntro: "Вступ",
     templateField: "Гравці на полі",
     templateBench: "Запасні гравці",
+    templateScore: "Гол (наша команда)",
+    templateGuestScore: "Гол (гості)",
     resetTemplates: "Відновити стандартні тексти",
     insertPlaceholder: "Вставити {placeholder}",
     noPlayersYet: "Додай гравців на кроці 1, щоб почути їхні оголошення.",

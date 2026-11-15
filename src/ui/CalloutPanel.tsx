@@ -18,6 +18,8 @@ const TEMPLATE_KEYS: { key: TemplateKey; label: keyof UiStrings }[] = [
   { key: 'intro', label: 'templateIntro' },
   { key: 'field', label: 'templateField' },
   { key: 'bench', label: 'templateBench' },
+  { key: 'score', label: 'templateScore' },
+  { key: 'guestScore', label: 'templateGuestScore' },
 ];
 const fill = (tpl: string, vars: Record<string, string | number>) =>
   tpl.replace(/\{(\w+)\}/g, (m, k: string) => (k in vars ? String(vars[k]) : m));

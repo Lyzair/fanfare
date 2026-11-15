@@ -123,6 +123,8 @@ export const ar = {
     templateIntro: "المقدمة",
     templateField: "اللاعبون في الملعب",
     templateBench: "اللاعبون البدلاء",
+    templateScore: "التسجيل (فريقنا)",
+    templateGuestScore: "التسجيل (الضيوف)",
     resetTemplates: "استعادة النصوص الافتراضية",
     insertPlaceholder: "إدراج {placeholder}",
     noPlayersYet: "أضف لاعبين في الخطوة 1 لتسمعهم يُعلَن عنهم.",

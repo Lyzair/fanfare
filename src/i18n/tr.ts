@@ -123,6 +123,8 @@ export const tr = {
     templateIntro: "Giriş",
     templateField: "Sahadaki oyuncular",
     templateBench: "Yedek oyuncular",
+    templateScore: "Sayı (takımımız)",
+    templateGuestScore: "Sayı (konuklar)",
     resetTemplates: "Standart metinleri geri yükle",
     insertPlaceholder: "{placeholder} ekle",
     noPlayersYet: "Anons edildiklerini duymak için 1. adımda oyuncu ekle.",

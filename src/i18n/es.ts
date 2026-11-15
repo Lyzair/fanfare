@@ -123,6 +123,8 @@ export const es = {
     templateIntro: "Introducción",
     templateField: "Jugadores en el campo",
     templateBench: "Jugadores suplentes",
+    templateScore: "Tanto (nuestro equipo)",
+    templateGuestScore: "Tanto (invitados)",
     resetTemplates: "Restaurar los textos estándar",
     insertPlaceholder: "Insertar {placeholder}",
     noPlayersYet: "Añade jugadores en el paso 1 para oírlos anunciados.",

@@ -123,6 +123,8 @@ export const nl = {
     templateIntro: "Intro",
     templateField: "Veldspelers",
     templateBench: "Wisselspelers",
+    templateScore: "Score (ons team)",
+    templateGuestScore: "Score (gasten)",
     resetTemplates: "Standaardteksten herstellen",
     insertPlaceholder: "{placeholder} invoegen",
     noPlayersYet: "Voeg in stap 1 spelers toe om ze te horen omroepen.",

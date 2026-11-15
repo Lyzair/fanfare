@@ -122,6 +122,8 @@ export const de = {
     templateIntro: "Begrüßung",
     templateField: "Feldspieler",
     templateBench: "Ersatzspieler",
+    templateScore: "Treffer (unser Team)",
+    templateGuestScore: "Treffer (Gäste)",
     resetTemplates: "Standardtexte wiederherstellen",
     insertPlaceholder: "{placeholder} einfügen",
     noPlayersYet: "Füge in Schritt 1 Spieler hinzu, um sie ansagen zu lassen.",

@@ -121,6 +121,8 @@ export const en = {
     templateIntro: "Intro",
     templateField: "Field players",
     templateBench: "Bench players",
+    templateScore: "Score (our team)",
+    templateGuestScore: "Score (guests)",
     resetTemplates: "Restore standard texts",
     insertPlaceholder: "Insert {placeholder}",
     noPlayersYet: "Add players in step 1 to hear them announced.",

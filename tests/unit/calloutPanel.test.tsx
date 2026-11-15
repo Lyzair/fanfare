@@ -409,3 +409,21 @@ describe('guest team announcements', () => {
     expect(box).toHaveValue(currentRoster(latest).templates.guestIntro);
   });
 });
+
+test('the score callouts are editable: editing them changes what the score buttons say', async () => {
+  const { scoreText, guestScoreText } = await import('../../src/domain/template');
+  const { services } = makeServices();
+  render(<Harness services={services} init={setup} />);
+  await userEvent.click(screen.getByText('Change the standard texts (rarely needed)'));
+  const score = screen.getByLabelText('Score (our team)', { selector: 'textarea' }) as HTMLTextAreaElement;
+  expect(score).toHaveValue(currentRoster(latest).templates.score);
+  await userEvent.clear(score);
+  await userEvent.type(score, 'Yes[[ {{name}]!');
+  const lea = currentRoster(latest).players[0];
+  expect(scoreText(lea, currentRoster(latest))).toBe('Yes Lea!');
+  expect(scoreText(null, currentRoster(latest))).toBe('Yes!');
+  const guest = screen.getByLabelText('Score (guests)', { selector: 'textarea' }) as HTMLTextAreaElement;
+  await userEvent.clear(guest);
+  await userEvent.type(guest, 'One for {{opponent}');
+  expect(guestScoreText(null, currentRoster(latest))).toBe('One for SV Gegner');
+});
