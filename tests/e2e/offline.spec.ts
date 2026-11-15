@@ -41,6 +41,8 @@ test('after one online visit the app reloads and announces offline', async ({ pa
   await page.goBack();
   await expect(page.getByRole('heading', { level: 1, name: 'Fanfare' })).toBeVisible();
 
+  // RemotePanel's mount probes /remote/health once; let it settle so it is not recorded as failed offline
+  await page.waitForLoadState('networkidle');
   await context.setOffline(true);
   page.on('requestfailed', (r) => failed.push(r.url()));
   await page.reload();

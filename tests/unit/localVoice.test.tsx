@@ -252,3 +252,39 @@ test('club voices can be deleted after confirming', async () => {
   expect(latest.voiceId.startsWith('local:club-')).toBe(false); // the deleted voice is no longer selected
   confirm.mockRestore();
 });
+
+test('dialog: double-clicking Record asks for the microphone once', async () => {
+  const dialog = await openDialog();
+  let release!: () => void;
+  vi.mocked(navigator.mediaDevices.getUserMedia).mockImplementationOnce(
+    () => new Promise(res => { release = () => res({ getTracks: () => tracks } as unknown as MediaStream); }),
+  );
+  const button = within(dialog).getByRole('button', { name: 'Record' });
+  await userEvent.dblClick(button);
+  expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledTimes(1);
+  expect(button).toBeDisabled();
+  release();
+  expect(await within(dialog).findByRole('button', { name: 'Stop recording' })).toBeInTheDocument();
+  expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledTimes(1);
+});
+
+test('dialog: recording again releases the previous playback URL', async () => {
+  const dialog = await openDialog();
+  vi.mocked(URL.createObjectURL).mockReturnValueOnce('blob:first').mockReturnValueOnce('blob:second');
+  await record(dialog);
+  await record(dialog);
+  expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:first');
+  await userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+  expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:second');
+});
+
+test('dialog: only server-supported languages are offered; an unsupported page language defaults to English', async () => {
+  setup(s => ({ ...s, lang: 'uk' }));
+  fetchMock.mockResolvedValueOnce(json([]));
+  await userEvent.click(screen.getByText(/Локальний сервер голосів/));
+  await userEvent.click(screen.getAllByRole('button').find(b => b.textContent === 'Підключити')!);
+  await userEvent.click(await screen.findByRole('button', { name: /Записати голос клубу/ }));
+  const select = within(screen.getByRole('dialog')).getByRole('combobox') as HTMLSelectElement;
+  expect(select.value).toBe('en');
+  expect(Array.from(select.options).map(o => o.value).sort()).toEqual(['ar', 'de', 'en', 'es', 'fr', 'it', 'nl', 'pl', 'tr']);
+});

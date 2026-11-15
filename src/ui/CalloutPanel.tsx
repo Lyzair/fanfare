@@ -85,7 +85,7 @@ export default function CalloutPanel({ state, dispatch }: PanelProps) {
       .finally(() => safe(() => { setPreparing(false); setProgress(null); refresh(); }));
   };
 
-  /** Throws the clip away (memory and storage) and makes it again, e.g. after a stray syllable. */
+  /** Makes the clip again (e.g. after a stray syllable); the old clip is replaced only if that works. */
   const regenerate = (text: string) => {
     const spoken = speechText(text, roster).trim();
     if (!spoken || regenerating.has(spoken)) return;
@@ -96,8 +96,7 @@ export default function CalloutPanel({ state, dispatch }: PanelProps) {
     });
     setError(null);
     mark(true);
-    speech.evict(state.voiceId, spoken)
-      .then(() => speech.get(state.voiceId, spoken))
+    speech.regenerate(state.voiceId, spoken)
       .then(() => undefined, (e: unknown) => { if (mounted.current) reportError(e); })
       .finally(() => { if (mounted.current) { mark(false); refresh(); } });
   };

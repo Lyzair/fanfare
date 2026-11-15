@@ -213,3 +213,20 @@ test('evict leaves other clips alone and survives a failing store', async () => 
   expect(c.has('v', 'A')).toBe(false);
   expect(c.has('v', 'B')).toBe(true);
 });
+
+test('regenerate replaces the clip only on success; a failing engine keeps the old clip', async () => {
+  const e = new FakeEngine();
+  const s = memStore();
+  const c = new SpeechCache(e, s);
+  const old = await c.get('v', 'Hallo');
+  e.fail = true;
+  await expect(c.regenerate('v', 'Hallo')).rejects.toBeInstanceOf(TtsUnavailableError);
+  expect(c.has('v', 'Hallo')).toBe(true);
+  expect(await c.get('v', 'Hallo')).toBe(old);
+  expect(s.m.get('v|Hallo')).toBe(old);
+  e.fail = false;
+  const fresh = await c.regenerate('v', ' Hallo ');
+  expect(fresh).not.toBe(old);
+  expect(await c.get('v', 'Hallo')).toBe(fresh);
+  expect(s.m.get('v|Hallo')).toBe(fresh);
+});

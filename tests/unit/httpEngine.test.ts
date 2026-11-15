@@ -192,3 +192,12 @@ test('archive round-trips localTts; an old archive without it gives null; a non-
   await expect(importArchive(evil)).rejects.toMatchObject({ code: 'invalid-data' });
   await expect(importArchive(evil)).rejects.toBeInstanceOf(ImportError);
 });
+
+test.each([
+  ['audio/webm;codecs=opus', 'webm'], ['audio/webm', 'webm'], ['audio/ogg', 'ogg'], ['audio/mp4', 'm4a'], ['audio/wav', 'wav'], ['', 'webm'], ['application/x', 'webm'],
+])('upload filename extension for %s is .%s', async (type, ext) => {
+  const { e, fetchFn } = engine(async () => json({ id: 'club-1', lang: 'de', label: 'x' }, { status: 201 }));
+  await e.uploadReference(new Blob(['x'], { type }), { name: 'a', lang: 'de' });
+  const form = (fetchFn.mock.calls[0][1] as RequestInit).body as FormData;
+  expect((form.get('audio') as File).name).toBe(`club-voice.${ext}`);
+});

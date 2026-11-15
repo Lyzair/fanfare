@@ -26,6 +26,22 @@ export function isLocalUrl(url: string): boolean {
   return true;
 }
 
+/**
+ * Languages the server accepts for POST /references. Mirrors Fanfare Studio's README
+ * ("Club voices": `lang` is one of de en fr es it nl pl tr ar; Chatterbox has no Ukrainian).
+ */
+export const CLUB_VOICE_LANGS: readonly Lang[] = ['de', 'en', 'fr', 'es', 'it', 'nl', 'pl', 'tr', 'ar'];
+
+/** Upload file extension for a recorded blob type. */
+export function recordingExtension(mime: string): string {
+  switch (mime.split(';')[0].trim().toLowerCase()) {
+    case 'audio/ogg': return 'ogg';
+    case 'audio/mp4': case 'audio/m4a': case 'audio/x-m4a': return 'm4a';
+    case 'audio/wav': case 'audio/x-wav': case 'audio/wave': return 'wav';
+    default: return 'webm';
+  }
+}
+
 export interface RemoteVoice { id: string; lang: string; label: string }
 /** A voice made from an uploaded recording; `warnings` come from the server (e.g. very quiet). */
 export interface ClubVoice extends RemoteVoice { warnings: string[] }
@@ -100,7 +116,7 @@ export class HttpTtsEngine implements TtsEngine {
    */
   async uploadReference(audio: Blob, meta: { name: string; lang: string }): Promise<ClubVoice> {
     const form = new FormData();
-    form.append('audio', audio, 'club-voice.webm');
+    form.append('audio', audio, `club-voice.${recordingExtension(audio.type)}`);
     form.append('name', meta.name);
     form.append('lang', meta.lang);
     form.append('consent', 'true');

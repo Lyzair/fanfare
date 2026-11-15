@@ -16,7 +16,7 @@ let latestDispatch: (a: Action) => void;
 const calls: string[] = [];
 const blobFor = (text: string) => new Blob([text]);
 
-function makeServices(opts: { fail?: boolean } = {}) {
+function makeServices(opts: { fail?: boolean; failRegen?: boolean } = {}) {
   const ready = new Set<string>();
   const speech = {
     has: (v: string, t: string) => ready.has(`${v}|${t.trim()}`),
@@ -25,7 +25,11 @@ function makeServices(opts: { fail?: boolean } = {}) {
       ready.add(`${v}|${t.trim()}`);
       return blobFor(t);
     }),
-    evict: vi.fn(async (v: string, t: string) => { ready.delete(`${v}|${t.trim()}`); }),
+    regenerate: vi.fn(async (v: string, t: string) => {
+      if (opts.failRegen) throw new TtsUnavailableError('nope');
+      ready.add(`${v}|${t.trim()}`);
+      return blobFor(t);
+    }),
     prepare: vi.fn(async (v: string, texts: string[], onProgress: (d: number, t: number) => void) => {
       const u = [...new Set(texts)];
       for (let i = 0; i < u.length; i++) { ready.add(`${v}|${u[i].trim()}`); onProgress(i + 1, u.length); }
@@ -97,16 +101,23 @@ test('↻ Regenerate evicts the clip, synthesizes it again and works for the int
   await userEvent.click(screen.getByRole('button', { name: 'Prepare voices (recommended before the game)' }));
   const row = screen.getByLabelText('Announcement text for Lea').closest('li')!;
   expect(within(row).getByText(/Ready/)).toBeInTheDocument();
-  speech.get.mockClear();
   await userEvent.click(screen.getByRole('button', { name: 'Regenerate Lea' }));
-  await waitFor(() => expect(speech.get).toHaveBeenCalledTimes(1));
-  expect(speech.evict).toHaveBeenCalledWith(latest.voiceId, expect.stringContaining('Lea'));
-  expect(speech.evict.mock.invocationCallOrder[0]).toBeLessThan(speech.get.mock.invocationCallOrder[0]);
+  await waitFor(() => expect(speech.regenerate).toHaveBeenCalledTimes(1));
+  expect(speech.regenerate).toHaveBeenCalledWith(latest.voiceId, expect.stringContaining('Lea'));
   expect(calls).not.toContain('play'); // it only makes the clip, nothing is played
   await waitFor(() => expect(within(row).getByText(/Ready/)).toBeInTheDocument());
-  speech.get.mockClear();
   await userEvent.click(screen.getByRole('button', { name: 'Regenerate Intro' }));
-  await waitFor(() => expect(speech.get).toHaveBeenCalledWith(latest.voiceId, expect.stringContaining('FC Test')));
+  await waitFor(() => expect(speech.regenerate).toHaveBeenCalledWith(latest.voiceId, expect.stringContaining('FC Test')));
+});
+
+test('a failing ↻ shows the error and keeps the old clip (still Ready)', async () => {
+  const { services } = makeServices({ failRegen: true });
+  render(<Harness services={services} init={setup} />);
+  await userEvent.click(screen.getByRole('button', { name: 'Prepare voices (recommended before the game)' }));
+  const row = screen.getByLabelText('Announcement text for Lea').closest('li')!;
+  await userEvent.click(screen.getByRole('button', { name: 'Regenerate Lea' }));
+  expect(await screen.findByRole('alert')).toBeInTheDocument();
+  expect(within(row).getByText(/Ready/)).toBeInTheDocument();
 });
 
 test('a local server that refuses this website shows the allow command on a failing clip', async () => {

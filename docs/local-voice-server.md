@@ -76,8 +76,7 @@ Fanfare records the sample in the browser (about 15 seconds, auto-stop at 20 s) 
 **only** to the configured local server.
 
 - `POST /references`, `multipart/form-data` with the fields
-  `audio` (wav/webm/ogg, up to 60 s and 10 MB), `name` (up to 40 characters), `lang` (a code from the list
-  above) and `consent` (must be `"true"`, otherwise `400`)
+  `audio` (wav/webm/ogg, up to 60 s and 10 MB), `name` (up to 40 characters), `lang` (`de en fr es it nl pl tr ar`; Ukrainian is not supported for club voices) and `consent` (must be `"true"`, otherwise `400`)
   -> `201 application/json` `{ "id": "club-1a2b3c4d", "lang": "de", "label": "...", "warnings": [] }`.
   `warnings` are short notes (for example very quiet) that Fanfare shows after saving. Other errors are
   `text/plain` (`400` unusable audio, `413` too large).

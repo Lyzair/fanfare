@@ -1,8 +1,8 @@
 import { useContext, useEffect, useRef, useState } from 'preact/hooks';
 import type { Lang } from '../domain/model';
-import { LANGS, getPack, t } from '../i18n';
+import { getPack, t } from '../i18n';
 import type { UiStrings } from '../i18n';
-import { HttpTtsEngine } from '../tts/httpEngine';
+import { CLUB_VOICE_LANGS, HttpTtsEngine } from '../tts/httpEngine';
 import type { ClubVoice } from '../tts/httpEngine';
 import { RECORD_MAX_MS, RecordingError, startRecording } from '../tts/recorder';
 import type { ActiveRecording } from '../tts/recorder';
@@ -26,9 +26,11 @@ export function ClubVoiceDialog({ lang, serverUrl, onSaved, onClose }: {
   const [left, setLeft] = useState(RECORD_MAX_MS / 1000);
   const [playbackUrl, setPlaybackUrl] = useState<string | null>(null);
   const [name, setName] = useState(tr('clubNameDefault'));
-  const [voiceLang, setVoiceLang] = useState<Lang>(lang);
+  const [voiceLang, setVoiceLang] = useState<Lang>(CLUB_VOICE_LANGS.includes(lang) ? lang : 'en');
   const [consent, setConsent] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [starting, setStarting] = useState(false); // waiting for the microphone prompt
+  const startingRef = useRef(false);
   const [error, setError] = useState<unknown>(null);
   const blob = useRef<Blob | null>(null);
   const active = useRef<ActiveRecording | null>(null);
@@ -60,6 +62,9 @@ export function ClubVoiceDialog({ lang, serverUrl, onSaved, onClose }: {
   }, [phase]);
 
   const record = async () => {
+    if (startingRef.current || active.current) return; // one recording at a time
+    startingRef.current = true;
+    setStarting(true);
     setError(null);
     dropRecording();
     setPlaybackUrl(null);
@@ -70,6 +75,9 @@ export function ClubVoiceDialog({ lang, serverUrl, onSaved, onClose }: {
     } catch (e) {
       if (mounted.current) setError(e);
       return;
+    } finally {
+      startingRef.current = false;
+      if (mounted.current) setStarting(false);
     }
     if (!mounted.current) { rec.cancel(); return; }
     active.current = rec;
@@ -77,14 +85,17 @@ export function ClubVoiceDialog({ lang, serverUrl, onSaved, onClose }: {
     setPhase('recording');
     rec.done.then(
       b => {
+        if (active.current !== rec) return; // stale: replaced or cancelled (its microphone is already off)
         active.current = null;
         if (!mounted.current) return;
+        dropRecording(); // never leave an earlier playback URL behind
         blob.current = b;
         urlRef.current = URL.createObjectURL(b);
         setPlaybackUrl(urlRef.current);
         setPhase('recorded');
       },
       (e: unknown) => {
+        if (active.current !== rec) return;
         active.current = null;
         if (!mounted.current) return;
         setPhase('idle');
@@ -134,7 +145,7 @@ export function ClubVoiceDialog({ lang, serverUrl, onSaved, onClose }: {
         <blockquote class="club-reading" lang={lang}>{tr('clubReadText')}</blockquote>
         <div class="row-actions club-record-row">
           {phase !== 'recording'
-            ? <button type="button" class="primary" disabled={saving} onClick={() => void record()}>{tr('clubStart')}</button>
+            ? <button type="button" class="primary" disabled={saving || starting} onClick={() => void record()}>{tr('clubStart')}</button>
             : <button type="button" class="stop" onClick={() => active.current?.stop()}>{tr('clubStopRec')}</button>}
           {phase === 'recording' && <span role="timer" class="countdown">{fill(tr('clubCountdown'), { seconds: left })}</span>}
           {phase === 'recorded' && playbackUrl && (
@@ -149,7 +160,7 @@ export function ClubVoiceDialog({ lang, serverUrl, onSaved, onClose }: {
         </label>
         <label class="stack">{tr('clubLang')}
           <select value={voiceLang} onChange={e => setVoiceLang(e.currentTarget.value as Lang)}>
-            {LANGS.map(l => <option key={l} value={l}>{getPack(l).nativeName}</option>)}
+            {CLUB_VOICE_LANGS.map(l => <option key={l} value={l}>{getPack(l).nativeName}</option>)}
           </select>
         </label>
         <label class="check">

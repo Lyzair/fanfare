@@ -84,6 +84,33 @@ export class SpeechCache {
     }
   }
 
+  /**
+   * Makes the clip again and replaces the old one only when that worked: if the engine fails
+   * (e.g. the local server is off) the existing clip stays in memory and storage.
+   */
+  async regenerate(voiceId: string, text: string): Promise<Blob> {
+    const key = SpeechCache.key(voiceId, text);
+    const inflight = this.pending.get(key);
+    if (inflight) await inflight.catch(() => undefined);
+    const blob = await this.synthesize(voiceId, text.trim());
+    this.mem.set(key, blob);
+    try {
+      await this.store.save(key, blob);
+    } catch (e) {
+      console.warn('Could not persist speech clip', e);
+    }
+    return blob;
+  }
+
+  private async synthesize(voiceId: string, text: string): Promise<Blob> {
+    try {
+      return await this.engine.synthesize(text, voiceId);
+    } catch (e) {
+      if (e instanceof TtsUnavailableError) throw e;
+      throw new TtsUnavailableError(`Speech synthesis failed: ${e instanceof Error ? e.message : String(e)}`, { cause: e });
+    }
+  }
+
   private async fetch(key: string, voiceId: string, text: string): Promise<Blob> {
     let stored: Blob | null = null;
     try {
@@ -95,13 +122,7 @@ export class SpeechCache {
       this.mem.set(key, stored);
       return stored;
     }
-    let blob: Blob;
-    try {
-      blob = await this.engine.synthesize(text, voiceId);
-    } catch (e) {
-      if (e instanceof TtsUnavailableError) throw e;
-      throw new TtsUnavailableError(`Speech synthesis failed: ${e instanceof Error ? e.message : String(e)}`, { cause: e });
-    }
+    const blob = await this.synthesize(voiceId, text);
     this.mem.set(key, blob);
     try {
       await this.store.save(key, blob);
