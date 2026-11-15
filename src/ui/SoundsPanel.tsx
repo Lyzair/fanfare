@@ -14,6 +14,9 @@ import type { PanelProps } from './types';
 import { usePlayback } from './usePlayback';
 
 const MAX_BYTES = 10 * 1024 * 1024;
+const EXTENSION_MIME: Record<string, string> = {
+  mp3: 'audio/mpeg', wav: 'audio/wav', ogg: 'audio/ogg', m4a: 'audio/mp4', aac: 'audio/aac', flac: 'audio/flac', webm: 'audio/webm',
+};
 const SLOT_LABEL: Record<SoundSlot, keyof UiStrings> = { score: 'slotScore', intro: 'slotIntro' };
 
 export default function SoundsPanel({ state, dispatch }: PanelProps) {
@@ -28,12 +31,15 @@ export default function SoundsPanel({ state, dispatch }: PanelProps) {
 
   const upload = async (slot: SoundSlot, file: File | undefined) => {
     if (!file) return;
-    if (!file.type.startsWith('audio/')) { setError('errorNotAudio'); return; }
+    // some file pickers (Android) give no type: then the extension decides
+    const mime = file.type || EXTENSION_MIME[file.name.slice(file.name.lastIndexOf('.') + 1).toLowerCase()] || '';
+    if (!mime.startsWith('audio/')) { setError('errorNotAudio'); return; }
     if (file.size > MAX_BYTES) { setError('errorTooLarge'); return; }
     setError(null);
-    rememberSound(slot, file); // keeps it usable this session even if storage fails
-    try { await saveSoundBlob(slot, file); } catch { /* private mode: in-memory copy is used */ }
-    dispatch({ type: 'setCustomSound', slot, sound: { name: file.name, mime: file.type } });
+    const sound: Blob = file.type ? file : new Blob([file], { type: mime });
+    rememberSound(slot, sound); // keeps it usable this session even if storage fails
+    try { await saveSoundBlob(slot, sound); } catch { /* private mode: in-memory copy is used */ }
+    dispatch({ type: 'setCustomSound', slot, sound: { name: file.name, mime } });
   };
 
   const reset = async (slot: SoundSlot) => {

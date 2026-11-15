@@ -95,3 +95,21 @@ test('Play sounds checkbox toggles soundsEnabled', async () => {
   await userEvent.click(screen.getByRole('checkbox', { name: 'Play sounds' }));
   expect(latest.soundsEnabled).toBe(false);
 });
+
+test('a file without a type (some Android pickers) is accepted by its audio extension and gets the matching type', async () => {
+  setup();
+  const file = new File(['abc'], 'Tor Hymne.M4A', { type: '' });
+  await userEvent.upload(fileInput('Score sound'), file, { applyAccept: false });
+  await waitFor(() => expect(latest.customSounds.score).toEqual({ name: 'Tor Hymne.M4A', mime: 'audio/mp4' }));
+  const stored = vi.mocked(saveSoundBlob).mock.calls.at(-1)![1] as Blob;
+  expect(stored.type).toBe('audio/mp4');
+  expect(stored.size).toBe(3);
+  expect(screen.queryByRole('alert')).toBeNull();
+});
+
+test('a file without a type and without an audio extension is still refused', async () => {
+  setup();
+  await userEvent.upload(fileInput('Score sound'), new File(['x'], 'notes.pdf', { type: '' }), { applyAccept: false });
+  expect(await screen.findByRole('alert')).toHaveTextContent('not an audio file');
+  expect(latest.customSounds.score).toBeUndefined();
+});
