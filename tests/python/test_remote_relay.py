@@ -482,6 +482,20 @@ class RelayHttpTests(base.TempDirCase):
                 time.sleep(0.02)
             raise AssertionError('no %s event; got %r' % (name, self.events))
 
+        def wait_for(self, name, predicate, timeout=5):
+            """Polls until the newest `name` event satisfies `predicate`; returns its data.
+
+            The reader thread may still be behind the server when a request returns, so asserting
+            on the newest event right away is a race: older events of the same name are already there.
+            """
+            end = time.time() + timeout
+            while time.time() < end:
+                newest = [d for n, d in list(self.events) if n == name][-1:]
+                if newest and predicate(newest[0]):
+                    return newest[0]
+                time.sleep(0.02)
+            raise AssertionError('no matching %s event; got %r' % (name, self.events))
+
         def last(self, name, timeout=5):
             self.wait(name, timeout)
             return [d for n, d in self.events if n == name][-1]
@@ -677,7 +691,7 @@ class RelayHttpTests(base.TempDirCase):
         self.assertNotEqual(code2, s['code'])
         remote = self.stream(r, tok)
         self.assertTrue(remote.headers['content-type'].startswith('text/event-stream'))
-        self.assertEqual(speaker.last('remotes'), {'count': 1})
+        speaker.wait_for('remotes', lambda d: d == {'count': 1})
         self.assertFalse(remote.wait('state')['online'] is False)
         # remote -> speaker
         resp, _ = self.call(r, 'POST', '/remote/command', {'cmd': 'score', 'args': {'team': 'home', 'player': 'p1'}},
@@ -687,10 +701,7 @@ class RelayHttpTests(base.TempDirCase):
         # speaker -> remote
         resp, _ = self.call(r, 'POST', '/remote/state', SNAPSHOT, headers={'X-Fanfare-Speaker-Token': s['speakerToken']})
         self.assertEqual(resp.status, 200)
-        deadline = time.time() + 5
-        while time.time() < deadline and not any(d.get('state') == SNAPSHOT for n, d in remote.events if n == 'state'):
-            time.sleep(0.02)
-        self.assertEqual(remote.last('state')['state'], SNAPSHOT)
+        remote.wait_for('state', lambda d: d.get('state') == SNAPSHOT)
         # end: both streams close
         resp, _ = self.call(r, 'DELETE', '/remote/session', headers={'X-Fanfare-Speaker-Token': s['speakerToken']})
         self.assertEqual(resp.status, 200)
@@ -782,14 +793,9 @@ class RelayHttpTests(base.TempDirCase):
         tok = self.call(r, 'POST', '/remote/pair', {'code': s['code']})[1]['token']
         remote = self.Sse(self, r, tok)
         speaker.wait('remotes')
-        deadline = time.time() + 5
-        while time.time() < deadline and speaker.last('remotes') != {'count': 1}:
-            time.sleep(0.02)
+        speaker.wait_for('remotes', lambda d: d == {'count': 1})
         remote.close()  # the phone goes away
-        deadline = time.time() + 5
-        while time.time() < deadline and speaker.last('remotes') != {'count': 0}:
-            time.sleep(0.05)
-        self.assertEqual(speaker.last('remotes'), {'count': 0})
+        speaker.wait_for('remotes', lambda d: d == {'count': 0})
 
     # ---- privacy
 
