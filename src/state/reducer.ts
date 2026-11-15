@@ -1,4 +1,5 @@
 import type { AppState, CustomSound, Lang, Player, Roster, Side, SoundSlot, SportId, TeamFile, TemplateKey } from '../domain/model';
+import { newId } from '../domain/id';
 import { parsePlayerLines } from '../domain/roster';
 import { defaultTemplates, getPack } from '../i18n';
 import { isLocalUrl } from '../tts/httpEngine';
@@ -111,7 +112,7 @@ export function reducer(s: AppState, a: Action): AppState {
     case 'addPlayers': {
       const parsed = parsePlayerLines(a.text, getPack(s.lang).sports[s.sport].positions, getPack(s.lang).staffHeadings);
       if (parsed.length === 0) return s;
-      const added = parsed.map(p => ({ ...p, id: crypto.randomUUID(), onField: a.onField, customText: null, sayAs: '', origSpelling: '', nameLang: '' }));
+      const added = parsed.map(p => ({ ...p, id: newId(), onField: a.onField, customText: null, sayAs: '', origSpelling: '', nameLang: '' }));
       return withPlayers(withRoster(s, r => ({ ...r, showPositions: r.showPositions || parsed.some(p => p.position !== '') })), a.side, ps => [...ps, ...added]);
     }
     case 'updatePlayer': {
@@ -144,7 +145,7 @@ export function reducer(s: AppState, a: Action): AppState {
     }
     case 'importGuestTeam': {
       if (a.team.sport !== s.sport) return s;
-      const guestPlayers = a.team.players.map(p => ({ ...p, id: crypto.randomUUID(), customText: null }));
+      const guestPlayers = a.team.players.map(p => ({ ...p, id: newId(), customText: null }));
       return withRoster(s, r => ({
         ...r, guestPlayers,
         showPositions: r.showPositions || guestPlayers.some(p => p.position !== ''),

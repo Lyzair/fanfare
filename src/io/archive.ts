@@ -1,4 +1,5 @@
 import { unzip, zip, strFromU8, strToU8, type Unzipped } from 'fflate';
+import { newId } from '../domain/id';
 import type { AppState, Lang, Player, Roster, SoundSlot, SportId, TemplateKey, CustomSound } from '../domain/model';
 import { SPORT_IDS } from '../domain/sports';
 import { LANGS, defaultTemplates } from '../i18n';
@@ -90,7 +91,7 @@ export function parsePlayer(v: unknown): Player {
   if (customText !== null && typeof customText !== 'string') throw bad();
   for (const k of ['sayAs', 'origSpelling', 'nameLang'] as const) if (v[k] !== undefined && typeof v[k] !== 'string') throw bad();
   return {
-    id: typeof id === 'string' && id ? id : crypto.randomUUID(), name, number, position, onField, customText,
+    id: typeof id === 'string' && id ? id : newId(), name, number, position, onField, customText,
     sayAs: typeof v.sayAs === 'string' ? v.sayAs : '',
     origSpelling: typeof v.origSpelling === 'string' ? v.origSpelling : '',
     nameLang: typeof v.nameLang === 'string' ? v.nameLang : '',
