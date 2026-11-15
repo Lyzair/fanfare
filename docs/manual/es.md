@@ -58,6 +58,10 @@ Para nombrar al goleador, toca primero al jugador bajo el botón, por ejemplo **
 
 ![El botón de gol y los botones de goleadores](media/es/04-game.png)
 
+**El móvil como mando a distancia.** Si ejecutas Fanfare desde tu portátil (consulta «¿Sin internet en absoluto?» en la sección 7) y lo inicias con `--lan`, un móvil conectado a la misma Wi-Fi puede ser el panel de sonidos mientras el portátil suena por los altavoces. En el paso 3 abre **📱 Usar el móvil como mando a distancia** y pulsa **Activar altavoz** (un toque, para que el portátil pueda reproducir sonido). Escanea el código QR con el móvil, o abre la dirección que aparece, e introduce el código de 6 dígitos. El móvil muestra botones grandes para el gol y el goleador, la alineación, **Detener** y el sonido de introducción. El sonido siempre sale del portátil. Pueden unirse hasta tres móviles; cuando un móvil se ha emparejado, el portátil muestra un código nuevo para el siguiente. **Terminar el mando** desconecta todos los móviles. Con http simple la conexión no está cifrada: otras personas en la Wi-Fi podrían ver los nombres de los jugadores y enviar comandos que intercepten. Para cifrar, inicia con `--https` (consulta los riesgos en la sección 7). No funciona con la demo en línea.
+
+![El móvil como panel de sonidos](media/es/07-remote.png)
+
 ## 5. Tus propios sonidos y tu voz
 
 Abre el paso 4 **Sonidos y voz**. Aquí puedes:

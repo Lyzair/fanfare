@@ -192,3 +192,34 @@ button, input, textarea { min-height: 44px; font: inherit; }
 .offline-status { margin: 8px 0; color: var(--muted); }
 .offline-status[data-offline="ready"] { color: var(--accent); font-weight: 600; }
 .update-notice button { margin-inline-start: 8px; }
+
+/* Phone remote: the speaker's pairing panel (step 3) and the soundboard page on the phone (#remote) */
+.remote-panel { display: grid; gap: 12px; margin-block-start: 20px; padding-block-start: 12px; border-block-start: 1px solid var(--border); }
+.remote-panel h3 { margin: 0; font-size: 1.05rem; }
+.remote-panel .hint, .remote-panel p { margin: 0; }
+.remote-panel button { min-height: 44px; padding-inline: 12px; }
+.remote-live { display: grid; gap: 10px; justify-items: start; }
+.remote-live .qr { max-width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--border); }
+.remote-url code { overflow-wrap: anywhere; }
+.remote-code { font-size: 2rem; letter-spacing: 0.2em; font-variant-numeric: tabular-nums; }
+.notice.warn { margin: 0; border-inline-start-color: #b45309; }
+
+.remote-app { max-width: 32rem; min-height: 100vh; margin: 0 auto; padding: 12px 16px 32px; display: grid; gap: 12px; align-content: start; background: var(--bg); color: var(--fg); }
+.remote-app h1 { margin: 0; font-size: 1.25rem; }
+.remote-app .hint { margin: 0; }
+.remote-app button { min-height: 64px; min-width: 64px; padding-inline: 16px; font-weight: 600; color: var(--fg); background: var(--card); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; }
+.remote-app button:disabled { opacity: 0.5; cursor: not-allowed; }
+.remote-app input { min-height: 64px; width: 100%; padding-inline: 12px; font-size: 1.8rem; letter-spacing: 0.3em; text-align: center; color: var(--fg); background: var(--card); border: 1px solid var(--border); border-radius: 10px; }
+.remote-app .stack { display: grid; gap: 6px; font-weight: 600; }
+.remote-app .goal { min-height: 96px; font-size: 1.6rem; font-weight: 700; color: #fff; background: var(--accent); border-color: var(--accent); }
+.remote-app .guest-goal { min-height: 80px; font-size: 1.3rem; }
+.remote-app .lineup { min-height: 72px; font-size: 1.2rem; }
+.remote-app .chips { gap: 8px; margin-block: 0; }
+.remote-app .chip { min-height: 64px; padding-inline: 16px; }
+.remote-app .chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.remote-app .stop { color: #fff; background: #b91c1c; border-color: #b91c1c; }
+.remote-board { display: grid; gap: 12px; }
+.remote-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.remote-pair { display: grid; gap: 12px; }
+.remote-status { margin: 0; padding: 10px 12px; font-weight: 600; text-align: center; border-radius: 8px; background: var(--card); border: 1px solid var(--border); }
+.remote-app .notice { margin: 0; padding: 10px 12px; font-size: 0.9rem; }

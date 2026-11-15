@@ -19,6 +19,12 @@ Use it on phones and tablets (same Wi-Fi):
    The window shows an http:// address; open it on the phone. This works, but over
    plain http phones cannot use offline mode or the microphone.
 
+   PHONE AS REMOTE: with --lan, step 3 in Fanfare shows "Use a phone as remote". Press
+   "Activate speaker", scan the QR code with a phone on the same Wi-Fi and enter the code.
+   The laptop plays the sounds; the phone is the soundboard. Over plain http others on
+   the Wi-Fi could see player names and send intercepted commands (Fanfare warns you);
+   --https avoids that (see the risks below).
+
    OPTIONAL, WITH RISKS - HTTPS for phones:  start-fanfare with --lan --https
    It asks you to type "yes" before it creates a local certificate authority. Then open
    <address>/trust.html on each phone once and follow the steps (compare the fingerprint
@@ -71,6 +77,12 @@ Auf Handy und Tablet (gleiches WLAN):
    start-fanfare mit der Option --lan starten   (z. B. ./start-fanfare.sh --lan)
    Das Fenster zeigt eine http://-Adresse; öffne sie auf dem Handy. Das funktioniert, aber
    über einfaches http können Handys weder den Offline-Modus noch das Mikrofon nutzen.
+
+   HANDY ALS FERNBEDIENUNG: Mit --lan zeigt Schritt 3 in Fanfare "Handy als Fernbedienung
+   nutzen". Tippe auf "Lautsprecher aktivieren", scanne den QR-Code mit einem Handy im
+   gleichen WLAN und gib den Code ein. Der Laptop spielt die Sounds; das Handy ist das
+   Soundboard. Über einfaches http könnten andere im WLAN Spielernamen sehen und
+   abgefangene Befehle senden (Fanfare warnt davor); --https verhindert das (Risiken unten).
 
    OPTIONAL, MIT RISIKEN - HTTPS für Handys:  start-fanfare mit --lan --https
    Vor dem Erstellen einer lokalen Zertifizierungsstelle musst du "yes" tippen. Öffne dann

@@ -58,6 +58,10 @@ Per nominare il marcatore, tocca prima il giocatore sotto il pulsante, per esemp
 
 ![Il pulsante del gol e i pulsanti dei marcatori](media/it/04-game.png)
 
+**Il telefono come telecomando.** Se avvii Fanfare dal tuo portatile (vedi «Niente internet?» nella sezione 7) con `--lan`, un telefono sullo stesso Wi-Fi può fare da pulsantiera mentre il portatile suona dagli altoparlanti. Nel passaggio 3 apri **📱 Usa il telefono come telecomando** e premi **Attiva l'altoparlante** (un tocco, così il portatile può riprodurre audio). Inquadra il codice QR con il telefono, oppure apri l'indirizzo mostrato, e inserisci il codice di 6 cifre. Il telefono mostra grandi pulsanti per il gol e il marcatore, la formazione, **Stop** e il suono di introduzione. L'audio esce sempre dal portatile. Possono collegarsi fino a tre telefoni; dopo l'abbinamento di un telefono, il portatile mostra un nuovo codice per il successivo. **Termina il telecomando** scollega tutti i telefoni. Con il semplice http la connessione non è cifrata: altri sul Wi-Fi potrebbero vedere i nomi dei giocatori e inviare comandi intercettati. Per cifrare avvia con `--https` (vedi i rischi nella sezione 7). Non funziona con la demo online.
+
+![Il telefono come pulsantiera](media/it/07-remote.png)
+
 ## 5. I tuoi suoni e la tua voce
 
 Apri il passaggio 4 **Suoni e voce**. Qui puoi:

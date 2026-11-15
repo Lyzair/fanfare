@@ -58,6 +58,10 @@ Pour citer le buteur, touchez d'abord le joueur sous le bouton, par exemple **7 
 
 ![Le bouton de score et les boutons des buteurs](media/fr/04-game.png)
 
+**Téléphone comme télécommande.** Si tu lances Fanfare depuis ton ordinateur portable (voir « Pas d'internet du tout ? » dans la section 7) avec `--lan`, un téléphone connecté au même Wi-Fi peut servir de pupitre de sons pendant que l'ordinateur joue sur les haut-parleurs. À l'étape 3, ouvre **📱 Utiliser un téléphone comme télécommande** et appuie sur **Activer le haut-parleur** (un seul appui, pour que l'ordinateur puisse jouer du son). Scanne le QR code avec le téléphone, ou ouvre l'adresse affichée, puis saisis le code à 6 chiffres. Le téléphone affiche de grands boutons pour le but et le buteur, la composition, **Arrêter** et le son d'intro. Le son vient toujours de l'ordinateur. Jusqu'à trois téléphones peuvent se connecter ; après l'appairage d'un téléphone, l'ordinateur affiche un nouveau code pour le suivant. **Arrêter la télécommande** déconnecte tous les téléphones. En http simple, la connexion n'est pas chiffrée : d'autres personnes sur le Wi-Fi pourraient voir les noms des joueurs et envoyer des commandes interceptées. Pour chiffrer, démarre avec `--https` (voir les risques dans la section 7). Cela ne fonctionne pas avec la démo en ligne.
+
+![Le téléphone comme pupitre de sons](media/fr/07-remote.png)
+
 ## 5. Vos propres sons et votre voix
 
 Ouvrez l'étape 4 **Sons et voix**. Vous pouvez :

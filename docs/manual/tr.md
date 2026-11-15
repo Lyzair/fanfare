@@ -58,6 +58,10 @@ Golü atanı söyletmek için önce düğmenin altındaki oyuncuya dokunun, örn
 
 ![Skor düğmesi ve gol atan düğmeleri](media/tr/04-game.png)
 
+**Telefon uzaktan kumanda olarak.** Fanfare'ı dizüstü bilgisayarından (bölüm 7'deki "İnternet hiç yok mu?" kısmına bak) `--lan` ile başlatırsan, aynı Wi-Fi'deki bir telefon ses panosu olabilir; dizüstü bilgisayar ise hoparlörlerden çalar. 3. adımda **📱 Telefonu uzaktan kumanda olarak kullan** bölümünü aç ve **Hoparlörü etkinleştir**'e bas (tek dokunuş, dizüstü bilgisayarın ses çalabilmesi için). QR kodunu telefonla tara veya gösterilen adresi aç ve 6 haneli kodu gir. Telefon; gol ve gol atan, kadro, **Durdur** ve giriş sesi için büyük düğmeler gösterir. Ses her zaman dizüstü bilgisayardan gelir. En fazla üç telefon bağlanabilir; bir telefon eşleştikten sonra dizüstü bilgisayar bir sonraki için yeni bir kod gösterir. **Kumandayı bitir** tüm telefonların bağlantısını keser. Düz http üzerinde bağlantı şifreli değildir: Wi-Fi'deki diğer kişiler oyuncu adlarını görebilir ve ele geçirdikleri komutları gönderebilir. Şifreleme için `--https` ile başlat (riskler için bölüm 7'ye bak). Çevrimiçi demoyla çalışmaz.
+
+![Ses panosu olarak telefon](media/tr/07-remote.png)
+
 ## 5. Kendi seslerin ve sesin
 
 4. adımı **Sesler ve ses seçimi** açın. Burada şunları yapabilirsiniz:

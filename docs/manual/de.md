@@ -56,6 +56,10 @@ Wenn der Torschütze genannt werden soll, tippe vorher unter dem Knopf auf den S
 
 ![Der Torknopf und die Torschützen](media/de/04-game.png)
 
+**Handy als Fernbedienung.** Wenn du Fanfare auf deinem Laptop startest (siehe „Ganz ohne Internet?“ in Abschnitt 7) und dabei `--lan` angibst, kann ein Handy im selben WLAN das Soundboard sein, während der Laptop über die Lautsprecher spielt. Öffne in Schritt 3 **📱 Handy als Fernbedienung nutzen** und tippe auf **Lautsprecher aktivieren** (ein Tipp, damit der Laptop Ton abspielen darf). Scanne den QR-Code mit dem Handy oder öffne die angezeigte Adresse und gib den 6-stelligen Code ein. Das Handy zeigt große Knöpfe für Tor und Torschützen, die Aufstellung, **Stopp** und den Intro-Sound. Der Ton kommt immer vom Laptop. Bis zu drei Handys können sich verbinden; nachdem sich ein Handy gekoppelt hat, zeigt der Laptop einen neuen Code für das nächste. **Fernbedienung beenden** trennt alle Handys. Über einfaches http ist die Verbindung nicht verschlüsselt: Andere im WLAN könnten Spielernamen sehen und abgefangene Befehle senden. Für Verschlüsselung starte mit `--https` (Risiken siehe Abschnitt 7). Mit der Online-Demo funktioniert das nicht.
+
+![Das Handy als Soundboard](media/de/07-remote.png)
+
 ## 5. Eigene Sounds und Stimme
 
 Öffne Schritt 4 **Klänge & Stimme**. Hier kannst du:

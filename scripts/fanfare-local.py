@@ -7,16 +7,22 @@ Python 3.9 or newer, standard library only. HTTPS for --lan needs either the `op
 command or the `cryptography` Python package (to create a private local certificate).
 HTTPS is opt-in and asks first: it creates a local certificate authority whose key stays on
 this computer (see the risks it prints). `--forget-ca` removes it again.
-The server only answers GET and HEAD, never lists folders, never contacts the internet,
-and logs nothing but "METHOD /path STATUS" (no addresses, no query strings).
+The server never lists folders, never contacts the internet, and logs nothing but
+"METHOD /path STATUS" (no addresses, no query strings). Besides GET and HEAD it answers only
+the small /remote/ relay that lets a phone on the same Wi-Fi trigger sounds on this laptop
+(sessions live in memory only; nothing is stored).
 """
 import argparse
 import datetime
 import hashlib
+import hmac
 import html
 import ipaddress
+import json
 import os
+import queue
 import re
+import secrets
 import shutil
 import socket
 import ssl
@@ -24,11 +30,13 @@ import subprocess
 import sys
 import tempfile
 import threading
+import time
 import webbrowser
+from collections import deque
 from dataclasses import dataclass
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import quote, unquote
+from urllib.parse import parse_qs, quote, unquote, urlsplit
 
 HTTP_PORTS = range(8080, 8100)    # default 8080, then 8081..8099 if busy
 HTTPS_PORTS = range(8443, 8464)   # default 8443, then 8444..8463 if busy
@@ -87,6 +95,8 @@ def _can_bind(host, port):
     try:
         if os.name == 'nt' and hasattr(socket, 'SO_EXCLUSIVEADDRUSE'):
             s.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+        elif os.name != 'nt':  # like the server itself: a port in TIME_WAIT after a restart is free
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         s.bind((host, port))
         return True
     except OSError:
@@ -590,6 +600,306 @@ code{word-break:break-all;font-family:ui-monospace,Menlo,Consolas,monospace}
           'remove_en': html.escape(REMOVAL['en']), 'remove_de': html.escape(REMOVAL['de'])}).encode('utf-8')
 
 
+# ----------------------------------------------------------------------------- phone remote relay
+
+CODE_TTL = 600          # a pairing code is valid for 10 minutes
+MAX_WRONG_CODES = 5     # then the session is locked
+MAX_REMOTES = 3         # phones per session
+IDLE_REMOTE_SECONDS = 120   # a phone that left frees its slot after this long
+RATE_PER_SECOND = 5     # commands per remote token
+KEEPALIVE_SECONDS = 15
+MAX_BODY = 64 * 1024
+ID_RE = re.compile(r'^[A-Za-z0-9_-]{1,64}$')
+REMOTE_ROUTES = {
+    '/remote/health': ('GET',), '/remote/events': ('GET',), '/remote/session': ('POST', 'DELETE'),
+    '/remote/pair': ('POST',), '/remote/command': ('POST',), '/remote/state': ('POST',), '/remote/code': ('POST',),
+}
+ANNOUNCE_PARTS = ('all', 'guests', 'home')
+TEAMS = ('home', 'guest')
+SOUND_SLOTS = ('intro', 'score')
+
+
+def _text(value, limit):
+    return value[:limit] if isinstance(value, str) else ''
+
+
+def _players(value):
+    out = []
+    for p in (value if isinstance(value, list) else [])[:60]:
+        if isinstance(p, dict) and isinstance(p.get('id'), str) and ID_RE.match(p['id']):
+            out.append({'id': p['id'], 'name': _text(p.get('name'), 80)})
+    return out
+
+
+def clean_state(raw):
+    """The only things a phone gets to see: display names of field players, team names, score
+    word and flags. Everything else the speaker might send (numbers, positions, texts) is dropped."""
+    if not isinstance(raw, dict):
+        return None
+
+    def team(key):
+        t = raw.get(key) if isinstance(raw.get(key), dict) else {}
+        return {'name': _text(t.get('name'), 80), 'players': _players(t.get('players'))}
+    return {'sport': _text(raw.get('sport'), 24), 'scoreWord': _text(raw.get('scoreWord'), 40),
+            'home': team('home'), 'guest': team('guest'), 'hasGuests': raw.get('hasGuests') is True,
+            'playing': raw.get('playing') is True, 'activated': raw.get('activated') is True}
+
+
+def clean_command(body):
+    """Allowlist: returns {'cmd', 'args'} rebuilt from known fields only, or None."""
+    if not isinstance(body, dict):
+        return None
+    cmd, args = body.get('cmd'), body.get('args', {})
+    if not isinstance(cmd, str) or not isinstance(args, dict):
+        return None
+    if cmd == 'stop':
+        return {'cmd': 'stop', 'args': {}}
+    if cmd == 'announce' and args.get('part') in ANNOUNCE_PARTS:
+        return {'cmd': 'announce', 'args': {'part': args['part']}}
+    if cmd == 'sound' and args.get('slot') in SOUND_SLOTS:
+        return {'cmd': 'sound', 'args': {'slot': args['slot']}}
+    if cmd == 'player' and isinstance(args.get('id'), str) and ID_RE.match(args['id']):
+        return {'cmd': 'player', 'args': {'id': args['id']}}
+    if cmd == 'score' and args.get('team') in TEAMS:
+        out = {'team': args['team']}
+        if 'player' in args:
+            if not (isinstance(args['player'], str) and ID_RE.match(args['player'])):
+                return None
+            out['player'] = args['player']
+        return {'cmd': 'score', 'args': out}
+    return None
+
+
+class Stream:
+    """One open event stream (the speaker's or a phone's). The handler thread drains `q`."""
+
+    def __init__(self, kind, owner):
+        self.kind, self.owner = kind, owner
+        self.q = queue.Queue()
+
+    def send(self, event, data):
+        self.q.put((event, data))
+
+    def close(self):
+        self.q.put(None)
+
+
+class _Remote:
+    def __init__(self, token, now):
+        self.token, self.last_seen = token, now
+        self.hits = deque()
+        self.streams = []
+
+
+class _Session:
+    def __init__(self, relay):
+        now = relay.clock()
+        self.speaker_token = secrets.token_urlsafe(24)
+        self.remotes = {}
+        self.speaker_streams = []
+        self.wrong = 0
+        self.state = None
+        self.code = self.code_expires = None
+        self.fresh_code(relay)
+        self.created = now
+
+    def fresh_code(self, relay):
+        self.code = '%06d' % secrets.randbelow(10 ** 6)
+        self.code_expires = relay.clock() + CODE_TTL
+
+
+class Relay:
+    """In-memory pairing and command relay between the laptop (speaker) and phones (remotes).
+    One session at a time. Pure logic: every method returns data, the HTTP layer only wires it up."""
+
+    def __init__(self, clock=time.monotonic, urls=(), secure=False):
+        self.clock = clock
+        self.urls, self.secure = list(urls), secure
+        self.keepalive = KEEPALIVE_SECONDS
+        self.speaker_secret = secrets.token_urlsafe(24)
+        self.session = None
+        self.lock = threading.RLock()
+
+    def configure(self, urls, secure):
+        self.urls, self.secure = list(urls), secure
+
+    def health(self):
+        return {'fanfare': 'local', 'urls': list(self.urls), 'secure': self.secure}
+
+    # -- session
+
+    def create_session(self):
+        with self.lock:
+            self._end()
+            self.session = _Session(self)
+            return {'speakerToken': self.session.speaker_token, 'code': self.session.code, 'expiresIn': CODE_TTL}
+
+    def _speaker_ok(self, token):
+        s = self.session
+        return bool(s and isinstance(token, str) and token and hmac.compare_digest(token.encode(), s.speaker_token.encode()))
+
+    def _find_remote(self, token):
+        s = self.session
+        if not (s and isinstance(token, str) and token):
+            return None
+        found = None
+        for t, r in s.remotes.items():
+            if hmac.compare_digest(token.encode(), t.encode()):
+                found = r
+        return found
+
+    def new_code(self, speaker_token):
+        with self.lock:
+            if not self._speaker_ok(speaker_token):
+                return 401, {'error': 'unauthorized'}
+            self.session.fresh_code(self)
+            return 200, {'code': self.session.code, 'expiresIn': CODE_TTL}
+
+    def end_session(self, speaker_token):
+        with self.lock:
+            if not self._speaker_ok(speaker_token):
+                return False
+            self._end()
+            return True
+
+    def end_all(self):
+        with self.lock:
+            self._end()
+
+    def _end(self):
+        s, self.session = self.session, None
+        if s is None:
+            return
+        for r in s.remotes.values():
+            for st in list(r.streams):
+                st.send('ended', {})
+                st.close()
+        for st in list(s.speaker_streams):
+            st.close()
+
+    # -- pairing
+
+    def _expire_idle(self, s):
+        now = self.clock()
+        for t in [t for t, r in s.remotes.items() if not r.streams and now - r.last_seen > IDLE_REMOTE_SECONDS]:
+            del s.remotes[t]
+
+    def pair(self, code):
+        with self.lock:
+            if not (isinstance(code, str) and re.fullmatch(r'\d{6}', code)):
+                return 400, {'error': 'bad-code'}
+            s = self.session
+            if s is None:
+                return 403, {'error': 'wrong-code'}
+            if s.wrong >= MAX_WRONG_CODES:
+                return 423, {'error': 'locked'}
+            match = hmac.compare_digest(code.encode(), s.code.encode())  # always compared, constant time
+            if not match:
+                s.wrong += 1
+                return 403, {'error': 'wrong-code', 'attemptsLeft': max(0, MAX_WRONG_CODES - s.wrong)}
+            if self.clock() > s.code_expires:
+                return 410, {'error': 'expired'}
+            self._expire_idle(s)
+            if len(s.remotes) >= MAX_REMOTES:
+                return 429, {'error': 'full'}
+            token = secrets.token_urlsafe(24)
+            s.remotes[token] = _Remote(token, self.clock())
+            s.fresh_code(self)  # the used code is dead; the speaker may show the next one
+            self._to_speaker(s, 'code', {'code': s.code, 'expiresIn': CODE_TTL})
+            self._to_speaker(s, 'remotes', {'count': self._count(s)})
+            return 200, {'token': token}
+
+    # -- state (speaker -> phones) and commands (phones -> speaker)
+
+    @staticmethod
+    def _count(s):
+        return sum(1 for r in s.remotes.values() if r.streams)
+
+    @staticmethod
+    def _to_speaker(s, event, data):
+        for st in s.speaker_streams:
+            st.send(event, data)
+
+    @staticmethod
+    def _state_event(s):
+        return {'state': s.state, 'online': bool(s.speaker_streams)}
+
+    def _to_remotes(self, s):
+        data = self._state_event(s)
+        for r in s.remotes.values():
+            for st in r.streams:
+                st.send('state', data)
+
+    def set_state(self, speaker_token, raw):
+        with self.lock:
+            if not self._speaker_ok(speaker_token):
+                return 401, {'error': 'unauthorized'}
+            state = clean_state(raw)
+            if state is None:
+                return 400, {'error': 'bad-state'}
+            self.session.state = state
+            self._to_remotes(self.session)
+            return 200, {'ok': True}
+
+    def command(self, remote_token, body):
+        with self.lock:
+            r = self._find_remote(remote_token)
+            if r is None:
+                return 401, {'error': 'unauthorized'}
+            now = self.clock()
+            while r.hits and now - r.hits[0] >= 1.0:
+                r.hits.popleft()
+            if len(r.hits) >= RATE_PER_SECOND:
+                return 429, {'error': 'rate-limit'}
+            r.hits.append(now)
+            r.last_seen = now
+            cmd = clean_command(body)
+            if cmd is None:
+                return 400, {'error': 'bad-command'}
+            if not self.session.speaker_streams:
+                return 409, {'error': 'speaker-offline'}
+            self._to_speaker(self.session, 'command', cmd)
+            return 200, {'ok': True}
+
+    # -- streams
+
+    def open_stream(self, token):
+        """Event stream for the speaker token or a remote token; None when the token is unknown."""
+        with self.lock:
+            s = self.session
+            if s is None:
+                return None
+            if self._speaker_ok(token):
+                st = Stream('speaker', None)
+                s.speaker_streams.append(st)
+                st.send('remotes', {'count': self._count(s)})
+                self._to_remotes(s)
+                return st
+            r = self._find_remote(token)
+            if r is None:
+                return None
+            st = Stream('remote', r)
+            r.streams.append(st)
+            r.last_seen = self.clock()
+            st.send('state', self._state_event(s))
+            self._to_speaker(s, 'remotes', {'count': self._count(s)})
+            return st
+
+    def close_stream(self, stream):
+        with self.lock:
+            s = self.session
+            if s is None:
+                return
+            if stream.kind == 'speaker':
+                if stream in s.speaker_streams:
+                    s.speaker_streams.remove(stream)
+                    self._to_remotes(s)
+            elif stream in stream.owner.streams:
+                stream.owner.streams.remove(stream)
+                stream.owner.last_seen = self.clock()
+                self._to_speaker(s, 'remotes', {'count': self._count(s)})
+
+
 # ----------------------------------------------------------------------------- server
 
 class Handler(BaseHTTPRequestHandler):
@@ -632,19 +942,174 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(body)
 
     def _method_not_allowed(self):
-        self._reply(405, b'Method not allowed\n', headers=[('Allow', 'GET, HEAD')])
+        path = self._clean_path()
+        allow = ', '.join(REMOTE_ROUTES.get(path, ('GET', 'HEAD')))
+        if self.command in ('POST', 'DELETE') or path in REMOTE_ROUTES:
+            self.close_connection = True  # a request body we did not read must not be taken for the next request
+        self._reply(405, b'Method not allowed\n', headers=[('Allow', allow)])
 
     def __getattr__(self, name):
-        # every method other than GET/HEAD (even unknown ones like PROPFIND) -> 405, not the base class's 501
+        # every method other than GET/HEAD/POST/DELETE (even unknown ones like PROPFIND) -> 405, not the base class's 501
         if name.startswith('do_'):
             return self._method_not_allowed
         raise AttributeError(name)
 
+    def _clean_path(self):
+        return '/' + '/'.join(s for s in self.path.split('?', 1)[0].split('#', 1)[0].split('/') if s)
+
     def do_GET(self):
+        path = self._clean_path()
+        if path in REMOTE_ROUTES:
+            return self._remote(path)
         self._serve(head=False)
 
     def do_HEAD(self):
+        if self._clean_path() in REMOTE_ROUTES:
+            return self._method_not_allowed()
         self._serve(head=True)
+
+    def do_POST(self):
+        self._remote(self._clean_path())
+
+    def do_DELETE(self):
+        self._remote(self._clean_path())
+
+    # ---- phone remote (see Relay)
+
+    def client_ip(self):
+        return self.client_address[0]
+
+    def _is_loopback(self):
+        try:
+            a = ipaddress.ip_address(self.client_ip().split('%')[0])
+        except ValueError:
+            return False
+        if isinstance(a, ipaddress.IPv6Address) and a.ipv4_mapped:
+            a = a.ipv4_mapped
+        return a.is_loopback
+
+    def _is_speaker(self):
+        """The laptop itself: a loopback client, or whoever holds this run's secret (only ever written
+        into the page handed to the laptop's own browser)."""
+        if self._is_loopback():
+            return True
+        given = self.headers.get('X-Fanfare-Speaker-Secret') or ''
+        return bool(given) and hmac.compare_digest(given.encode(), self.server.relay.speaker_secret.encode())
+
+    def _host_ok(self):
+        """Only IP addresses, localhost and *.local: a public name pointing at this laptop (DNS rebinding) is refused."""
+        try:
+            name = (urlsplit('//' + (self.headers.get('Host') or '')).hostname or '').lower()
+        except ValueError:
+            return False
+        if name == 'localhost' or name.endswith('.local'):
+            return True
+        try:
+            ipaddress.ip_address(name)
+            return True
+        except ValueError:
+            return False
+
+    def _json(self, status, obj, headers=()):
+        self._reply(status, json.dumps(obj).encode('utf-8'), 'application/json; charset=utf-8', headers)
+
+    def _fail(self, status, error):
+        self.close_connection = True
+        self._json(status, {'error': error})
+
+    def _read_json(self):
+        """Parsed JSON object from the body, or (status, error) when it cannot be used."""
+        if 'chunked' in (self.headers.get('Transfer-Encoding') or '').lower():
+            return 411, 'length-required'
+        try:
+            n = int(self.headers.get('Content-Length') or 0)
+        except ValueError:
+            return 400, 'bad-request'
+        if n < 0:
+            return 400, 'bad-request'
+        if n > MAX_BODY:
+            left = n
+            while 0 < left <= 1 << 20:  # swallow a modest body so the client can read our answer
+                chunk = self.rfile.read(min(65536, left))
+                if not chunk:
+                    break
+                left -= len(chunk)
+            return 413, 'too-large'
+        raw = self.rfile.read(n) if n else b''
+        try:
+            data = json.loads(raw.decode('utf-8')) if raw else {}
+        except (ValueError, UnicodeDecodeError):
+            return 400, 'bad-json'
+        return data if isinstance(data, dict) else (400, 'bad-json')
+
+    def _remote(self, path):
+        method = self.command
+        if path not in REMOTE_ROUTES or method not in REMOTE_ROUTES[path]:
+            return self._method_not_allowed()
+        if not self._host_ok():
+            return self._fail(403, 'bad-host')
+        origin = self.headers.get('Origin')
+        if origin is not None and urlsplit(origin).netloc.lower() != (self.headers.get('Host') or '').lower():
+            return self._fail(403, 'bad-origin')  # another web page trying to use the laptop's relay
+        relay = self.server.relay
+        if path == '/remote/health':
+            return self._json(200, relay.health())
+        if path == '/remote/events':
+            return self._events(parse_qs(self.path.partition('?')[2]).get('token', [''])[0])
+        body = {}
+        if method == 'POST':
+            if not (self.headers.get('Content-Type') or '').lower().startswith('application/json'):
+                return self._fail(415, 'json-required')  # also keeps cross-site "simple" requests out
+            body = self._read_json()
+            if isinstance(body, tuple):
+                return self._fail(*body)
+        stoken = self.headers.get('X-Fanfare-Speaker-Token')
+        if path == '/remote/session' and method == 'POST':
+            if not self._is_speaker():
+                return self._fail(403, 'not-the-speaker')
+            return self._json(200, relay.create_session())
+        if path == '/remote/session':  # DELETE
+            if relay.end_session(stoken):
+                return self._json(200, {'ok': True})
+            return self._json(401, {'error': 'unauthorized'})
+        if path == '/remote/code':
+            return self._json(*relay.new_code(stoken))
+        if path == '/remote/state':
+            return self._json(*relay.set_state(stoken, body))
+        if path == '/remote/pair':
+            return self._json(*relay.pair(body.get('code')))
+        return self._json(*relay.command(self.headers.get('X-Fanfare-Remote'), body))  # /remote/command
+
+    def _events(self, token):
+        relay = self.server.relay
+        stream = relay.open_stream(token)
+        if stream is None:
+            return self._json(403, {'error': 'bad-token'})
+        self.close_connection = True
+        try:
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/event-stream; charset=utf-8')
+            self.send_header('Connection', 'close')
+            self.send_header('X-Accel-Buffering', 'no')
+            self.end_headers()
+            self.wfile.write(b'retry: 2000\n\n')
+            self.wfile.flush()
+            while True:
+                try:
+                    item = stream.q.get(timeout=relay.keepalive)
+                except queue.Empty:
+                    self.wfile.write(b': keep-alive\n\n')  # also notices a phone that went away
+                    self.wfile.flush()
+                    continue
+                if item is None:
+                    break
+                event, data = item
+                self.wfile.write(('event: %s\ndata: %s\n\n' % (event, json.dumps(data))).encode('utf-8'))
+                self.wfile.flush()
+        except OSError:
+            pass
+        finally:
+            relay.close_stream(stream)
 
     def _segments(self):
         """URL path -> safe list of segments, or None when it tries to escape or is malformed."""
@@ -658,6 +1123,22 @@ class Handler(BaseHTTPRequestHandler):
         if any(s == '..' or ':' in s for s in segs):
             return None
         return segs
+
+    def _gets_secret(self):
+        # Only the laptop's own browser, and only for a page load: the service worker's hash-checked
+        # download of index.html (no "document" destination) stays byte-identical.
+        return self._is_loopback() and self.headers.get('Sec-Fetch-Dest') == 'document'
+
+    def _with_secret(self, target):
+        try:
+            data = Path(target).read_bytes()
+        except OSError:
+            return None
+        m = re.search(rb'<head[^>]*>', data, re.I)
+        if m is None:
+            return None
+        meta = ('<meta name="fanfare-speaker-secret" content="%s">' % self.server.relay.speaker_secret).encode('ascii')
+        return data[:m.end()] + meta + data[m.end():]
 
     def _serve(self, head):
         try:
@@ -687,6 +1168,10 @@ class Handler(BaseHTTPRequestHandler):
             target = index
         if not os.path.isfile(target):
             return self._reply(404, b'Not found\n', head=head)
+        if os.path.dirname(target) == root and os.path.basename(target) == 'index.html' and self._gets_secret():
+            injected = self._with_secret(target)
+            if injected is not None:
+                return self._reply(200, injected, guess_type(target), [('Vary', 'Sec-Fetch-Dest')], head=head)
         try:
             with open(target, 'rb') as f:
                 size = os.fstat(f.fileno()).st_size
@@ -704,8 +1189,9 @@ class FanfareServer(ThreadingHTTPServer):
     daemon_threads = True
     allow_reuse_address = os.name != 'nt'
 
-    def __init__(self, address, root, log=None, extras=None, ssl_context=None):
+    def __init__(self, address, root, log=None, extras=None, ssl_context=None, relay=None):
         self.root = os.path.realpath(root)
+        self.relay = relay or Relay()
         self.csp = CSP
         self.extras = extras or {}
         self.ssl_context = ssl_context
@@ -754,6 +1240,7 @@ class Running:
             self.close()
 
     def close(self):
+        self.primary.relay.end_all()  # closes every open event stream
         for s in self._servers():
             if s in self._serving:
                 s.shutdown()
@@ -841,12 +1328,14 @@ def start(argv, out=say, ask=input, interactive=None):
         raise PortError('Could not start on port %d: %s' % (port, e.strerror or e))
     port = server.server_address[1]
     scheme = 'https' if https else 'http'
+    server.relay.configure(['%s://%s:%d' % (scheme, ip, port) for ip in ips] if args.lan else [], https)
 
     loopback = None
     local_url = '%s://localhost:%d' % (scheme, port)
     if https:  # the laptop itself uses plain http on localhost: a secure context without any certificate prompt
         try:
-            loopback = FanfareServer(('127.0.0.1', pick_port('127.0.0.1', None, HTTP_PORTS[0], HTTP_PORTS[-1])), root, out)
+            loopback = FanfareServer(('127.0.0.1', pick_port('127.0.0.1', None, HTTP_PORTS[0], HTTP_PORTS[-1])), root, out,
+                                  relay=server.relay)
             local_url = 'http://localhost:%d' % loopback.server_address[1]
         except OSError:
             loopback = None

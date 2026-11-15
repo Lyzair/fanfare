@@ -1,10 +1,10 @@
 import { useContext, useState } from 'preact/hooks';
-import { defaultSoundBlob } from '../audio/defaultSounds';
 import type { SoundSlot } from '../domain/model';
 import { t } from '../i18n';
 import type { UiStrings } from '../i18n';
 import { saveSoundBlob } from '../state/persist';
 import { VOICES } from '../tts/voices';
+import { playSound } from './actions';
 import { rememberSound, useCustomSoundBlob } from './soundMemory';
 import { ServicesContext } from './types';
 import type { PanelProps } from './types';
@@ -25,12 +25,9 @@ export default function SoundsPanel({ state, dispatch }: PanelProps) {
     intro: useCustomSoundBlob('intro', state.customSounds.intro),
   };
   if (!services) return null;
-  const { queue } = services;
+  const { queue, speech } = services;
 
-  const preview = (slot: SoundSlot) => {
-    queue.unlock(); // synchronously inside the click
-    void queue.play([blobs[slot] ?? defaultSoundBlob(slot)]);
-  };
+  const preview = (slot: SoundSlot) => playSound({ state, queue, speech, blobs }, slot);
 
   const upload = async (slot: SoundSlot, file: File | undefined) => {
     if (!file) return;

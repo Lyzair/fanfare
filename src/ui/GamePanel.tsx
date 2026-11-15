@@ -1,11 +1,10 @@
 import { useContext, useEffect, useState } from 'preact/hooks';
-import { defaultSoundBlob } from '../audio/defaultSounds';
-import type { QueueItem } from '../audio/queue';
 import type { Player } from '../domain/model';
 import { SPORTS } from '../domain/sports';
-import { guestScoreText, scoreText, speechText } from '../domain/template';
 import { getPack, t } from '../i18n';
 import { currentRoster } from '../state/reducer';
+import { callScore, stopPlaying } from './actions';
+import type { ActionEnv } from './actions';
 import { fill } from './PlayerEditor';
 import { useCustomSoundBlob } from './soundMemory';
 import { ServicesContext } from './types';
@@ -40,21 +39,9 @@ export default function GamePanel({ state }: PanelProps) {
   const word = getPack(lang).sports[state.sport].scoreWord;
   const guestName = roster.opponent.trim() || t(lang, 'tabGuests');
 
-  const playScore = (rawText: string) => {
-    queue.unlock(); // synchronously inside the click, before anything async
-    setError(false);
-    const text = speechText(rawText, roster);
-    const items: QueueItem[] = [];
-    if (state.soundsEnabled) items.push(scoreBlob ?? defaultSoundBlob('score'));
-    items.push(async () => {
-      try {
-        return await speech.get(state.voiceId, text);
-      } catch (e) {
-        setError(true);
-        throw e;
-      }
-    });
-    void queue.play(items);
+  const env: ActionEnv = {
+    state, queue, speech, blobs: { score: scoreBlob },
+    onStart: () => setError(false), onError: () => setError(true),
   };
 
   const chip = (p: Player, selected: boolean, set: (id: string | null) => void) => (
@@ -65,8 +52,8 @@ export default function GamePanel({ state }: PanelProps) {
   return (
     <div class="game-panel">
       <div class="callout-actions">
-        <button type="button" class="primary score-button" onClick={() => playScore(scoreText(scorer, roster))}>{`${SPORTS[state.sport].icon} ${word}!`}</button>
-        {playing && <button type="button" class="stop" onClick={() => queue.stop()}>{t(lang, 'stopPlaying')}</button>}
+        <button type="button" class="primary score-button" onClick={() => callScore(env, 'home', scorer)}>{`${SPORTS[state.sport].icon} ${word}!`}</button>
+        {playing && <button type="button" class="stop" onClick={() => stopPlaying(env)}>{t(lang, 'stopPlaying')}</button>}
       </div>
       {error && <p role="alert" class="error">{t(lang, 'ttsError')}</p>}
       <p class="hint" id="scorer-label">{t(lang, 'scorerLabel')}</p>
@@ -76,7 +63,7 @@ export default function GamePanel({ state }: PanelProps) {
       </div>
       {roster.guestPlayers.length > 0 && (
         <div class="guest-score">
-          <button type="button" class="guest-score-button" onClick={() => playScore(guestScoreText(guestScorer, roster))}>
+          <button type="button" class="guest-score-button" onClick={() => callScore(env, 'guest', guestScorer)}>
             {`${SPORTS[state.sport].icon} ${fill(t(lang, 'guestScoreButton'), { word, opponent: guestName })}`}
           </button>
           <p class="hint" id="guest-scorer-label">{t(lang, 'guestScorerLabel')}</p>

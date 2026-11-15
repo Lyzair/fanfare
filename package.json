@@ -25,7 +25,8 @@
     "@mintplex-labs/piper-tts-web": "1.0.5",
     "fflate": "^0.8.3",
     "idb-keyval": "^6.3.0",
-    "preact": "^11.2.0"
+    "preact": "^11.2.0",
+    "qrcode-generator": "2.0.4"
   },
   "devDependencies": {
     "@diffusionstudio/piper-wasm": "1.0.0",

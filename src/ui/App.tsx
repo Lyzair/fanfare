@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'preact/hooks';
 import { AudioQueue } from '../audio/queue';
-import { SPORTS, SPORT_IDS } from '../domain/sports';
 import { detectLang, getPack, t } from '../i18n';
 import type { UiStrings } from '../i18n';
 import { initialState, reducer } from '../state/reducer';
@@ -8,12 +7,14 @@ import { loadState, saveState } from '../state/persist';
 import { applyUpdate, usePwaState } from '../pwa/register';
 import { PiperEngine } from '../tts/engine';
 import { SpeechCache } from '../tts/speechCache';
+import { ACCENT_CSS } from './accent';
 import { Header } from './Header';
 import { WelcomeCard } from './WelcomeCard';
 import { ShowMe } from './ShowMe';
 import DataPanel from './DataPanel';
 import CalloutPanel from './CalloutPanel';
 import GamePanel from './GamePanel';
+import RemotePanel from './RemotePanel';
 import RosterPanel from './RosterPanel';
 import SoundsPanel from './SoundsPanel';
 import { ServicesContext } from './types';
@@ -29,9 +30,6 @@ const WELCOME_KEY = 'fanfare.welcomeDismissed';
 function welcomeDismissedBefore(): boolean {
   try { return localStorage.getItem(WELCOME_KEY) === '1'; } catch { return false; }
 }
-
-/** Per-sport accent colours, generated from SPORTS so they live in one place. */
-const ACCENT_CSS = SPORT_IDS.map(id => `[data-sport="${id}"]{--accent:${SPORTS[id].accent}}`).join('\n');
 
 function firstRunLang() {
   const prefs = typeof navigator === 'undefined' ? [] : navigator.languages?.length ? navigator.languages : [navigator.language];
@@ -100,7 +98,7 @@ export function App() {
               <h2 id={`step${n}-title`} tabIndex={-1}>{n} {t(state.lang, `step${n}Title` as keyof UiStrings)}</h2>
               <p class="hint">{t(state.lang, `step${n}Hint` as keyof UiStrings)}</p>
               <ShowMe lang={state.lang} step={n} />
-              <div class="panel-body">{n === 1 && <RosterPanel state={state} dispatch={dispatch} />}{n === 2 && <CalloutPanel state={state} dispatch={dispatch} />}{n === 3 && <GamePanel state={state} dispatch={dispatch} />}{n === 4 && <SoundsPanel state={state} dispatch={dispatch} />}{n === 5 && <DataPanel state={state} dispatch={dispatch} />}</div>
+              <div class="panel-body">{n === 1 && <RosterPanel state={state} dispatch={dispatch} />}{n === 2 && <CalloutPanel state={state} dispatch={dispatch} />}{n === 3 && <><GamePanel state={state} dispatch={dispatch} /><RemotePanel state={state} dispatch={dispatch} /></>}{n === 4 && <SoundsPanel state={state} dispatch={dispatch} />}{n === 5 && <DataPanel state={state} dispatch={dispatch} />}</div>
             </section>
           ))}
         </main>

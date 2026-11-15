@@ -1,12 +1,11 @@
 import { useContext, useEffect, useRef, useState } from 'preact/hooks';
-import type { AppState, Player, Roster, Side, TemplateKey } from '../domain/model';
+import type { Player, Side, TemplateKey } from '../domain/model';
 import { calloutText, guestIntroText, introText, speechText } from '../domain/template';
-import { defaultSoundBlob } from '../audio/defaultSounds';
-import type { QueueItem } from '../audio/queue';
 import { currentRoster } from '../state/reducer';
 import { t } from '../i18n';
 import type { UiStrings } from '../i18n';
-import type { SpeechCache } from '../tts/speechCache';
+import { announce as announceAction, lineupTexts, playText as playTextAction } from './actions';
+import type { ActionEnv, LineupPart } from './actions';
 import { useCustomSoundBlob } from './soundMemory';
 import { ServicesContext } from './types';
 import type { PanelProps } from './types';
@@ -21,54 +20,8 @@ const TEMPLATE_KEYS: { key: TemplateKey; label: keyof UiStrings }[] = [
 const fill = (tpl: string, vars: Record<string, string | number>) =>
   tpl.replace(/\{(\w+)\}/g, (m, k: string) => (k in vars ? String(vars[k]) : m));
 
-export type LineupPart = 'both' | 'guests' | 'home';
-
-/** The texts of one team in announcing order: intro, field players, bench players. */
-function teamTexts(side: Side, roster: Roster): string[] {
-  const players = side === 'guest' ? roster.guestPlayers : roster.players;
-  return [
-    side === 'guest' ? guestIntroText(roster) : introText(roster),
-    ...players.filter(p => p.onField).map(p => calloutText(p, roster)),
-    ...players.filter(p => !p.onField).map(p => calloutText(p, roster)),
-  ];
-}
-
-/** Which teams a part covers: guests (when there are any) always come before our team. */
-function sidesFor(roster: Roster, part: LineupPart): Side[] {
-  const sides: Side[] = [];
-  if (roster.guestPlayers.length > 0 && part !== 'home') sides.push('guest');
-  if (part !== 'guests' || roster.guestPlayers.length === 0) sides.push('home');
-  return sides;
-}
-
-/** Every speech text a full lineup needs (both teams), as passed to Prepare voices. */
-export function lineupTexts(state: AppState): string[] {
-  const roster = currentRoster(state);
-  return sidesFor(roster, 'both').flatMap(side => teamTexts(side, roster)).map(x => speechText(x, roster)).filter(x => x.trim());
-}
-
-/** Intro sound (if enabled) → [guest intro → guest field → guest bench →] intro → field → bench. Speech items are lazy. */
-export function lineupSequence(
-  state: AppState,
-  speech: SpeechCache,
-  introSound: Blob | null,
-  onError?: (e: unknown) => void,
-  part: LineupPart = 'both',
-): Array<Blob | (() => Promise<Blob>)> {
-  const roster = currentRoster(state);
-  const lazy = (text: string) => async () => {
-    try {
-      return await speech.get(state.voiceId, speechText(text, roster));
-    } catch (e) {
-      onError?.(e);
-      throw e;
-    }
-  };
-  const items: Array<Blob | (() => Promise<Blob>)> = [];
-  if (state.soundsEnabled) items.push(introSound ?? defaultSoundBlob('intro'));
-  for (const text of sidesFor(roster, part).flatMap(side => teamTexts(side, roster))) if (text.trim()) items.push(lazy(text));
-  return items;
-}
+export { lineupSequence, lineupTexts } from './actions';
+export type { LineupPart } from './actions';
 
 export default function CalloutPanel({ state, dispatch }: PanelProps) {
   const services = useContext(ServicesContext);
@@ -108,20 +61,12 @@ export default function CalloutPanel({ state, dispatch }: PanelProps) {
   const reportError = () => setError(true);
   const refresh = () => setTick(n => n + 1);
 
-  const playItems = (items: QueueItem[]) => {
-    queue.unlock(); // synchronously inside the click, before anything async
-    setError(false);
-    void queue.play(items).finally(refresh);
+  const env: ActionEnv = {
+    state, queue, speech, blobs: { intro: introBlob },
+    onStart: () => setError(false), onError: reportError, onDone: refresh,
   };
-  const playText = (text: string) => playItems([async () => {
-    try {
-      return await speech.get(state.voiceId, speechText(text, roster));
-    } catch (e) {
-      reportError();
-      throw e;
-    }
-  }]);
-  const announce = (part: LineupPart) => playItems(lineupSequence(state, speech, introBlob, reportError, part));
+  const playText = (text: string) => playTextAction(env, text);
+  const announce = (part: LineupPart) => announceAction(env, part);
   const prepareTexts = lineupTexts(state);
   const prepareKey = `${state.voiceId}\n${prepareTexts.map(x => x.trim()).join('\n')}`;
   const prepare = () => {

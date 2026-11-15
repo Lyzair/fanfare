@@ -58,6 +58,10 @@ Aby wywołać strzelca, najpierw dotknij zawodnika pod przyciskiem, na przykład
 
 ![Przycisk wyniku i przyciski strzelców](media/pl/04-game.png)
 
+**Telefon jako pilot.** Jeśli uruchamiasz Fanfare na swoim laptopie (zobacz „W ogóle bez internetu?” w sekcji 7) z opcją `--lan`, telefon w tej samej sieci Wi-Fi może być panelem dźwięków, podczas gdy laptop gra przez głośniki. W kroku 3 otwórz **📱 Użyj telefonu jako pilota** i naciśnij **Aktywuj głośnik** (jedno dotknięcie, aby laptop mógł odtwarzać dźwięk). Zeskanuj kod QR telefonem lub otwórz wyświetlony adres i wpisz 6-cyfrowy kod. Telefon pokazuje duże przyciski dla gola i strzelca, składu, **Zatrzymaj** i dźwięku wstępu. Dźwięk zawsze pochodzi z laptopa. Może połączyć się do trzech telefonów; po sparowaniu telefonu laptop pokazuje nowy kod dla następnego. **Zakończ pilota** rozłącza wszystkie telefony. Przy zwykłym http połączenie nie jest szyfrowane: inne osoby w sieci Wi-Fi mogą zobaczyć imiona graczy i wysyłać przechwycone polecenia. Aby szyfrować, uruchom z `--https` (zobacz ryzyko w sekcji 7). To nie działa z wersją demo online.
+
+![Telefon jako panel dźwięków](media/pl/07-remote.png)
+
 ## 5. Własne dźwięki i głos
 
 Otwórz krok 4 **Dźwięki i głos**. Tutaj możesz:

@@ -58,6 +58,10 @@ Wil je de scorer noemen, tik dan eerst op de speler onder de knop, bijvoorbeeld 
 
 ![De scoreknop en de knoppen voor de scorers](media/nl/04-game.png)
 
+**Telefoon als afstandsbediening.** Als je Fanfare vanaf je laptop draait (zie „Helemaal geen internet?” in sectie 7) en het start met `--lan`, kan een telefoon op hetzelfde wifi het geluidspaneel zijn terwijl de laptop via de luidsprekers speelt. Open in stap 3 **📱 Gebruik een telefoon als afstandsbediening** en tik op **Luidspreker activeren** (één tik, zodat de laptop geluid mag afspelen). Scan de QR-code met de telefoon, of open het getoonde adres, en voer de code van 6 cijfers in. De telefoon toont grote knoppen voor het doelpunt en de scorer, de opstelling, **Stop** en het introgeluid. Het geluid komt altijd van de laptop. Er kunnen maximaal drie telefoons meedoen; nadat een telefoon is gekoppeld, toont de laptop een nieuwe code voor de volgende. **Afstandsbediening stoppen** verbreekt alle telefoons. Via gewone http is de verbinding niet versleuteld: anderen op het wifi kunnen spelersnamen zien en onderschepte commando's versturen. Start voor versleuteling met `--https` (zie de risico's in sectie 7). Met de online demo werkt dit niet.
+
+![De telefoon als geluidspaneel](media/nl/07-remote.png)
+
 ## 5. Je eigen geluiden en stem
 
 Open stap 4 **Geluiden en stem**. Hier kun je:

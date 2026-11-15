@@ -56,6 +56,10 @@ To name the scorer, tap the player below the button first, for example **7 Kim M
 
 ![The score button and the scorer buttons](media/en/04-game.png)
 
+**Phone as remote.** If you run Fanfare from your laptop (see "No internet at all?" in section 7) and start it with `--lan`, a phone on the same Wi-Fi can be the soundboard while the laptop plays through the speakers. In step 3 open **📱 Use a phone as remote** and press **Activate speaker** (one tap, so the laptop may play sound). Scan the QR code with the phone, or open the address shown, and enter the 6-digit code. The phone shows big buttons for the goal and the scorer, the lineup, **Stop** and the intro sound. The sound always comes from the laptop. Up to three phones can join; after a phone has paired, the laptop shows a fresh code for the next one. **End remote** disconnects all phones. Over plain http the connection is not encrypted: others on the Wi-Fi could see player names and send commands they intercept. For encryption start with `--https` (see the risks in section 7). It does not work with the online demo.
+
+![The phone as a soundboard](media/en/07-remote.png)
+
 ## 5. Your own sounds and voice
 
 Open step 4 **Sounds & voice**. Here you can:

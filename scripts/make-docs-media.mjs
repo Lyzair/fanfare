@@ -2,7 +2,9 @@
 // Regenerates the screenshots and GIFs of the manuals: docs/manual/media/<lang>/*.png|gif
 //
 // Usage:  npm run build && npm run docs:media [-- --lang de,en]
-// Starts `vite preview` on a private port against dist/ and stops it at the end.
+// Starts `vite preview` on a private port against dist/ and stops it at the end. For the
+// phone-remote screenshot (07-remote.png) it also starts scripts/fanfare-local.py on another
+// private port (the remote needs the real relay) and pairs a phone page with it.
 // Uses only the fictional demo team below. Fails when a GIF exceeds 1.5 MB or the
 // total media exceeds 40 MB.
 import { spawn } from 'node:child_process';
@@ -19,6 +21,8 @@ const { PNG } = pngjs;
 
 const PORT = 4180;
 const BASE = `http://localhost:${PORT}/`;
+const REMOTE_PORT = 4181;
+const REMOTE_BASE = `http://127.0.0.1:${REMOTE_PORT}`;
 const OUT = 'docs/manual/media';
 const MAX_GIF = 1.5 * 1024 * 1024;
 const MAX_TOTAL = 40 * 1024 * 1024;
@@ -177,6 +181,48 @@ async function waitStopVisible(page, pack) {
   return stop;
 }
 
+// ---------- phone remote screenshot ----------
+
+async function relay(method, path, body, headers = {}) {
+  const res = await fetch(REMOTE_BASE + path, {
+    method, headers: { 'Content-Type': 'application/json', ...headers }, body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  const text = await res.text();
+  if (!res.ok) throw new Error(`${method} ${path}: HTTP ${res.status} ${text}`);
+  return text ? JSON.parse(text) : null;
+}
+
+/** The soundboard as a phone shows it: pair with the real relay, then screenshot. Speaker side is played by this script. */
+async function remoteShot(browser, pack, outDir) {
+  const names = (text) => text.split('\n').map((l, i) => ({ id: `h${i + 1}`, name: l.replace(/^\d+\s+/, '') }));
+  const session = await relay('POST', '/remote/session', {});
+  const speaker = new AbortController();
+  const events = await fetch(`${REMOTE_BASE}/remote/events?token=${session.speakerToken}`, { signal: speaker.signal }); // the laptop is "connected"
+  void (async () => { try { for await (const _ of events.body) { /* keep the stream open and drained */ } } catch { /* aborted at the end */ } })();
+  await relay('POST', '/remote/state', {
+    sport: 'football', scoreWord: pack.sports.football.scoreWord, hasGuests: true, playing: false, activated: true,
+    home: { name: DEMO.home, players: names(DEMO.field) },
+    guest: { name: DEMO.opponent, players: DEMO.guests.players.filter((p) => p.onField).map((p, i) => ({ id: `g${i + 1}`, name: p.name })) },
+  }, { 'X-Fanfare-Speaker-Token': session.speakerToken });
+  const ctx = await browser.newContext({ viewport: PHONE, deviceScaleFactor: 2, locale: pack.code, isMobile: true, hasTouch: true });
+  try {
+    const page = await ctx.newPage();
+    await page.goto(`${REMOTE_BASE}/#remote`);
+    await page.getByLabel(pack.ui.remoteEnterCode).fill(session.code);
+    await page.getByRole('button', { name: pack.ui.remoteConnect, exact: true }).click();
+    await page.locator('.remote-board .goal').first().waitFor({ state: 'visible', timeout: 15_000 });
+    await page.getByRole('button', { name: 'Kim Muster', exact: true }).first().click();
+    await sleep(300);
+    const file = join(outDir, '07-remote.png');
+    await page.screenshot({ path: file, fullPage: true, animations: 'disabled' });
+    return file;
+  } finally {
+    await ctx.close();
+    speaker.abort();
+    await relay('DELETE', '/remote/session', undefined, { 'X-Fanfare-Speaker-Token': session.speakerToken });
+  }
+}
+
 // ---------- per-language run ----------
 
 async function runLang(browser, pack, outDir) {
@@ -294,17 +340,18 @@ async function runLang(browser, pack, outDir) {
     await png(card(page, 1), '02b-guests.png');
   }
   await ctx.close();
+  written.push(await remoteShot(browser, pack, outDir));
   return written;
 }
 
 // ---------- main ----------
 
-async function waitForServer() {
+async function waitForServer(url = BASE, what = 'vite preview') {
   for (let i = 0; i < 100; i++) {
-    try { if ((await fetch(BASE)).ok) return; } catch { /* not up yet */ }
+    try { if ((await fetch(url)).ok) return; } catch { /* not up yet */ }
     await sleep(200);
   }
-  throw new Error('vite preview did not start');
+  throw new Error(`${what} did not start`);
 }
 
 async function main() {
@@ -318,11 +365,14 @@ async function main() {
 
   const preview = spawn('npx', ['vite', 'preview', '--port', String(PORT), '--strictPort'], { stdio: 'ignore', detached: true });
   const killPreview = () => { try { process.kill(-preview.pid); } catch { /* already gone */ } };
-  process.on('SIGINT', () => { killPreview(); process.exit(130); });
+  const local = spawn('python3', ['scripts/fanfare-local.py', 'dist', '--port', String(REMOTE_PORT)], { stdio: 'ignore', detached: true });
+  const killLocal = () => { try { process.kill(-local.pid); } catch { /* already gone */ } };
+  process.on('SIGINT', () => { killPreview(); killLocal(); process.exit(130); });
   let browser;
   const files = [];
   try {
     await waitForServer();
+    await waitForServer(`${REMOTE_BASE}/remote/health`, 'fanfare-local.py');
     browser = await chromium.launch();
     for (const lang of langs) {
       const t0 = Date.now();
@@ -334,6 +384,7 @@ async function main() {
   } finally {
     await browser?.close();
     killPreview();
+    killLocal();
     await vite.close();
   }
 

@@ -42,3 +42,10 @@ test('accent colours have 4.5:1 contrast against white', () => {
   };
   for (const id of SPORT_IDS) expect(1.05 / (lum(SPORTS[id].accent) + 0.05)).toBeGreaterThanOrEqual(4.5);
 });
+test('phone remote: the ruled wording in en and de', () => {
+  expect(t('en', 'remoteNeedsLocal')).toBe('Phone remote needs Fanfare running on this laptop. See the manual: "No internet at all?"');
+  expect(t('de', 'remoteNeedsLocal')).toBe('Die Handy-Fernbedienung braucht Fanfare auf diesem Laptop. Siehe Anleitung: „Ganz ohne Internet?“');
+  expect(t('en', 'remoteUnencrypted')).toBe('Connection not encrypted: others on this Wi-Fi could see player names and send commands they intercept. Use --https for encryption (see risks).');
+  expect(t('de', 'remoteUnencrypted')).toBe('Verbindung nicht verschlüsselt: Andere im WLAN könnten Spielernamen sehen und abgefangene Befehle senden. Mit --https verschlüsseln (Risiken beachten).');
+  for (const lang of LANGS) expect(t(lang, 'remoteUnencrypted')).toContain('--https');
+});
