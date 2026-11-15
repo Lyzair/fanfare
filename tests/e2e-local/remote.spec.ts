@@ -79,3 +79,34 @@ test('a page from another host never sees the relay: health is the speaker origi
   expect((await res.json()).fanfare).toBe('local');
   expect((await request.post('/remote/session', { data: {}, headers: { Origin: 'https://evil.example' } })).status()).toBe(403);
 });
+
+// A plain-http LAN address is not a secure context: no crypto.randomUUID, no service worker. The app
+// itself must still work there (fanfare-local --lan and the Raspberry Pi appliance serve it like this).
+test('on the plain-http LAN address players can be added, edited and announced texts appear', async ({ browser }) => {
+  const laptop = await (await browser.newContext()).newPage();
+  await laptop.addInitScript(() => { try { localStorage.setItem('fanfare.welcomeDismissed', '1'); } catch { /* ignore */ } });
+  await laptop.goto('/');
+  const hasLan = await laptop.getByRole('button', { name: 'Activate speaker' }).waitFor({ state: 'visible', timeout: 10_000 }).then(() => true, () => false);
+  test.skip(!hasLan, 'no LAN address on this machine');
+  await laptop.getByRole('button', { name: 'Activate speaker' }).click();
+  const lanOrigin = new URL((await laptop.locator('.remote-url code').textContent())!).origin;
+  await laptop.getByRole('button', { name: 'End remote' }).click();
+
+  const page = await (await browser.newContext()).newPage();
+  const errors: string[] = [];
+  page.on('pageerror', e => errors.push(e.message));
+  await page.addInitScript(() => { try { localStorage.setItem('fanfare.welcomeDismissed', '1'); } catch { /* ignore */ } });
+  await page.goto(`${lanOrigin}/`);
+  expect(await page.evaluate(() => [window.isSecureContext, typeof crypto.randomUUID])).toEqual([false, 'undefined']);
+  await page.getByLabel('Language').selectOption('en');
+  await page.getByLabel('Paste or type a list of players').fill('7 Lea Müller\n9 Tom');
+  await page.getByRole('button', { name: 'Add', exact: true }).click();
+  await expect(page.getByLabel(/^Name: /)).toHaveCount(2);
+  await page.getByLabel('Add one player').fill('Zoë');
+  await page.getByLabel('Add one player').press('Enter');
+  await expect(page.getByLabel(/^Name: /)).toHaveCount(3);
+  await expect(page.getByLabel('Announcement text for Zoë')).toBeVisible();
+  await page.getByRole('button', { name: 'Remove: Tom' }).click();
+  await expect(page.getByLabel(/^Name: /)).toHaveCount(2);
+  expect(errors).toEqual([]);
+});
