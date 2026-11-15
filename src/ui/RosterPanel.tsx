@@ -6,6 +6,7 @@ import { ImportError } from '../io/archive';
 import { blobText } from '../io/blob';
 import { MAX_TEAM_FILE_BYTES, parseTeamFile } from '../io/teamFile';
 import { currentRoster } from '../state/reducer';
+import type { MatchPatch } from '../state/reducer';
 import { fill } from './fill';
 import PlayerEditor from './PlayerEditor';
 import { PlaybackError } from './PlaybackError';
@@ -15,6 +16,11 @@ import type { PanelProps } from './types';
 
 type Message = { kind: 'ok' | 'error'; text: string } | null;
 const TABS: Side[] = ['home', 'guest'];
+/** The two team-name fields of the match card and the roster fields each one edits. */
+const MATCH_FIELDS = [
+  { key: 'home', label: 'homeTeam', name: 'homeTeam', sayAs: 'homeSayAs', orig: 'homeOrigSpelling', nameLang: 'homeNameLang' },
+  { key: 'opponent', label: 'opponent', name: 'opponent', sayAs: 'opponentSayAs', orig: 'opponentOrigSpelling', nameLang: 'opponentNameLang' },
+] as const;
 
 export default function RosterPanel({ state, dispatch }: PanelProps) {
   const lang = state.lang;
@@ -25,6 +31,8 @@ export default function RosterPanel({ state, dispatch }: PanelProps) {
   const [message, setMessage] = useState<Message>(null);
   const tabRefs = useRef<Partial<Record<Side, HTMLButtonElement | null>>>({});
   const rtl = getPack(lang).dir === 'rtl';
+
+  const setMatch = (patch: MatchPatch) => dispatch({ type: 'setMatch', patch });
 
   const tabLabel = (side: Side) =>
     `${side === 'home' ? tr('ourTeam') : tr('tabGuests')} (${side === 'home' ? roster.players.length : roster.guestPlayers.length})`;
@@ -73,27 +81,22 @@ export default function RosterPanel({ state, dispatch }: PanelProps) {
     <div class="roster-panel">
       <fieldset class="match-card">
         <legend>{tr('matchTitle')}</legend>
-        {([
-          { key: 'home', label: 'homeTeam', value: roster.homeTeam, sayAs: roster.homeSayAs, orig: roster.homeOrigSpelling, nameLang: roster.homeNameLang },
-          { key: 'opponent', label: 'opponent', value: roster.opponent, sayAs: roster.opponentSayAs, orig: roster.opponentOrigSpelling, nameLang: roster.opponentNameLang },
-        ] as const).map(f => (
+        {MATCH_FIELDS.map(f => (
           <div class="match-field" key={f.key}>
             <label for={`match-${f.key}`}>{tr(f.label)}</label>
             <span class="with-toggle">
-              <input id={`match-${f.key}`} value={f.value} onInput={e => dispatch({ type: 'setMatch', [f.key]: e.currentTarget.value })} />
-              {sayAs.hintToggle(f.key, f.sayAs.trim() !== '')}
+              <input id={`match-${f.key}`} value={roster[f.name]} onInput={e => setMatch({ [f.name]: e.currentTarget.value })} />
+              {sayAs.hintToggle(f.key, roster[f.sayAs].trim() !== '')}
             </span>
             {sayAs.isOpen(f.key) && (
               <div class="say-as">
-                <input aria-label={`${tr(f.label)}: ${tr('sayAsLabel')}`} placeholder={tr('sayAsPlaceholder')} value={f.sayAs} maxLength={80}
-                  onInput={e => dispatch({ type: 'setMatch', [f.key === 'home' ? 'homeSayAs' : 'opponentSayAs']: e.currentTarget.value })} />
-                {sayAs.hearButton(f.value, f.sayAs)}
+                <input aria-label={`${tr(f.label)}: ${tr('sayAsLabel')}`} placeholder={tr('sayAsPlaceholder')} value={roster[f.sayAs]} maxLength={80}
+                  onInput={e => setMatch({ [f.sayAs]: e.currentTarget.value })} />
+                {sayAs.hearButton(roster[f.name], roster[f.sayAs])}
                 <p class="hint">{tr('sayAsHint')}</p>
-                <SuggestPanel lang={lang} voiceId={state.voiceId} name={f.value} origSpelling={f.orig} nameLang={f.nameLang}
-                  onFields={patch => dispatch({ type: 'setMatch', ...(f.key === 'home'
-                    ? { homeOrigSpelling: patch.origSpelling, homeNameLang: patch.nameLang }
-                    : { opponentOrigSpelling: patch.origSpelling, opponentNameLang: patch.nameLang }) })}
-                  onUse={text => dispatch({ type: 'setMatch', [f.key === 'home' ? 'homeSayAs' : 'opponentSayAs']: text })} />
+                <SuggestPanel lang={lang} voiceId={state.voiceId} name={roster[f.name]} origSpelling={roster[f.orig]} nameLang={roster[f.nameLang]}
+                  onFields={patch => setMatch({ [f.orig]: patch.origSpelling, [f.nameLang]: patch.nameLang })}
+                  onUse={text => setMatch({ [f.sayAs]: text })} />
               </div>
             )}
           </div>

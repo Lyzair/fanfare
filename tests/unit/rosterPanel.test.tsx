@@ -200,7 +200,7 @@ test('▶ next to a hint unlocks, then speaks just the hint (or the name if empt
 
 test('▶ speaks a hint that contains its own name exactly as written (player and teams)', async () => {
   const { services, queue, speech } = makeServices();
-  render(<WithServices services={services} init={s => reducer(withPlayers(1)(s), { type: 'setMatch', home: 'FC', homeSayAs: 'FC-eff', opponent: 'Bay', opponentSayAs: 'Bay-ern' })} />);
+  render(<WithServices services={services} init={s => reducer(withPlayers(1)(s), { type: 'setMatch', patch: { homeTeam: 'FC', homeSayAs: 'FC-eff', opponent: 'Bay', opponentSayAs: 'Bay-ern' } })} />);
   const toggles = screen.getAllByRole('button', { name: 'Pronunciation' });
   for (const t of toggles) await userEvent.click(t);
   await userEvent.type(screen.getByLabelText('Say it like…'), 'P1-ah');
@@ -357,7 +357,7 @@ describe('✨ Suggest in the roster', () => {
 
   test('the opponent has its own ✨ and stores language and spelling on the roster', async () => {
     const { services } = makeServices();
-    render(<WithServices services={services} init={s => reducer(s, { type: 'setMatch', opponent: 'Wojciech United' })} />);
+    render(<WithServices services={services} init={s => reducer(s, { type: 'setMatch', patch: { opponent: 'Wojciech United' } })} />);
     await userEvent.click(screen.getAllByRole('button', { name: 'Pronunciation' })[1]);
     await userEvent.click(screen.getByRole('button', { name: '✨ Suggest' }));
     await userEvent.selectOptions(screen.getByLabelText("Name's language"), 'pl');

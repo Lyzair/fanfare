@@ -27,7 +27,7 @@ function makeServices() {
 function Harness({ services }: { services: Services }) {
   const [state, dispatch] = useReducer(reducer, undefined, () => {
     let s = initialState('en');
-    s = reducer(s, { type: 'setMatch', home: 'FC Test', opponent: 'SV Gegner' });
+    s = reducer(s, { type: 'setMatch', patch: { homeTeam: 'FC Test', opponent: 'SV Gegner' } });
     return reducer(s, { type: 'addPlayers', text: '7 Lea\n9 Tom', onField: true });
   });
   return <ServicesContext.Provider value={services}><RemotePanel state={state} dispatch={dispatch} /></ServicesContext.Provider>;

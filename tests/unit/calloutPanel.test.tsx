@@ -58,7 +58,7 @@ function Harness({ services, init }: { services: Services; init?: (s: AppState) 
   return <ServicesContext.Provider value={services}><CalloutPanel state={state} dispatch={dispatch} /></ServicesContext.Provider>;
 }
 const setup = (s: AppState) => {
-  let st = reducer(s, { type: 'setMatch', home: 'FC Test', opponent: 'SV Gegner' });
+  let st = reducer(s, { type: 'setMatch', patch: { homeTeam: 'FC Test', opponent: 'SV Gegner' } });
   st = reducer(st, { type: 'addPlayers', text: '7 Lea\n9 Tom', onField: true });
   return reducer(st, { type: 'addPlayers', text: '12 Ann', onField: false });
 };
@@ -308,7 +308,7 @@ test('a hint containing its own name is spoken once, not re-replaced', async () 
 describe('guest team announcements', () => {
   const withGuests = (s: AppState) => {
     let st = setup(s);
-    st = reducer(st, { type: 'setMatch', opponent: 'SV Gegner', opponentSayAs: 'Ess Fau Gegner' });
+    st = reducer(st, { type: 'setMatch', patch: { opponent: 'SV Gegner', opponentSayAs: 'Ess Fau Gegner' } });
     st = reducer(st, { type: 'addPlayers', text: '3 Gus\n5 Gina', onField: true, side: 'guest' });
     return reducer(st, { type: 'addPlayers', text: '14 Gabi', onField: false, side: 'guest' });
   };

@@ -26,7 +26,7 @@ function makeServices(fail = false) {
 function Harness({ services, init }: { services: Services; init?: (s: AppState) => AppState }) {
   const [state, dispatch] = useReducer(reducer, undefined, () => {
     let s = initialState('en');
-    s = reducer(s, { type: 'setMatch', home: 'FC Test', opponent: 'SV Gegner' });
+    s = reducer(s, { type: 'setMatch', patch: { homeTeam: 'FC Test', opponent: 'SV Gegner' } });
     s = reducer(s, { type: 'addPlayers', text: '7 Lea\n9 Tom', onField: true });
     s = reducer(s, { type: 'addPlayers', text: '12 Ann', onField: false });
     return init ? init(s) : s;
@@ -134,7 +134,7 @@ describe('guest goals', () => {
   test('guest sayAs is spoken; the button falls back to "Guests" without a team name', async () => {
     const { services, speech } = makeServices();
     const init = (s: AppState) => {
-      const st = reducer(withGuests(s), { type: 'setMatch', opponent: '' });
+      const st = reducer(withGuests(s), { type: 'setMatch', patch: { opponent: '' } });
       return reducer(st, { type: 'updatePlayer', id: st.rosters.football!.guestPlayers[0].id, patch: { sayAs: 'Goose' }, side: 'guest' });
     };
     render(<Harness services={services} init={init} />);

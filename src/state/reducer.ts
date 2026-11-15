@@ -8,10 +8,13 @@ import { LANGS, defaultTemplates, getPack } from '../i18n';
 import { isLocalUrl } from '../tts/httpEngine';
 import { VOICES, defaultVoiceFor } from '../tts/voices';
 
+/** The team names of a match and how the voice says them. */
+export type MatchPatch = Partial<Pick<Roster,
+  'homeTeam' | 'homeSayAs' | 'homeOrigSpelling' | 'homeNameLang' | 'opponent' | 'opponentSayAs' | 'opponentOrigSpelling' | 'opponentNameLang'>>;
+
 export type Action =
   | { type: 'setSport'; sport: SportId } | { type: 'setLang'; lang: Lang } | { type: 'setVoice'; voiceId: string }
-  | { type: 'setMatch'; home?: string; opponent?: string; homeSayAs?: string; opponentSayAs?: string;
-      homeOrigSpelling?: string; homeNameLang?: string; opponentOrigSpelling?: string; opponentNameLang?: string } | { type: 'togglePositions'; on: boolean }
+  | { type: 'setMatch'; patch: MatchPatch } | { type: 'togglePositions'; on: boolean }
   // `side` picks the list an edit applies to; omitted = our own team
   | { type: 'addPlayers'; text: string; onField: boolean; side?: Side }
   | { type: 'updatePlayer'; id: string; patch: Partial<Omit<Player, 'id'>>; side?: Side }
@@ -117,13 +120,11 @@ export function reducer(s: AppState, a: Action): AppState {
       return { ...s, lang: a.lang, rosters, voiceId: voiceOk ? s.voiceId : defaultVoiceFor(a.lang) };
     }
     case 'setVoice': return { ...s, voiceId: a.voiceId };
-    case 'setMatch':
-      return withRoster(s, r => ({
-        ...r, homeTeam: a.home ?? r.homeTeam, opponent: a.opponent ?? r.opponent,
-        homeSayAs: a.homeSayAs ?? r.homeSayAs, opponentSayAs: a.opponentSayAs ?? r.opponentSayAs,
-        homeOrigSpelling: a.homeOrigSpelling ?? r.homeOrigSpelling, homeNameLang: a.homeNameLang ?? r.homeNameLang,
-        opponentOrigSpelling: a.opponentOrigSpelling ?? r.opponentOrigSpelling, opponentNameLang: a.opponentNameLang ?? r.opponentNameLang,
-      }));
+    case 'setMatch': {
+      // a field that is present but undefined keeps its value
+      const patch = Object.fromEntries(Object.entries(a.patch).filter(([, v]) => v !== undefined));
+      return withRoster(s, r => ({ ...r, ...patch }));
+    }
     case 'togglePositions': return withRoster(s, r => ({ ...r, showPositions: a.on }));
     case 'addPlayers': {
       const parsed = parsePlayerLines(a.text, getPack(s.lang).sports[s.sport].positions, getPack(s.lang).staffHeadings);
@@ -165,10 +166,11 @@ export function reducer(s: AppState, a: Action): AppState {
       return withRoster(s, r => ({
         ...r, guestPlayers,
         showPositions: r.showPositions || guestPlayers.some(p => p.position !== ''),
-        opponent: a.team.teamName.trim() ? a.team.teamName : r.opponent,
-        opponentSayAs: a.team.teamName.trim() ? a.team.teamSayAs : r.opponentSayAs,
-        opponentOrigSpelling: a.team.teamName.trim() ? a.team.teamOrigSpelling : r.opponentOrigSpelling,
-        opponentNameLang: a.team.teamName.trim() ? a.team.teamNameLang : r.opponentNameLang,
+        // a file without a team name leaves the opponent as it was
+        ...(a.team.teamName.trim() ? {
+          opponent: a.team.teamName, opponentSayAs: a.team.teamSayAs,
+          opponentOrigSpelling: a.team.teamOrigSpelling, opponentNameLang: a.team.teamNameLang,
+        } : {}),
       }));
     }
     case 'clearGuests': return withRoster(s, r => ({ ...r, guestPlayers: [] }));

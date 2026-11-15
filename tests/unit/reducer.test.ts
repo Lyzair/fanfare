@@ -18,8 +18,8 @@ test('rosters are kept per sport', () => {
   expect(currentRoster(s).players[0].name).toBe('Lea');
 });
 test('setMatch updates only the given field', () => {
-  let s = reducer(initialState('en'), { type: 'setMatch', home: 'FC A' });
-  s = reducer(s, { type: 'setMatch', opponent: 'SV X' });
+  let s = reducer(initialState('en'), { type: 'setMatch', patch: { homeTeam: 'FC A' } });
+  s = reducer(s, { type: 'setMatch', patch: { opponent: 'SV X' } });
   expect(currentRoster(s).homeTeam).toBe('FC A'); expect(currentRoster(s).opponent).toBe('SV X');
 });
 test('setLang swaps untouched templates and voice, keeps edited templates', () => {
@@ -47,7 +47,7 @@ test('updatePlayer normalises blank customText to null', () => {
 });
 test('reducer does not mutate input', () => {
   const s = initialState('en'); const f = structuredClone(s);
-  reducer(s, { type: 'setMatch', home: 'X' }); expect(s).toEqual(f);
+  reducer(s, { type: 'setMatch', patch: { homeTeam: 'X' } }); expect(s).toEqual(f);
 });
 test('movePlayer moves and is a no-op at the boundary', () => {
   let s = reducer(initialState('en'), { type: 'addPlayers', text: 'A\nB', onField: true });
@@ -85,7 +85,7 @@ test('sayAs round-trips through updatePlayer and setMatch', () => {
   const id = currentRoster(s).players[0].id;
   s = reducer(s, { type: 'updatePlayer', id, patch: { sayAs: 'Tso-eh' } });
   expect(currentRoster(s).players[0].sayAs).toBe('Tso-eh');
-  s = reducer(s, { type: 'setMatch', homeSayAs: 'A', opponentSayAs: 'B' });
+  s = reducer(s, { type: 'setMatch', patch: { homeSayAs: 'A', opponentSayAs: 'B' } });
   expect(currentRoster(s)).toMatchObject({ homeSayAs: 'A', opponentSayAs: 'B', homeTeam: '' });
   expect(currentRoster(initialState('en'))).toMatchObject({ homeSayAs: '', opponentSayAs: '' });
 });
@@ -237,4 +237,10 @@ describe('normalizeState: a damaged or old stored state never throws at start', 
     const s = load({ ...g, rosters: { ...g.rosters, chess: currentRoster(g), handball: null } });
     expect(Object.keys(s.rosters)).toEqual(['football']);
   });
+});
+
+test('setMatch: a field passed as undefined keeps its value', () => {
+  let s = reducer(initialState('en'), { type: 'setMatch', patch: { homeTeam: 'FC A', homeOrigSpelling: 'ФК А' } });
+  s = reducer(s, { type: 'setMatch', patch: { homeOrigSpelling: undefined, homeNameLang: 'ru' } });
+  expect(currentRoster(s)).toMatchObject({ homeTeam: 'FC A', homeOrigSpelling: 'ФК А', homeNameLang: 'ru' });
 });

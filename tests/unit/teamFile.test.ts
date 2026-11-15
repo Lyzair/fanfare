@@ -56,7 +56,7 @@ describe('parseTeamFile', () => {
 
 describe('exportTeamFile', () => {
   test('exports the home team of the current sport only', () => {
-    let s = reducer(initialState('en'), { type: 'setMatch', home: 'FC Example', homeSayAs: 'F C Example', opponent: 'Other' });
+    let s = reducer(initialState('en'), { type: 'setMatch', patch: { homeTeam: 'FC Example', homeSayAs: 'F C Example', opponent: 'Other' } });
     s = reducer(s, { type: 'addPlayers', text: '7 Lea', onField: true });
     s = reducer(s, { type: 'addPlayers', text: '12 Tom', onField: false });
     s = reducer(s, { type: 'updatePlayer', id: currentRoster(s).players[0].id, patch: { sayAs: 'Lee-ah', customText: 'secret' } });
@@ -71,7 +71,7 @@ describe('exportTeamFile', () => {
     expect(JSON.stringify(f)).not.toContain('secret');
   });
   test('round-trips through JSON and parse', () => {
-    let s = reducer(initialState('en'), { type: 'setMatch', home: 'FC Example' });
+    let s = reducer(initialState('en'), { type: 'setMatch', patch: { homeTeam: 'FC Example' } });
     s = reducer(s, { type: 'addPlayers', text: '7 Lea', onField: true });
     const f = exportTeamFile(s);
     expect(parseTeamFile(JSON.parse(JSON.stringify(f)))).toEqual(f);

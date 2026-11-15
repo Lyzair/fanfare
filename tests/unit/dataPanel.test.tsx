@@ -209,7 +209,7 @@ describe('share our team', () => {
   };
   test('downloads a names-only team file with the safe pattern and shows the privacy note', async () => {
     const g = grab();
-    setup('en', s => reducer(withPlayer(s), { type: 'setMatch', home: 'FC Beispiel', opponent: 'Other' }));
+    setup('en', s => reducer(withPlayer(s), { type: 'setMatch', patch: { homeTeam: 'FC Beispiel', opponent: 'Other' } }));
     expect(screen.getByText("This file contains names. Only send it to the other team's coach.")).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Share our team' }));
     const { blob, download, inDom } = g.get();

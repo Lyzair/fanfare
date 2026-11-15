@@ -4,7 +4,7 @@ import type { AppState } from '../../src/domain/model';
 
 function state(): AppState {
   let s = initialState('en');
-  s = reducer(s, { type: 'setMatch', home: 'FC Example', opponent: 'SV Sample' });
+  s = reducer(s, { type: 'setMatch', patch: { homeTeam: 'FC Example', opponent: 'SV Sample' } });
   s = reducer(s, { type: 'addPlayers', text: '7 Lea\n9 Tom', onField: true });
   s = reducer(s, { type: 'addPlayers', text: '12 Benchy', onField: false });
   const players = s.rosters.football!.players;

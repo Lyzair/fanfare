@@ -6,7 +6,7 @@ import type { QueueItem } from '../../src/audio/queue';
 
 function setup(opts: { sounds?: boolean } = {}) {
   let s = initialState('en');
-  s = reducer(s, { type: 'setMatch', home: 'FC Test', opponent: 'SV Gegner' });
+  s = reducer(s, { type: 'setMatch', patch: { homeTeam: 'FC Test', opponent: 'SV Gegner' } });
   s = reducer(s, { type: 'addPlayers', text: '7 Lea\n9 Tom', onField: true });
   s = reducer(s, { type: 'importGuestTeam', team: {
     fanfareTeam: 1, sport: 'football', teamName: 'SV Gegner', teamSayAs: '', teamOrigSpelling: '', teamNameLang: '',
