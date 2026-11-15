@@ -86,7 +86,7 @@ export default function RosterPanel({ state, dispatch }: PanelProps) {
             <label for={`match-${f.key}`}>{tr(f.label)}</label>
             <span class="with-toggle">
               <input id={`match-${f.key}`} value={roster[f.name]} onInput={e => setMatch({ [f.name]: e.currentTarget.value })} />
-              {sayAs.hintToggle(f.key, roster[f.sayAs].trim() !== '')}
+              {sayAs.hintToggle(f.key, roster[f.sayAs].trim() !== '', tr(f.label))}
             </span>
             {sayAs.isOpen(f.key) && (
               <div class="say-as">

@@ -81,7 +81,7 @@ test('editing a text stores customText; "↺" resets it to null', async () => {
   await userEvent.clear(box);
   await userEvent.type(box, 'Hi Lea');
   expect(currentRoster(latest).players[0].customText).toBe('Hi Lea');
-  await userEvent.click(screen.getByRole('button', { name: 'Reset to the standard text' }));
+  await userEvent.click(screen.getByRole('button', { name: /^Reset to the standard text: / }));
   expect(currentRoster(latest).players[0].customText).toBeNull();
   expect((screen.getByLabelText('Announcement text for Lea') as HTMLTextAreaElement).value).toContain('number 7');
 });
@@ -387,7 +387,7 @@ describe('guest team announcements', () => {
     await userEvent.type(box, 'Hi Gus');
     expect(currentRoster(latest).guestPlayers[0].customText).toBe('Hi Gus');
     expect(currentRoster(latest).players.every(p => p.customText === null)).toBe(true);
-    await userEvent.click(screen.getByRole('button', { name: 'Reset to the standard text' }));
+    await userEvent.click(screen.getByRole('button', { name: /^Reset to the standard text: / }));
     expect(currentRoster(latest).guestPlayers[0].customText).toBeNull();
   });
   test('Prepare voices covers both teams and Ready badges appear on guest rows', async () => {

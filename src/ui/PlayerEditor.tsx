@@ -74,27 +74,30 @@ export default function PlayerEditor({ state, dispatch, side }: PanelProps & { s
       <h3 id={headingId}>{title}</h3>
       {list.length === 0 && <p class="hint">{tr('emptyList')}</p>}
       <ul>
-        {list.map((p, i) => (
+        {list.map((p, i) => {
+          // every control of a row names its player: otherwise a screen reader hears "Name, Name, Name"
+          const label = (k: keyof UiStrings) => `${tr(k)}: ${p.name}`;
+          return (
           <li class="player-row" key={p.id}>
-            <input class="num" inputMode="numeric" maxLength={3} aria-label={tr('shirtNumber')}
+            <input class="num" inputMode="numeric" maxLength={3} aria-label={label('shirtNumber')}
               defaultValue={p.number} onInput={e => update(p.id, { number: e.currentTarget.value.trim() })} />
-            <input class="name" aria-label={tr('playerName')} defaultValue={p.name} maxLength={60}
+            <input class="name" aria-label={label('playerName')} defaultValue={p.name} maxLength={60}
               onInput={e => update(p.id, { name: e.currentTarget.value })} />
             {roster.showPositions && (
-              <input class="pos" list={datalistId} aria-label={tr('position')} defaultValue={p.position}
+              <input class="pos" list={datalistId} aria-label={label('position')} defaultValue={p.position}
                 onInput={e => update(p.id, { position: e.currentTarget.value.trim() })} />
             )}
             <span class="row-actions">
-              {sayAs.hintToggle(p.id, p.sayAs.trim() !== '')}
-              <button type="button" aria-label={tr(p.onField ? 'toBench' : 'toField')} title={tr(p.onField ? 'toBench' : 'toField')}
+              {sayAs.hintToggle(p.id, p.sayAs.trim() !== '', p.name)}
+              <button type="button" aria-label={label(p.onField ? 'toBench' : 'toField')} title={tr(p.onField ? 'toBench' : 'toField')}
                 onClick={() => update(p.id, { onField: !p.onField })}>⇄</button>
-              <button type="button" aria-label={tr('moveUp')} title={tr('moveUp')} disabled={i === 0} onClick={() => move(p, -1)}>↑</button>
-              <button type="button" aria-label={tr('moveDown')} title={tr('moveDown')} disabled={i === list.length - 1} onClick={() => move(p, 1)}>↓</button>
-              <button type="button" aria-label={tr('remove')} title={tr('remove')} onClick={() => remove(p)}>🗑</button>
+              <button type="button" aria-label={label('moveUp')} title={tr('moveUp')} disabled={i === 0} onClick={() => move(p, -1)}>↑</button>
+              <button type="button" aria-label={label('moveDown')} title={tr('moveDown')} disabled={i === list.length - 1} onClick={() => move(p, 1)}>↓</button>
+              <button type="button" aria-label={label('remove')} title={tr('remove')} onClick={() => remove(p)}>🗑</button>
             </span>
             {sayAs.isOpen(p.id) && (
               <div class="say-as">
-                <input aria-label={tr('sayAsLabel')} placeholder={tr('sayAsPlaceholder')} value={p.sayAs} maxLength={80}
+                <input aria-label={label('sayAsLabel')} placeholder={tr('sayAsPlaceholder')} value={p.sayAs} maxLength={80}
                   onInput={e => update(p.id, { sayAs: e.currentTarget.value })} />
                 {sayAs.hearButton(p.name, p.sayAs)}
                 <p class="hint">{tr('sayAsHint')}</p>
@@ -103,7 +106,8 @@ export default function PlayerEditor({ state, dispatch, side }: PanelProps & { s
               </div>
             )}
           </li>
-        ))}
+          );
+        })}
       </ul>
     </section>
   );
@@ -127,7 +131,7 @@ export default function PlayerEditor({ state, dispatch, side }: PanelProps & { s
       <label class="stack">{tr('singleLabel')}
         <input value={oneText} placeholder={tr('singlePlaceholder')}
           onInput={e => setOneText(e.currentTarget.value)}
-          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addOne(); } }} />
+          onKeyDown={e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); addOne(); } }} />
       </label>
 
       <label class="check">

@@ -39,7 +39,7 @@ test('adding names via textarea creates field players', async () => {
   render(<Harness />);
   await userEvent.type(screen.getByLabelText('Paste or type a list of players'), '7 Lea{Enter}Tom');
   await userEvent.click(screen.getByRole('button', { name: 'Add' }));
-  expect(screen.getAllByLabelText('Name')).toHaveLength(2);
+  expect(screen.getAllByLabelText(/^Name: /)).toHaveLength(2);
   const first = currentRoster(latest).players[0];
   expect(first).toMatchObject({ name: 'Lea', number: '7', onField: true });
   expect(screen.getByDisplayValue('Lea')).toBeInTheDocument();
@@ -53,7 +53,7 @@ test('pasting the fussball.de fixture adds 5 players with positions and turns po
   await userEvent.click(screen.getByRole('button', { name: 'Hinzufügen' }));
   expect(currentRoster(latest).players).toHaveLength(5);
   expect(currentRoster(latest).showPositions).toBe(true);
-  expect(screen.getAllByRole('combobox', { name: 'Position' })).toHaveLength(5);
+  expect(screen.getAllByRole('combobox', { name: /^Position: / })).toHaveLength(5);
   expect(screen.getByDisplayValue('Lea Müller')).toBeInTheDocument();
   expect(screen.getByDisplayValue('Torwart')).toBeInTheDocument();
 });
@@ -80,7 +80,7 @@ test('Enter in the single-name box adds one player', async () => {
 test('field/bench toggle moves a player to the bench list', async () => {
   render(<Harness init={withPlayers(1)} />);
   const field = screen.getByRole('region', { name: 'On the field' });
-  await userEvent.click(within(field).getByRole('button', { name: 'Move to bench' }));
+  await userEvent.click(within(field).getByRole('button', { name: /^Move to bench: / }));
   expect(currentRoster(latest).players[0].onField).toBe(false);
   const bench = screen.getByRole('region', { name: 'Bench' });
   expect(within(bench).getByDisplayValue('P1')).toBeInTheDocument();
@@ -88,9 +88,9 @@ test('field/bench toggle moves a player to the bench list', async () => {
 
 test('position column hidden until "Use positions" is checked', async () => {
   render(<Harness init={withPlayers(1)} />);
-  expect(screen.queryByRole('combobox', { name: 'Position' })).toBeNull();
+  expect(screen.queryByRole('combobox', { name: /^Position: / })).toBeNull();
   await userEvent.click(screen.getByLabelText('Use positions'));
-  const combo = screen.getByRole('combobox', { name: 'Position' });
+  const combo = screen.getByRole('combobox', { name: /^Position: / });
   const list = document.getElementById(combo.getAttribute('list')!)!;
   expect([...list.querySelectorAll('option')].map(o => o.getAttribute('value'))).toEqual(
     ['Goalkeeper', 'Defence', 'Midfield', 'Attack']);
@@ -115,7 +115,7 @@ test('typing in a name input keeps focus and caret', async () => {
 test('up/down reorders within the list', async () => {
   render(<Harness init={withPlayers(3)} />);
   const field = screen.getByRole('region', { name: 'On the field' });
-  await userEvent.click(within(field).getAllByRole('button', { name: 'Move down' })[0]);
+  await userEvent.click(within(field).getAllByRole('button', { name: /^Move down: / })[0]);
   expect(currentRoster(latest).players.map(p => p.name)).toEqual(['P2', 'P1', 'P3']);
 });
 
@@ -123,12 +123,12 @@ test('remove asks no confirmation but offers Undo for 5 s', async () => {
   vi.useFakeTimers({ shouldAdvanceTime: true });
   try {
     render(<Harness init={withPlayers(3)} />);
-    await userEvent.click(screen.getAllByRole('button', { name: 'Remove' })[1]);
+    await userEvent.click(screen.getAllByRole('button', { name: /^Remove: / })[1]);
     expect(currentRoster(latest).players.map(p => p.name)).toEqual(['P1', 'P3']);
     expect(screen.getByRole('status')).toHaveTextContent('Removed P2');
     await userEvent.click(screen.getByRole('button', { name: 'Undo' }));
     expect(currentRoster(latest).players.map(p => p.name)).toEqual(['P1', 'P2', 'P3']);
-    await userEvent.click(screen.getAllByRole('button', { name: 'Remove' })[0]);
+    await userEvent.click(screen.getAllByRole('button', { name: /^Remove: / })[0]);
     expect(screen.getByRole('button', { name: 'Undo' })).toBeInTheDocument();
     act(() => { vi.advanceTimersByTime(5100); });
     expect(screen.queryByRole('button', { name: 'Undo' })).toBeNull();
@@ -154,24 +154,24 @@ function WithServices({ services, init }: { services: Services; init?: (s: AppSt
 
 test('🗣 toggles a "Say it like…" input; typing stores sayAs; the button is highlighted when a hint exists', async () => {
   render(<Harness init={withPlayers(1)} />);
-  expect(screen.queryByLabelText('Say it like…')).toBeNull();
-  const playerToggle = () => screen.getAllByRole('button', { name: 'Pronunciation' }).at(-1)!;
+  expect(screen.queryByLabelText(/^Say it like…: /)).toBeNull();
+  const playerToggle = () => screen.getAllByRole('button', { name: /^Pronunciation: / }).at(-1)!;
   const toggle = playerToggle();
   expect(toggle).not.toHaveClass('has-hint');
   await userEvent.click(toggle);
   expect(screen.getByText(/Write the name the way it sounds/)).toBeInTheDocument();
-  const input = screen.getByLabelText('Say it like…');
+  const input = screen.getByLabelText(/^Say it like…: /);
   expect(input).toHaveAttribute('placeholder', 'e.g. Tso-eh');
   await userEvent.type(input, 'Tso-eh');
   expect(currentRoster(latest).players[0].sayAs).toBe('Tso-eh');
   expect(playerToggle()).toHaveClass('has-hint');
   await userEvent.click(playerToggle());
-  expect(screen.queryByLabelText('Say it like…')).toBeNull();
+  expect(screen.queryByLabelText(/^Say it like…: /)).toBeNull();
 });
 
 test('home team and opponent each have a 🗣 hint that dispatches setMatch', async () => {
   render(<Harness />);
-  const toggles = screen.getAllByRole('button', { name: 'Pronunciation' });
+  const toggles = screen.getAllByRole('button', { name: /^Pronunciation: / });
   expect(toggles).toHaveLength(2);
   await userEvent.click(toggles[1]);
   await userEvent.type(screen.getByLabelText('Opponent: Say it like…'), 'Es Fau');
@@ -185,12 +185,12 @@ test('home team and opponent each have a 🗣 hint that dispatches setMatch', as
 test('▶ next to a hint unlocks, then speaks just the hint (or the name if empty) with the voice', async () => {
   const { services, queue, speech } = makeServices();
   render(<WithServices services={services} init={withPlayers(1)} />);
-  await userEvent.click(screen.getAllByRole('button', { name: 'Pronunciation' }).at(-1)!);
+  await userEvent.click(screen.getAllByRole('button', { name: /^Pronunciation: / }).at(-1)!);
   await userEvent.click(screen.getByRole('button', { name: 'Hear it' }));
   const run = async () => { const items = queue.play.mock.calls.at(-1)![0] as Array<() => Promise<Blob>>; await items[0](); };
   await run();
   expect(speech.get).toHaveBeenLastCalledWith(latest.voiceId, 'P1');
-  await userEvent.type(screen.getByLabelText('Say it like…'), 'Pee-one');
+  await userEvent.type(screen.getByLabelText(/^Say it like…: /), 'Pee-one');
   await userEvent.click(screen.getByRole('button', { name: 'Hear it' }));
   await run();
   expect(speech.get).toHaveBeenLastCalledWith(latest.voiceId, 'Pee-one');
@@ -201,9 +201,9 @@ test('▶ next to a hint unlocks, then speaks just the hint (or the name if empt
 test('▶ speaks a hint that contains its own name exactly as written (player and teams)', async () => {
   const { services, queue, speech } = makeServices();
   render(<WithServices services={services} init={s => reducer(withPlayers(1)(s), { type: 'setMatch', patch: { homeTeam: 'FC', homeSayAs: 'FC-eff', opponent: 'Bay', opponentSayAs: 'Bay-ern' } })} />);
-  const toggles = screen.getAllByRole('button', { name: 'Pronunciation' });
+  const toggles = screen.getAllByRole('button', { name: /^Pronunciation: / });
   for (const t of toggles) await userEvent.click(t);
-  await userEvent.type(screen.getByLabelText('Say it like…'), 'P1-ah');
+  await userEvent.type(screen.getByLabelText(/^Say it like…: /), 'P1-ah');
   const heard = async (i: number) => {
     await userEvent.click(screen.getAllByRole('button', { name: 'Hear it' })[i]);
     await (queue.play.mock.calls.at(-1)![0] as Array<() => Promise<Blob>>)[0]();
@@ -264,9 +264,9 @@ describe('guest team tab', () => {
     await userEvent.type(screen.getByLabelText('Add one player'), 'Zed{Enter}');
     expect(currentRoster(latest).guestPlayers.map(p => p.name)).toEqual(['Pat', 'Mika', 'Zed']);
     const row = screen.getByDisplayValue('Pat').closest('li')!;
-    await userEvent.click(within(row).getByRole('button', { name: 'Move to bench' }));
+    await userEvent.click(within(row).getByRole('button', { name: /^Move to bench: / }));
     expect(currentRoster(latest).guestPlayers[0].onField).toBe(false);
-    await userEvent.click(within(screen.getByDisplayValue('Mika').closest('li')!).getByRole('button', { name: 'Remove' }));
+    await userEvent.click(within(screen.getByDisplayValue('Mika').closest('li')!).getByRole('button', { name: /^Remove: / }));
     expect(screen.getByRole('status')).toHaveTextContent('Removed Mika');
     await userEvent.click(screen.getByRole('button', { name: 'Undo' }));
     expect(currentRoster(latest).guestPlayers.map(p => p.name)).toContain('Mika');
@@ -343,7 +343,7 @@ describe('✨ Suggest in the roster', () => {
   test('Use this fills the player hint (shown in the input) and the original spelling is saved on the player', async () => {
     const { services } = makeServices();
     render(<WithServices services={services} init={s => reducer(s, { type: 'addPlayers', text: 'Wojciech', onField: true })} />);
-    await userEvent.click(screen.getAllByRole('button', { name: 'Pronunciation' }).at(-1)!);
+    await userEvent.click(screen.getAllByRole('button', { name: /^Pronunciation: / }).at(-1)!);
     await userEvent.click(screen.getByRole('button', { name: '✨ Suggest' }));
     await userEvent.selectOptions(screen.getByLabelText("Name's language"), 'pl');
     expect(currentRoster(latest).players[0].nameLang).toBe('pl');
@@ -352,13 +352,13 @@ describe('✨ Suggest in the roster', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Find suggestions' }));
     await userEvent.click((await screen.findAllByRole('button', { name: /^Use this: Voy/ }, { timeout: 2000 }))[0]);
     expect(currentRoster(latest).players[0].sayAs).toMatch(/^Voy/);
-    expect(screen.getByLabelText('Say it like…')).toHaveValue(currentRoster(latest).players[0].sayAs);
+    expect(screen.getByLabelText(/^Say it like…: /)).toHaveValue(currentRoster(latest).players[0].sayAs);
   });
 
   test('the opponent has its own ✨ and stores language and spelling on the roster', async () => {
     const { services } = makeServices();
     render(<WithServices services={services} init={s => reducer(s, { type: 'setMatch', patch: { opponent: 'Wojciech United' } })} />);
-    await userEvent.click(screen.getAllByRole('button', { name: 'Pronunciation' })[1]);
+    await userEvent.click(screen.getAllByRole('button', { name: /^Pronunciation: / })[1]);
     await userEvent.click(screen.getByRole('button', { name: '✨ Suggest' }));
     await userEvent.selectOptions(screen.getByLabelText("Name's language"), 'pl');
     expect(currentRoster(latest).opponentNameLang).toBe('pl');
@@ -367,4 +367,31 @@ describe('✨ Suggest in the roster', () => {
     await userEvent.click((await screen.findAllByRole('button', { name: /^Use this: Voy/ }, { timeout: 2000 }))[0]);
     expect(currentRoster(latest).opponentSayAs).toMatch(/^Voy/);
   });
+});
+
+test('every control of a player row carries that player\'s name, so rows can be told apart', async () => {
+  render(<Harness init={s => reducer(reducer(s, { type: 'addPlayers', text: 'Torwart\n1 Lea\n2 Tom', onField: true }), { type: 'togglePositions', on: true })} />);
+  for (const name of ['Lea', 'Tom']) {
+    expect(screen.getByLabelText(`Name: ${name}`)).toHaveValue(name);
+    expect(screen.getByLabelText(`Shirt number: ${name}`)).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: `Position: ${name}` })).toBeInTheDocument();
+    for (const action of ['Pronunciation', 'Move to bench', 'Move up', 'Move down', 'Remove']) {
+      expect(screen.getByRole('button', { name: `${action}: ${name}` })).toBeInTheDocument();
+    }
+  }
+  expect(screen.getByRole('button', { name: 'Pronunciation: Home team' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Pronunciation: Opponent' })).toBeInTheDocument();
+  await userEvent.click(screen.getByRole('button', { name: 'Pronunciation: Tom' }));
+  expect(screen.getByLabelText('Say it like…: Tom')).toBeInTheDocument();
+});
+
+test('Enter while an input method is composing (e.g. Japanese, Korean) does not add the player yet', async () => {
+  const { fireEvent } = await import('@testing-library/preact');
+  render(<Harness />);
+  const box = screen.getByLabelText('Add one player');
+  await userEvent.type(box, 'Yuki');
+  fireEvent.keyDown(box, { key: 'Enter', isComposing: true });
+  expect(currentRoster(latest).players).toHaveLength(0);
+  fireEvent.keyDown(box, { key: 'Enter' });
+  expect(currentRoster(latest).players.map(p => p.name)).toEqual(['Yuki']);
 });

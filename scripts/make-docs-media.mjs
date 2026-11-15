@@ -327,13 +327,13 @@ async function runLang(browser, pack, outDir) {
   // 02 players: our team with one row's "Say it like..." hint open
   {
     const row = page.getByRole('listitem').filter({ has: page.locator('input[value="Kim Muster"]') });
-    await row.getByRole('button', { name: pack.ui.pronunciation, exact: true }).click();
-    await row.getByLabel(pack.ui.sayAsLabel).fill(DEMO.sayAs);
+    await row.getByRole('button', { name: `${pack.ui.pronunciation}: Kim Muster`, exact: true }).click();
+    await row.getByLabel(`${pack.ui.sayAsLabel}: Kim Muster`, { exact: true }).fill(DEMO.sayAs);
     await sleep(300);
     await scrollToCard(page, 1);
     await png(card(page, 1), '02-players.png');
     // 02b guests: the Guests tab after importing the team file
-    await row.getByRole('button', { name: pack.ui.pronunciation, exact: true }).click();
+    await row.getByRole('button', { name: `${pack.ui.pronunciation}: Kim Muster`, exact: true }).click();
     await page.getByRole('tab', { name: new RegExp(`^${pack.ui.tabGuests}`) }).click();
     await sleep(300);
     await scrollToCard(page, 1);

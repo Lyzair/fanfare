@@ -22,8 +22,9 @@ export function useSayAs(state: AppState) {
     playVoiceText({ ...services, onStart: () => setHearError(null), onError: e => setHearError(e ?? true) }, state.voiceId, sayAs.trim() || name);
   };
   const isOpen = (key: string) => open.has(key);
-  const hintToggle = (key: string, active: boolean) => (
-    <button type="button" class={active ? 'hint-toggle has-hint' : 'hint-toggle'} aria-label={tr('pronunciation')} title={tr('pronunciation')}
+  /** `whose` names the player or team, so that the toggles of a list can be told apart. */
+  const hintToggle = (key: string, active: boolean, whose: string) => (
+    <button type="button" class={active ? 'hint-toggle has-hint' : 'hint-toggle'} aria-label={`${tr('pronunciation')}: ${whose}`} title={tr('pronunciation')}
       aria-pressed={open.has(key)} onClick={() => toggle(key)}>🗣</button>
   );
   const hearButton = (name: string, sayAs: string) => services && (

@@ -26,7 +26,7 @@ test('game day flow stays on-origin', async ({ page, baseURL }) => {
   await expect(page.getByRole('textbox', { name: 'Opponent', exact: true })).toHaveValue('SV Musterstadt');
   await page.getByLabel('Paste or type a list of players').fill('7 Lea Müller\nTom\nZoë');
   await page.getByRole('button', { name: 'Add', exact: true }).click();
-  await expect(page.getByLabel('Name', { exact: true })).toHaveCount(3);
+  await expect(page.getByLabel(/^Name: /)).toHaveCount(3);
 
   const fieldList = page.getByRole('region', { name: 'On the field' });
   const benchList = page.getByRole('region', { name: 'Bench' });
@@ -93,7 +93,7 @@ test('game day flow stays on-origin', async ({ page, baseURL }) => {
   await expect(page.locator('input.num[value="7"]')).toHaveCount(1);
   await expect(benchList.locator('input[value="Zoë"]')).toHaveCount(1);
   await expect(fieldList.locator('input[value="Zoë"]')).toHaveCount(0);
-  await expect(fieldList.getByLabel('Position', { exact: true }).first()).toHaveValue('Goalkeeper');
+  await expect(fieldList.getByLabel(/^Position: /).first()).toHaveValue('Goalkeeper');
 
   // Volleyball
   await page.getByLabel('Sport').selectOption('volleyball');

@@ -80,7 +80,7 @@ export default function CalloutPanel({ state, dispatch }: PanelProps) {
           <button type="button" aria-label={`${tr('playClip')} ${p.name}`} title={tr('playClip')} onClick={() => playText(text)}>▶</button>
           {regenerateButton(text, p.name)}
           {p.customText !== null && (
-            <button type="button" aria-label={tr('resetText')} title={tr('resetText')}
+            <button type="button" aria-label={`${tr('resetText')}: ${p.name}`} title={tr('resetText')}
               onClick={() => dispatch({ type: 'updatePlayer', id: p.id, patch: { customText: null }, side })}>↺</button>
           )}
           {badge(text)}
