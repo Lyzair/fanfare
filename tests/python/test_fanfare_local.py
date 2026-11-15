@@ -282,6 +282,31 @@ class OptInTests(TempDirCase):
             self.assertFalse(self.cfg.exists(), answer)
             r.close()
 
+    def test_ctrl_c_at_ca_prompt_falls_back_to_http(self):
+        def interrupt(prompt):
+            raise KeyboardInterrupt
+        r = self.run_server('--lan', '--https', '--port', '0', interactive=True, ask=interrupt)
+        self.assertEqual(r.scheme, 'http')
+        self.assertFalse(self.cfg.exists())
+        self.assertIn('Cancelled', '\n'.join(self.logs))
+
+    def test_ctrl_c_at_forget_prompt_deletes_nothing_and_exits_1(self):
+        self.run_server('--lan', '--https', '--accept-ca-risk', '--port', '0').close()
+        self.logs.clear()
+
+        def interrupt(prompt):
+            raise KeyboardInterrupt
+        argv = [str(self.root), '--config-dir', str(self.cfg), '--forget-ca']
+        with self.assertRaises(fl.Cancelled):
+            fl.start(argv, out=self.logs.append, ask=interrupt, interactive=True)
+        self.assertTrue((self.cfg / 'ca.key').exists())
+        text = '\n'.join(self.logs)
+        self.assertIn('Cancelled - nothing deleted.', text)
+        self.assertIn('ca.key', text)  # the exact files are listed before asking
+        self.assertIn('server.key', text)
+        with mock.patch.object(fl, 'start', side_effect=fl.Cancelled()):
+            self.assertEqual(fl.main(argv), 1)
+
     def test_eof_on_prompt_falls_back(self):
         def eof(prompt):
             raise EOFError

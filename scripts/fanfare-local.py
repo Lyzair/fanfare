@@ -464,11 +464,18 @@ def ca_is_current(cfg):
         and marker.read_text().strip() == CA_MARKER
 
 
-def _yes(ask, prompt):
+class Cancelled(Exception):
+    """The user pressed Ctrl+C at a prompt; the message has already been printed."""
+
+
+def _yes(ask, prompt, out, cancelled_message):
     try:
         return ask(prompt).strip().lower() == 'yes'
     except EOFError:
         return False
+    except KeyboardInterrupt:
+        out('\n' + cancelled_message)
+        raise Cancelled()
 
 
 def confirm_new_ca(accept_risk, out, ask, interactive):
@@ -483,8 +490,12 @@ def confirm_new_ca(accept_risk, out, ask, interactive):
         out('No terminal to ask on, so no certificate authority was created. Using plain http. '
             'To accept the risks, add --accept-ca-risk.')
         return False
-    if _yes(ask, 'Type yes to create a local certificate authority: '):
-        return True
+    try:
+        if _yes(ask, 'Type yes to create a local certificate authority: ', out,
+                'Cancelled - continuing without HTTPS (plain http, no certificate authority created).'):
+            return True
+    except Cancelled:
+        return False
     out('No certificate authority was created. Using plain http.')
     return False
 
@@ -499,8 +510,8 @@ def forget_ca(cfg, yes, out, ask, interactive):
     if not yes:
         if not interactive:
             raise StartError('This deletes the local certificate authority and keys in %s. Add --yes to confirm.' % cfg)
-        out('This deletes the local certificate authority and the keys in %s.' % cfg)
-        if not _yes(ask, 'Type yes to delete them: '):
+        out('This deletes these files in %s: %s' % (cfg, ', '.join(present)))
+        if not _yes(ask, 'Type yes to delete them: ', out, 'Cancelled - nothing deleted.'):
             out('Nothing was deleted.')
             return False
     for n in present:
@@ -532,7 +543,7 @@ code{word-break:break-all;font-family:ui-monospace,Menlo,Consolas,monospace}
 @media (prefers-color-scheme:dark){body{background:#151515;color:#ececec}h2{border-color:#444}.fp{background:#232b24}}
 </style></head><body>
 <h1>Fanfare: trust this laptop</h1>
-<p>This laptop uses its own private certificate, so your phone can open Fanfare safely over Wi-Fi. Install it once. Then offline mode and the microphone work.</p>
+<p>This laptop uses its own private certificate, so your phone can open Fanfare over HTTPS (read the risks below first). Install it once. Then offline mode and the microphone work.</p>
 <p><a class="btn" href="/fanfare-ca.crt">Download certificate</a></p>
 <p>Fingerprint (SHA-256). It must match the one shown in the laptop's terminal:</p>
 <p class="fp"><code>%(fp)s</code></p>
@@ -553,7 +564,7 @@ code{word-break:break-all;font-family:ui-monospace,Menlo,Consolas,monospace}
 <p>%(remove_en)s</p>
 
 <h1 lang="de">Fanfare: Diesem Laptop vertrauen</h1>
-<p lang="de">Dieser Laptop nutzt sein eigenes privates Zertifikat, damit dein Handy Fanfare im WLAN sicher öffnen kann. Installiere es einmal. Danach funktionieren der Offline-Modus und das Mikrofon.</p>
+<p lang="de">Dieser Laptop nutzt sein eigenes privates Zertifikat, damit dein Handy Fanfare über HTTPS öffnen kann (lies zuerst die Risiken unten). Installiere es einmal. Danach funktionieren der Offline-Modus und das Mikrofon.</p>
 <p lang="de"><a class="btn" href="/fanfare-ca.crt">Zertifikat herunterladen</a></p>
 <p lang="de">Fingerabdruck (SHA-256). Er muss mit dem im Terminal des Laptops übereinstimmen:</p>
 <p class="fp"><code>%(fp)s</code></p>
@@ -872,6 +883,8 @@ def main(argv=None):
     except StartError as e:
         sys.stderr.write('Error: %s\n' % e)
         return 2
+    except Cancelled:  # Ctrl+C at the --forget-ca prompt; the message is already printed
+        return 1
     if running is None:  # --forget-ca
         return 0
     running.serve_forever()
