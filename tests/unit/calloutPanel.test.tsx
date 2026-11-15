@@ -257,12 +257,11 @@ const withHint = (s: AppState) => {
 };
 
 test('speech gets the hint while the textarea keeps the real name', async () => {
-  const { services, queue, speech } = makeServices();
+  const { services, speech } = makeServices();
   render(<Harness services={services} init={withHint} />);
   expect((screen.getByLabelText('Announcement text for Lea') as HTMLTextAreaElement).value).toContain('Lea');
   expect((screen.getByLabelText('Announcement text for Lea') as HTMLTextAreaElement).value).not.toContain('Lee-ah');
   await userEvent.click(screen.getByRole('button', { name: 'Play Lea' }));
-  await (queue.play.mock.calls[0][0] as QueueItem[])[0]!.valueOf();
   const got = speech.get.mock.calls.at(-1)![1];
   expect(got).toContain('Lee-ah');
   expect(got).not.toContain('Lea ');
@@ -293,13 +292,12 @@ test('changing a hint changes the cache key: the Ready badge disappears for that
 });
 
 test('a hint containing its own name is spoken once, not re-replaced', async () => {
-  const { services, queue, speech } = makeServices();
+  const { services, speech } = makeServices();
   render(<Harness services={services} init={s => {
     const st = setup(s);
     return reducer(st, { type: 'updatePlayer', id: currentRoster(st).players[0].id, patch: { sayAs: 'Lea-ah' } });
   }} />);
   await userEvent.click(screen.getByRole('button', { name: 'Play Lea' }));
-  await (queue.play.mock.calls[0][0] as QueueItem[])[0]!.valueOf();
   const got = speech.get.mock.calls.at(-1)![1];
   expect(got).toContain('Lea-ah');
   expect(got).not.toContain('Lea-ah-ah');

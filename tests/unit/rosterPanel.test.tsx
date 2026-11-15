@@ -201,8 +201,6 @@ test('▶ next to a hint unlocks, then speaks just the hint (or the name if empt
 test('▶ speaks a hint that contains its own name exactly as written (player and teams)', async () => {
   const { services, queue, speech } = makeServices();
   render(<WithServices services={services} init={s => reducer(withPlayers(1)(s), { type: 'setMatch', home: 'FC', homeSayAs: 'FC-eff', opponent: 'Bay', opponentSayAs: 'Bay-ern' })} />);
-  const id = currentRoster(latest).players[0].id;
-  void id;
   const toggles = screen.getAllByRole('button', { name: 'Pronunciation' });
   for (const t of toggles) await userEvent.click(t);
   await userEvent.type(screen.getByLabelText('Say it like…'), 'P1-ah');

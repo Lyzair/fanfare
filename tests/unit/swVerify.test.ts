@@ -1,7 +1,6 @@
 import { fetchVerified } from '../../src/sw/verify';
 import type { CacheMode } from '../../src/sw/verify';
 
-const buf = (s: string) => new TextEncoder().encode(s).buffer as ArrayBuffer;
 const hashOf = async (b: ArrayBuffer) => new TextDecoder().decode(b);
 const resp = (s: string, status = 200) => new Response(s, { status });
 
@@ -22,5 +21,4 @@ test('refetches with reload when the first copy is stale, then accepts', async (
 test('throws when even the reloaded copy mismatches or the response is not ok', async () => {
   await expect(fetchVerified('https://e.org/a/x.js', 'good', async () => resp('bad'), hashOf)).rejects.toThrow(/does not match/);
   await expect(fetchVerified('https://e.org/a/x.js', 'good', async () => resp('x', 404), hashOf)).rejects.toThrow(/HTTP 404/);
-  void buf;
 });

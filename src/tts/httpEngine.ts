@@ -33,7 +33,7 @@ export function isLocalUrl(url: string): boolean {
 export const CLUB_VOICE_LANGS: readonly Lang[] = ['de', 'en', 'fr', 'es', 'it', 'nl', 'pl', 'tr', 'ar'];
 
 /** Upload file extension for a recorded blob type. */
-export function recordingExtension(mime: string): string {
+function recordingExtension(mime: string): string {
   switch (mime.split(';')[0].trim().toLowerCase()) {
     case 'audio/ogg': return 'ogg';
     case 'audio/mp4': case 'audio/m4a': case 'audio/x-m4a': return 'm4a';

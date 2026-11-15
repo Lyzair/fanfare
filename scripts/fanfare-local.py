@@ -1339,7 +1339,6 @@ def _parser():
     p.add_argument('--https', action='store_true',
                    help='with --lan: serve HTTPS with a local certificate authority (asks first; phones then work offline '
                         'and can use the microphone; read the risks it prints)')
-    p.add_argument('--http', action='store_true', help=argparse.SUPPRESS)  # old name for the default, still accepted
     p.add_argument('--accept-ca-risk', action='store_true',
                    help='with --https: create the certificate authority without asking (for scripts / no terminal)')
     p.add_argument('--forget-ca', action='store_true',
@@ -1365,8 +1364,6 @@ def start(argv, out=say, ask=input, interactive=None):
         interactive = bool(sys.stdin and sys.stdin.isatty())
     if args.https and not args.lan:
         raise StartError('--https only makes sense together with --lan.')
-    if args.https and args.http:
-        raise StartError('Choose either --https or --http, not both.')
     root = Path(args.folder).resolve() if args.folder else Path(__file__).resolve().parent
     if not root.is_dir():
         raise StartError('Folder not found: %s' % root)

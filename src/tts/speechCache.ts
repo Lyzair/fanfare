@@ -54,19 +54,6 @@ export class SpeechCache {
     }
   }
 
-  /** Forgets one clip (memory and storage) so the next `get` synthesizes it again. */
-  async evict(voiceId: string, text: string): Promise<void> {
-    const key = SpeechCache.key(voiceId, text);
-    const inflight = this.pending.get(key);
-    if (inflight) await inflight.catch(() => undefined); // let a running synthesis finish first
-    this.mem.delete(key);
-    try {
-      await this.store.remove(key);
-    } catch (e) {
-      console.warn('Could not remove speech clip from storage', e);
-    }
-  }
-
   entries(): Map<string, Blob> {
     return new Map(this.mem);
   }

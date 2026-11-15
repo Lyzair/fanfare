@@ -175,46 +175,6 @@ test('replace swaps all in-memory clips', () => {
   expect([...c.entries().keys()]).toEqual(['v|b']);
 });
 
-test('evict removes a clip from memory and storage, so the next get synthesizes again', async () => {
-  const e = new FakeEngine();
-  const s = memStore();
-  const c = new SpeechCache(e, s);
-  await c.get('v', 'Hallo');
-  expect(c.has('v', 'Hallo')).toBe(true);
-  expect(s.m.size).toBe(1);
-  await c.evict('v', ' Hallo ');
-  expect(c.has('v', 'Hallo')).toBe(false);
-  expect(s.m.size).toBe(0);
-  await c.get('v', 'Hallo');
-  expect(e.calls).toHaveLength(2);
-  expect(c.has('v', 'Hallo')).toBe(true);
-});
-
-test('evict waits for a running synthesis and still removes its result', async () => {
-  const e = new FakeEngine();
-  const s = memStore();
-  const c = new SpeechCache(e, s);
-  e.hold();
-  const first = c.get('v', 'Hallo');
-  const ev = c.evict('v', 'Hallo');
-  e.open();
-  await first;
-  await ev;
-  expect(c.has('v', 'Hallo')).toBe(false);
-  expect(s.m.size).toBe(0);
-});
-
-test('evict leaves other clips alone and survives a failing store', async () => {
-  const e = new FakeEngine();
-  const s = { ...memStore(), async remove() { throw new Error('idb'); } };
-  const c = new SpeechCache(e, s);
-  await c.get('v', 'A');
-  await c.get('v', 'B');
-  await c.evict('v', 'A');
-  expect(c.has('v', 'A')).toBe(false);
-  expect(c.has('v', 'B')).toBe(true);
-});
-
 test('regenerate replaces the clip only on success; a failing engine keeps the old clip', async () => {
   const e = new FakeEngine();
   const s = memStore();

@@ -52,7 +52,7 @@ export function App() {
   stateRef.current = state;
   services.current ??= {
     queue: new AudioQueue(),
-    speech: new SpeechCache(new RoutingEngine(new PiperEngine('./'), () => (stateRef.current.localTts ? new HttpTtsEngine(stateRef.current.localTts.url) : null))),
+    speech: new SpeechCache(new RoutingEngine(new PiperEngine(), () => (stateRef.current.localTts ? new HttpTtsEngine(stateRef.current.localTts.url) : null))),
   };
   const value = useMemo(() => services.current!, []);
 

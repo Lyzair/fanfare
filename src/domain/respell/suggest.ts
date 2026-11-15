@@ -26,7 +26,7 @@ export interface Suggestions {
   candidates: Candidate[];
 }
 
-export const MAX_RESULTS = 3;
+const MAX_RESULTS = 3;
 
 export type PhonemizeFn = (text: string, voice: string) => Promise<string[]>;
 

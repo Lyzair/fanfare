@@ -1,36 +1,17 @@
 /*
- * Spike finding (Task 9, @mintplex-labs/piper-tts-web 1.0.5, read from the
- * installed dist/piper-tts-web.js):
+ * The in-browser voice: @mintplex-labs/piper-tts-web 1.0.5 (Piper models on ONNX Runtime 1.18.0).
  *
- * - ONNX Runtime WASM: configurable. `TtsSession.create({ wasmPaths })` sets
- *   `ort.env.wasm.wasmPaths = wasmPaths.onnxWasm` (a directory prefix). The
- *   library imports `onnxruntime-web/wasm` and was built against ORT 1.18.0,
- *   which we pin; fetch-assets copies its ort-wasm*.wasm files to ./ort/.
- *   (ORT 1.18 has no .mjs loaders; threaded variants use a blob: worker,
- *   covered by `worker-src blob:`, and only when crossOriginIsolated.)
- * - piper-phonemize WASM + espeak-ng data: configurable via
- *   `wasmPaths.piperWasm` / `wasmPaths.piperData` (Emscripten locateFile).
- *   Copied from @diffusionstudio/piper-wasm@1.0.0 to ./piper/. The JS glue is
- *   already bundled in the library. Note: a new phonemizer module is created
- *   per text chunk, so the 18 MB .data is re-requested per synthesis (served
- *   from the HTTP cache after the first time).
- * - Voice .onnx / .onnx.json: HARD-CODED to huggingface.co (`HF_BASE`), with
- *   OPFS caching guarded by `url.match("https://huggingface.co")`. Patched
- *   via patch-package (patches/@mintplex-labs+piper-tts-web+1.0.5.patch):
- *   HF_BASE -> "./voices", the two OPFS guards -> `url.startsWith(HF_BASE+"/")`
- *   (OPFS caching keeps working), the CDN defaults -> "./ort/", "./piper/…",
- *   and fetchBlob now throws on a non-2xx response (otherwise a 404 page would
- *   be parsed as a model and cached in OPFS). Files are laid out under
- *   public/voices/ exactly as PATH_MAP names them.
- * - Only voices listed in the library's PATH_MAP can be used. The library
- *   always phonemizes with espeak, so voices with `phoneme_type: "text"`
- *   (e.g. uk_UA-ukrainian_tts-medium) produce wrong phoneme ids; we use
- *   uk_UA-lada-x_low instead.
- * - TtsSession is a process-wide singleton (`TtsSession._instance`); creating
- *   a session for another voice silently reuses the first model. We reset
- *   `_instance` before switching voices.
- * - Everything runs on the main thread; no eval/new Function. Works under the
- *   page CSP (`'wasm-unsafe-eval'`, `connect-src 'self'`).
+ * - Everything is loaded from this page's own origin. The library's hard-coded download addresses
+ *   are replaced by patches/@mintplex-labs+piper-tts-web+1.0.5.patch: voices from ./voices/ (laid
+ *   out as the library's PATH_MAP names them), ONNX Runtime from ./ort/, the phonemizer from
+ *   ./piper/. scripts/fetch-assets.mjs puts the files there; scripts/check-piper-patch.mjs fails
+ *   the build if the patch is missing.
+ * - The patch also makes the library's download fail on a non-2xx answer: otherwise an error page
+ *   would be stored in the browser's private file system (OPFS) as if it were the voice model.
+ * - Voices with `phoneme_type: "text"` (the Ukrainian one) are mapped to phoneme ids by the patch
+ *   directly, as Piper does; all others go through eSpeak NG.
+ * - The library keeps one global session and would reuse the first voice for every other one, so
+ *   the session is reset when the voice changes, and all work runs one after the other.
  */
 import type { TtsSession } from '@mintplex-labs/piper-tts-web';
 import { VOICES } from './voices';
@@ -57,16 +38,11 @@ const PREDICT_TIMEOUT_MS = 60_000;
 type PiperModule = typeof import('@mintplex-labs/piper-tts-web');
 
 export class PiperEngine implements TtsEngine {
-  private readonly base: string;
   private lib: Promise<PiperModule> | null = null;
   private session: TtsSession | null = null;
   private sessionVoice: string | null = null;
   /** Serializes all work: the library holds a single global session. */
   private chain: Promise<unknown> = Promise.resolve();
-
-  constructor(assetBase = './') {
-    this.base = assetBase;
-  }
 
   preload(voiceId: string, onProgress?: (p: number) => void): Promise<void> {
     return this.enqueue(async () => {
@@ -97,10 +73,6 @@ export class PiperEngine implements TtsEngine {
     return run;
   }
 
-  private abs(path: string): string {
-    return new URL(path, new URL(this.base, document.baseURI)).href;
-  }
-
   private loadLib(): Promise<PiperModule> {
     if (!this.lib) {
       this.lib = import('@mintplex-labs/piper-tts-web').catch((e: unknown) => {
@@ -125,9 +97,9 @@ export class PiperEngine implements TtsEngine {
       const session = await Session.create({
         voiceId,
         wasmPaths: {
-          onnxWasm: this.abs('ort/'),
-          piperData: this.abs('piper/piper_phonemize.data'),
-          piperWasm: this.abs('piper/piper_phonemize.wasm'),
+          onnxWasm: abs('ort/'),
+          piperData: abs('piper/piper_phonemize.data'),
+          piperWasm: abs('piper/piper_phonemize.wasm'),
         },
         progress: (p) => {
           if (onProgress && p.url.endsWith('.onnx') && p.total > 0) {
@@ -144,6 +116,9 @@ export class PiperEngine implements TtsEngine {
     }
   }
 }
+
+/** The absolute address of a file that is served next to the page. */
+const abs = (path: string): string => new URL(path, document.baseURI).href;
 
 function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
   return new Promise<T>((resolve, reject) => {

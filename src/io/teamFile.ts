@@ -5,10 +5,10 @@ import { ImportError } from './archive';
 import { dateStamp } from './download';
 
 export const MAX_TEAM_FILE_BYTES = 1024 * 1024;
-export const MAX_TEAM_PLAYERS = 100;
+const MAX_TEAM_PLAYERS = 100;
 /** Caps for the Suggest fields: the original spelling like a hint input, the language code short. */
-export const MAX_ORIG_SPELLING = 80;
-export const MAX_NAME_LANG = 20;
+const MAX_ORIG_SPELLING = 80;
+const MAX_NAME_LANG = 20;
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 const bad = () => new ImportError('invalid-data');

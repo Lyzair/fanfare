@@ -12,6 +12,6 @@ declare global {
  */
 export function installTtsTestHook(): void {
   if (!import.meta.env.DEV && !new URLSearchParams(location.search).has('test')) return;
-  const engine = new PiperEngine('./');
+  const engine = new PiperEngine();
   window.__tts = { synthesize: (text, voiceId) => engine.synthesize(text, voiceId) };
 }
