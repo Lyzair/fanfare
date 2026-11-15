@@ -49,3 +49,22 @@ test('phone remote: the ruled wording in en and de', () => {
   expect(t('de', 'remoteUnencrypted')).toBe('Verbindung nicht verschlüsselt: Andere im WLAN könnten Spielernamen sehen und abgefangene Befehle senden. Mit --https verschlüsseln (Risiken beachten).');
   for (const lang of LANGS) expect(t(lang, 'remoteUnencrypted')).toContain('--https');
 });
+
+describe('translated templates keep the structure of the English ones', () => {
+  const placeholders = (s: string) => [...s.matchAll(/\{(\w+)\}/g)].map(m => m[1]).sort();
+  /** The placeholders of every optional [section], one sorted list per section, sections sorted. */
+  const sections = (s: string) => [...s.matchAll(/\[([^\[\]]*)\]/g)].map(m => placeholders(m[1]).join(',')).sort();
+
+  test.each(LANGS.filter(l => l !== 'en'))('%s: same placeholders and the same optional sections for every sport', lang => {
+    for (const sport of SPORT_IDS) {
+      const en = defaultTemplates(sport, 'en'), tr = defaultTemplates(sport, lang);
+      for (const key of Object.keys(en) as (keyof typeof en)[]) {
+        const where = `${lang} ${sport} ${key}: ${tr[key]}`;
+        expect(placeholders(tr[key]), where).toEqual(placeholders(en[key]));
+        expect(sections(tr[key]), where).toEqual(sections(en[key]));
+        expect(tr[key], where).not.toMatch(/\{score\}/); // the score word is filled in by the pack
+        expect((tr[key].match(/\[/g) ?? []).length, where).toBe((tr[key].match(/\]/g) ?? []).length);
+      }
+    }
+  });
+});
