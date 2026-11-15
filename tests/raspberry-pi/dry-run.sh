@@ -75,7 +75,10 @@ echo "$out" | grep -q 'hostnamectl set-hostname fanfare' && ok "--hostname sets 
 echo "$out" | grep -q 'docker restarts only if\|only when daemon.json changed' && ok "docker restarts only when daemon.json changed" || bad "unconditional docker restart"
 
 out=$(run_dry --no-update)
-echo "$out" | grep -q 'fanfare-update.timer' && bad "--no-update still installs the timer" || ok "--no-update skips the update timer"
+echo "$out" | grep -q 'write /etc/systemd/system/fanfare-update' && bad "--no-update still installs the timer" || ok "--no-update skips the update timer"
+echo "$out" | grep -q 'enable --now fanfare-update.timer' && bad "--no-update enables the timer" || ok "--no-update does not enable the timer"
+echo "$out" | grep -q 'systemctl disable --now fanfare-update.timer' && ok "--no-update disables a timer from an earlier run" || bad "--no-update leaves an earlier timer enabled"
+echo "$out" | grep -q 'find /opt/fanfare -type l' && ok "links that leave /opt/fanfare are checked" || bad "no link check"
 
 out=$(run_dry --image-tar /tmp/x.tar)
 echo "$out" | grep -q 'docker load -i /tmp/x.tar' && ok "--image-tar loads the tar" || bad "--image-tar: no docker load"

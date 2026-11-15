@@ -2,7 +2,11 @@
 installer (Task 28). Container-based validation lives in tests/hosting/validate.sh and
 tests/raspberry-pi/dry-run.sh."""
 import importlib.util
+import os
 import re
+import shutil
+import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -133,6 +137,89 @@ class Installer(unittest.TestCase):
         self.assertIn('MODE=tar', self.sh)
         self.assertIn('--hostname', self.sh)
         self.assertNotIn('192.168.1.20', self.sh)
+
+    # ---- what a user of the Pi controls must not reach root (run as a dry run in a made-up checkout)
+
+    def dry_run(self, origin, *args):
+        if not (shutil.which('bash') and shutil.which('git')):
+            self.skipTest('needs bash and git')
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, True)
+        os.makedirs(os.path.join(tmp, 'deploy', 'raspberry-pi'))
+        os.makedirs(os.path.join(tmp, '.git'))
+        shutil.copy(ROOT / 'deploy' / 'raspberry-pi' / 'install.sh', os.path.join(tmp, 'deploy', 'raspberry-pi'))
+        if origin is not None:
+            with open(os.path.join(tmp, '.git', 'config'), 'w') as f:
+                f.write('[remote "origin"]\n\turl = %s\n' % origin)
+        r = subprocess.run(['bash', os.path.join(tmp, 'deploy', 'raspberry-pi', 'install.sh'), '--dry-run', *args],
+                           capture_output=True, text=True, timeout=60)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        return r.stdout
+
+    def test_https_origin_is_cloned_with_end_of_options(self):
+        out = self.dry_run('https://example.org/club/fanfare.git')
+        self.assertIn('+ git clone -- https://example.org/club/fanfare.git /opt/fanfare', out)
+        self.assertIn('HAS_REMOTE=1', out)
+        self.assertNotIn('tar -C', out)
+
+    def test_other_origins_are_never_used_by_root(self):
+        for origin in ('file:///home/pi/repo', '/home/pi/repo', '../repo', 'ssh://git@example.org/x.git',
+                       'git@example.org:x.git', 'ext::sh -c touch% /tmp/x', '--upload-pack=touch /tmp/x',
+                       'http://example.org/x.git'):
+            out = self.dry_run(origin)
+            self.assertNotIn('git clone', out, origin)
+            self.assertIn('is not an https:// address', out, origin)
+            self.assertIn('tar -C', out, origin)  # the copy path
+            self.assertIn('HAS_REMOTE=0', out, origin)
+
+    def test_no_origin_takes_the_copy_path(self):
+        out = self.dry_run(None)
+        self.assertNotIn('git clone', out)
+        self.assertIn('HAS_REMOTE=0', out)
+
+    def test_no_update_disables_an_earlier_timer(self):
+        out = self.dry_run(None, '--no-update')
+        self.assertIn('systemctl disable --now fanfare-update.timer', out)
+        self.assertNotIn('enable --now fanfare-update.timer', out.replace('disable --now', ''))
+        self.assertNotIn('write /etc/systemd/system/fanfare-update.timer', out)
+        self.assertRegex(self.sh, r'(?s)--no-update\)\..*?systemctl disable --now fanfare-update\.timer 2>/dev/null \|\| true')
+
+    def test_root_python_is_isolated_and_clone_ends_options(self):
+        self.assertIn("python3 -I - <<'PY'", self.sh)
+        self.assertNotRegex(self.sh, r'python3 - <<')
+        self.assertIn('git clone -- "$ORIGIN" "$REPO"', self.sh)
+        self.assertNotRegex(self.sh, r'git clone "\$ORIGIN"')
+
+    def test_links_that_leave_the_copy_stop_the_installer(self):
+        if not shutil.which('bash'):
+            self.skipTest('needs bash')
+        fn = re.search(r'(?ms)^check_links\(\) \{.*?^\}$', self.sh).group(0)
+        self.assertRegex(self.sh, r'(?m)^  check_links$')  # and it is called in a real run
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, True)
+        repo = os.path.join(os.path.realpath(tmp), 'opt')
+        os.makedirs(os.path.join(repo, 'deploy'))
+        outside = os.path.join(tmp, 'user.yaml')
+        open(outside, 'w').close()
+        open(os.path.join(repo, 'inside.txt'), 'w').close()
+        os.symlink('../inside.txt', os.path.join(repo, 'deploy', 'ok-link'))
+
+        def check():
+            return subprocess.run(['bash', '-c', fn + '\ncheck_links\necho passed'], env={**os.environ, 'REPO': repo},
+                                  capture_output=True, text=True, timeout=30)
+        r = check()
+        self.assertEqual((r.returncode, r.stdout.strip()), (0, 'passed'), r.stderr)
+        os.symlink(outside, os.path.join(repo, 'deploy', 'compose.yaml'))
+        r = check()
+        self.assertEqual(r.returncode, 1)
+        self.assertIn('deploy/compose.yaml is a link that leads outside', r.stderr)
+        self.assertNotIn('passed', r.stdout)
+        os.remove(os.path.join(repo, 'deploy', 'compose.yaml'))
+        os.symlink('/nonexistent/dir/x', os.path.join(repo, 'dangling'))
+        self.assertEqual(check().returncode, 1)
+        os.remove(os.path.join(repo, 'dangling'))
+        os.symlink(repo + '-sibling', os.path.join(repo, 'sibling'))  # same prefix, different folder
+        self.assertEqual(check().returncode, 1)
 
 
 class Wiring(unittest.TestCase):

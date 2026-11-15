@@ -144,26 +144,55 @@ if [ "$HTTPS" = 1 ]; then run apt-get install -y --no-install-recommends openssl
 
 # ---- 1b. root-owned copy in /opt/fanfare -------------------------------------------------------------
 step "1b. Fanfare files: a root-owned copy in $REPO (the weekly update runs as root, so it must not use a user's folder)"
+# check_links: a link in $REPO that leads outside it would let the root job read a file a user can change
+check_links() {
+  local link target found=0
+  while IFS= read -r -d '' link; do
+    target=$(readlink -f -- "$link" 2>/dev/null || true)
+    case "$target" in
+      "$REPO"/*) ;;
+      *)
+        echo "install: $link is a link that leads outside $REPO (to ${target:-nowhere})" >&2
+        found=1
+        ;;
+    esac
+  done < <(find "$REPO" -type l -print0)
+  if [ "$found" = 1 ]; then
+    echo "install: remove these links from your Fanfare folder and from $REPO, then run this again. Stopped before anything was built or started." >&2
+    exit 1
+  fi
+}
+
 ORIGIN=""
 if [ -f "$SRC/.git/config" ]; then
   # read the setting from the file: no git command runs inside the user's folder
   ORIGIN=$(git config --file "$SRC/.git/config" --get remote.origin.url 2>/dev/null || true)
 fi
+# Only an https:// address is used as root: a local path, file://, ssh:// or ext:: origin would make
+# root clone now, and pull every week, from a place a user of this Pi may control.
+case "$ORIGIN" in
+  https://*) ;;
+  "") ;;
+  *)
+    say "  The origin of this folder is not an https:// address ($ORIGIN): it is not used for updates."
+    ORIGIN=""
+    ;;
+esac
 HAS_REMOTE=0
 if [ "$SRC" = "$REPO" ]; then
   say "  running from $REPO already"
-  if git config --file "$REPO/.git/config" --get remote.origin.url >/dev/null 2>&1; then HAS_REMOTE=1; fi
+  if [ -n "$ORIGIN" ]; then HAS_REMOTE=1; fi
 elif [ -n "$ORIGIN" ]; then
   HAS_REMOTE=1
   say "  The update address (origin of your checkout) is: $ORIGIN"
   say "  Weekly updates will run: git -C $REPO pull --ff-only (as root, on the root-owned copy)."
   if [ "$DRY" = 1 ] || [ ! -d "$REPO/.git" ]; then
-    run git clone "$ORIGIN" "$REPO"
+    run git clone -- "$ORIGIN" "$REPO"
   else
     say "  $REPO is already a clone: kept"
   fi
 else
-  say "  Your folder has no remote: files are copied to $REPO and the weekly job only rebuilds from that copy."
+  say "  Your folder has no https remote: files are copied to $REPO and the weekly job only rebuilds from that copy."
   say "  (To get new versions later, copy a newer folder over it with this installer.)"
   TAR_EXCL=(--exclude=./node_modules --exclude=./dist --exclude=./release --exclude=./test-results --exclude=./.git)
   if [ "$DRY" = 1 ]; then
@@ -176,6 +205,11 @@ fi
 if [ "$SRC" != "$REPO" ]; then
   run chown -R root:root "$REPO"
   run chmod -R go-w,a+rX "$REPO"
+fi
+if [ "$DRY" = 1 ]; then
+  say "  + find $REPO -type l   (every link must lead to a file inside $REPO; otherwise the installer stops)"
+else
+  check_links
 fi
 if [ "$DRY" != 1 ] && [ ! -f "$PI_DIR/compose.yaml" ]; then
   echo "install: $PI_DIR/compose.yaml is missing after the copy" >&2
@@ -219,7 +253,8 @@ if [ "$DRY" = 1 ]; then
   say '  + write /etc/docker/daemon.json: "log-driver": "local", "log-opts": {"max-size": "2m", "max-file": "2"} (merged, existing settings are kept; docker restarts only if the file changed)'
 else
   mkdir -p /etc/docker
-  result=$(python3 - <<'PY'
+  # -I: isolated mode, so a json.py in the folder where sudo was run is never imported as root
+  result=$(python3 -I - <<'PY'
 import json, os, sys
 p = '/etc/docker/daemon.json'
 d = json.load(open(p)) if os.path.exists(p) and os.path.getsize(p) else {}
@@ -390,6 +425,11 @@ EOF
   run systemctl enable --now fanfare-update.timer
 else
   step "7. Weekly update: skipped (--no-update). Update by hand: sudo git -C $REPO pull, then rebuild with docker compose"
+  if [ "$DRY" = 1 ]; then
+    say "  + systemctl disable --now fanfare-update.timer   (only if an earlier run installed it)"
+  else
+    systemctl disable --now fanfare-update.timer 2>/dev/null || true
+  fi
 fi
 
 step "Done"
