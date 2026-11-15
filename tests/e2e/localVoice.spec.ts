@@ -1,9 +1,10 @@
 import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { mkdtempSync } from 'node:fs';
+import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { MockVoiceServer } from './fixtures/mockVoiceServer';
+import { unzipSync } from 'fflate';
 
 // Chromium's fake microphone, for the club-voice test (the others never open the microphone).
 test.use({
@@ -40,7 +41,7 @@ test('prepare at home with a local voice, export, then announce after import wit
     const urls = await open(page);
     await page.getByLabel('Paste or type a list of players').fill('7 Lea\n9 Tom');
     await page.getByRole('button', { name: 'Add', exact: true }).click();
-    await expect(page.getByLabel('Name', { exact: true })).toHaveCount(2);
+    await expect(page.getByLabel(/^Name: /)).toHaveCount(2);
 
     await connect(page, mock.url);
     await expect(page.getByText('✓ 2 voices found')).toBeVisible();
@@ -64,7 +65,24 @@ test('prepare at home with a local voice, export, then announce after import wit
     for (const r of mock.requests.filter(x => x.method !== 'OPTIONS')) { expect(r.xFanfare).toBe('1'); expect(r.origin).toBe(pageOrigin); }
 
     await mock.stop(); // the server is gone for the rest of the test
+    // With the mock server everything above takes less than the 300 ms autosave delay. A reload inside
+    // that window loses the last change (a write to IndexedDB started while the page unloads is dropped
+    // by the browser), so wait until the choice of voice is stored.
+    await expect.poll(() => page.evaluate(() => new Promise<unknown>(resolve => {
+      const open = indexedDB.open('fanfare');
+      open.onsuccess = () => {
+        const get = open.result.transaction('kv').objectStore('kv').get('state');
+        get.onsuccess = () => resolve((get.result as { voiceId?: string } | undefined)?.voiceId);
+      };
+    }))).toBe('local:mock-en');
     await page.reload();
+    // after the reload the prepared clips are still "Ready" and part of a new export
+    await expect(page.locator('.ready-badge')).toHaveCount(3);
+    const secondDownload = page.waitForEvent('download');
+    await page.getByRole('button', { name: 'Export (zip)' }).click();
+    const second = join(mkdtempSync(join(tmpdir(), 'fanfare-local-')), 'export-after-reload.zip');
+    await (await secondDownload).saveAs(second);
+    expect(Object.keys(unzipSync(new Uint8Array(readFileSync(second)))).filter(n => n.startsWith('speech/'))).toHaveLength(3);
     await page.getByRole('button', { name: 'Delete all data on this device' }).click();
     await expect(page.getByText('All data on this device was deleted.')).toBeVisible();
     await page.getByLabel('Import (zip)', { exact: true }).setInputFiles(file);

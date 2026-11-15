@@ -17,7 +17,7 @@ test('after one online visit the app reloads and announces offline', async ({ pa
   await page.getByLabel('Language').selectOption('en');
   await page.getByLabel('Paste or type a list of players').fill('7 Lea Müller\nTom');
   await page.getByRole('button', { name: 'Add', exact: true }).click();
-  await expect(page.getByLabel('Name', { exact: true })).toHaveCount(2);
+  await expect(page.getByLabel(/^Name: /)).toHaveCount(2);
 
   await expect(page.getByText(/Not ready for offline use|The voice is missing/)).toBeVisible();
   await page.getByRole('button', { name: /Prepare voices/ }).click();
@@ -47,7 +47,7 @@ test('after one online visit the app reloads and announces offline', async ({ pa
   page.on('requestfailed', (r) => failed.push(r.url()));
   await page.reload();
   await expect(page.getByRole('heading', { level: 1, name: 'Fanfare' })).toBeVisible();
-  await expect(page.getByLabel('Name', { exact: true })).toHaveCount(2);
+  await expect(page.getByLabel(/^Name: /)).toHaveCount(2);
   await expect(page.getByText('Offline ready ✓')).toBeVisible({ timeout: 30_000 });
 
   await page.getByRole('button', { name: /Announce lineup/ }).click();
