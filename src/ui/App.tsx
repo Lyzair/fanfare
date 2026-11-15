@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'preact/hooks';
 import { AudioQueue } from '../audio/queue';
 import { browserLang, getPack, t } from '../i18n';
-import type { UiStrings } from '../i18n';
 import { initialState, reducer } from '../state/reducer';
 import { loadState, saveState } from '../state/persist';
 import { applyUpdate, usePwaState } from '../pwa/register';
@@ -20,9 +19,12 @@ import RemotePanel from './RemotePanel';
 import RosterPanel from './RosterPanel';
 import SoundsPanel from './SoundsPanel';
 import { ServicesContext } from './types';
-import type { Services } from './types';
+import type { PanelProps, Services } from './types';
 
-const STEPS = [1, 2, 3, 4, 5] as const;
+/** Step 3 is the game itself: the score buttons and, below them, the phone remote. */
+const GameStep = (p: PanelProps) => <><GamePanel {...p} /><RemotePanel {...p} /></>;
+/** The panels of steps 1 to 5, in order. */
+const PANELS = [RosterPanel, CalloutPanel, GameStep, SoundsPanel, DataPanel];
 const SAVE_DELAY_MS = 300;
 const WELCOME_KEY = 'fanfare.welcomeDismissed';
 
@@ -116,14 +118,17 @@ export function App() {
         )}
         <main>
           {showWelcome && <WelcomeCard lang={state.lang} onDismiss={dismissWelcome} />}
-          {STEPS.map(n => (
-            <section class="card" key={n} aria-labelledby={`step${n}-title`}>
-              <h2 id={`step${n}-title`} tabIndex={-1}>{n} {t(state.lang, `step${n}Title` as keyof UiStrings)}</h2>
-              <p class="hint">{t(state.lang, `step${n}Hint` as keyof UiStrings)}</p>
-              <ShowMe lang={state.lang} step={n} />
-              <div class="panel-body">{n === 1 && <RosterPanel state={state} dispatch={dispatch} />}{n === 2 && <CalloutPanel state={state} dispatch={dispatch} />}{n === 3 && <><GamePanel state={state} dispatch={dispatch} /><RemotePanel state={state} dispatch={dispatch} /></>}{n === 4 && <SoundsPanel state={state} dispatch={dispatch} />}{n === 5 && <DataPanel state={state} dispatch={dispatch} />}</div>
-            </section>
-          ))}
+          {PANELS.map((Panel, i) => {
+            const n = (i + 1) as 1 | 2 | 3 | 4 | 5;
+            return (
+              <section class="card" key={n} aria-labelledby={`step${n}-title`}>
+                <h2 id={`step${n}-title`} tabIndex={-1}>{n} {t(state.lang, `step${n}Title`)}</h2>
+                <p class="hint">{t(state.lang, `step${n}Hint`)}</p>
+                <ShowMe lang={state.lang} step={n} />
+                <div class="panel-body"><Panel state={state} dispatch={dispatch} /></div>
+              </section>
+            );
+          })}
         </main>
       </div>
     </ServicesContext.Provider>
