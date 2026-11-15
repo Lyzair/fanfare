@@ -1,26 +1,18 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { playersOf } from '../domain/model';
-import type { Player, Side, TemplateKey } from '../domain/model';
+import type { Player, Side } from '../domain/model';
 import { calloutText, guestIntroText, introText, speechText } from '../domain/template';
 import { currentRoster } from '../state/reducer';
 import { t } from '../i18n';
 import type { UiStrings } from '../i18n';
+import { TemplateEditor } from './TemplateEditor';
 import { announce as announceAction, lineupTexts, playText as playTextAction, stopPlaying } from './actions';
 import type { ActionEnv, LineupPart } from './actions';
 import { fill } from './fill';
 import type { PanelProps } from './types';
 import { PlaybackError } from './PlaybackError';
 import { usePlayback } from './usePlayback';
-
-const PLACEHOLDERS = ['name', 'number', 'position', 'home', 'opponent'] as const;
-const TEMPLATE_KEYS: { key: TemplateKey; label: keyof UiStrings }[] = [
-  { key: 'guestIntro', label: 'guestIntroLabel' },
-  { key: 'intro', label: 'templateIntro' },
-  { key: 'field', label: 'templateField' },
-  { key: 'bench', label: 'templateBench' },
-  { key: 'score', label: 'templateScore' },
-  { key: 'guestScore', label: 'templateGuestScore' },
-];
+import { usePrepare } from './usePrepare';
 
 export default function CalloutPanel({ state, dispatch }: PanelProps) {
   const lang = state.lang;
@@ -28,15 +20,12 @@ export default function CalloutPanel({ state, dispatch }: PanelProps) {
   const roster = currentRoster(state);
   const playback = usePlayback(state);
   const [regenerating, setRegenerating] = useState<ReadonlySet<string>>(new Set());
-  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
-  const [preparing, setPreparing] = useState(false);
-  const [doneKey, setDoneKey] = useState<string | null>(null);
   const mounted = useRef(true);
   useEffect(() => () => { mounted.current = false; }, []);
   const [, setTick] = useState(0);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
-  const tplRefs = useRef<Partial<Record<TemplateKey, HTMLTextAreaElement | null>>>({});
-  const lastTpl = useRef<TemplateKey>('field');
+  const prepareTexts = lineupTexts(state);
+  const prepare = usePrepare(playback?.speech, state.voiceId, prepareTexts, e => playback?.setError(e ?? true));
 
   if (!playback) return null;
   const { playing, error, setError, speech } = playback;
@@ -51,21 +40,6 @@ export default function CalloutPanel({ state, dispatch }: PanelProps) {
   const env: ActionEnv = { ...playback.env, onDone: refresh };
   const playText = (text: string) => playTextAction(env, text);
   const announce = (part: LineupPart) => announceAction(env, part);
-  const prepareTexts = lineupTexts(state);
-  const prepareKey = `${state.voiceId}\n${prepareTexts.map(x => x.trim()).join('\n')}`;
-  const prepare = () => {
-    if (preparing) return;
-    const key = prepareKey;
-    const safe = (fn: () => void) => { if (mounted.current) fn(); };
-    setError(null);
-    setDoneKey(null);
-    setPreparing(true);
-    setProgress({ done: 0, total: new Set(prepareTexts.map(x => x.trim())).size });
-    speech.prepare(state.voiceId, prepareTexts, (done, total) => safe(() => { setProgress({ done, total }); refresh(); }))
-      .then(() => safe(() => setDoneKey(key)), (e: unknown) => safe(() => reportError(e)))
-      .finally(() => safe(() => { setPreparing(false); setProgress(null); refresh(); }));
-  };
-
   /** Makes the clip again (e.g. after a stray syllable); the old clip is replaced only if that works. */
   const regenerate = (text: string) => {
     const spoken = speechText(text, roster).trim();
@@ -85,18 +59,6 @@ export default function CalloutPanel({ state, dispatch }: PanelProps) {
     <button type="button" aria-label={`${tr('regenerateClip')} ${name}`} title={tr('regenerateClip')}
       disabled={regenerating.has(speechText(text, roster).trim())} onClick={() => regenerate(text)}>↻</button>
   ) : null;
-
-  const insertChip = (name: string) => {
-    const key = lastTpl.current;
-    const el = tplRefs.current[key];
-    const value = roster.templates[key];
-    const start = el?.selectionStart ?? value.length;
-    const end = el?.selectionEnd ?? start;
-    const ins = `{${name}}`;
-    dispatch({ type: 'setTemplate', key, text: value.slice(0, start) + ins + value.slice(end) });
-    const caret = start + ins.length;
-    requestAnimationFrame(() => { el?.focus(); el?.setSelectionRange(caret, caret); });
-  };
 
   const badge = (text: string) =>
     text.trim() && speech.has(state.voiceId, speechText(text, roster)) ? <span class="ready-badge"><span aria-hidden="true">✓</span> {tr('readyBadge')}</span> : null;
@@ -157,9 +119,9 @@ export default function CalloutPanel({ state, dispatch }: PanelProps) {
           <button type="button" onClick={() => announce('home')}>{tr('announceHomeOnly')}</button>
         </div>
       )}
-      <button type="button" disabled={preparing} onClick={prepare}>{tr('prepareVoices')}</button>
-      {preparing && progress && <p role="status" class="progress">{fill(tr('prepareProgress'), progress)}</p>}
-      {!preparing && doneKey === prepareKey && <p role="status" class="progress">{tr('prepareDone')}</p>}
+      <button type="button" disabled={prepare.preparing} onClick={() => { setError(null); prepare.start(); }}>{tr('prepareVoices')}</button>
+      {prepare.preparing && prepare.progress && <p role="status" class="progress">{fill(tr('prepareProgress'), prepare.progress)}</p>}
+      {prepare.done && <p role="status" class="progress">{tr('prepareDone')}</p>}
       <PlaybackError lang={lang} error={error} />
       {!hasPlayers && <p class="hint">{tr('noPlayersYet')}</p>}
 
@@ -172,25 +134,7 @@ export default function CalloutPanel({ state, dispatch }: PanelProps) {
       )}
       {teamList('home', intro, tr('introLabel'))}
 
-      <details class="help templates">
-        <summary>{tr('templatesTitle')}</summary>
-        <p class="hint">{tr('templatesHelp')}</p>
-        <div class="chips">
-          {PLACEHOLDERS.map(n => (
-            <button type="button" class="chip" key={n} aria-label={fill(tr('insertPlaceholder'), { placeholder: `{${n}}` })}
-              onMouseDown={e => e.preventDefault()} onClick={() => insertChip(n)}>{`{${n}}`}</button>
-          ))}
-        </div>
-        {TEMPLATE_KEYS.map(({ key, label }) => (
-          <label class="stack" key={key}>{tr(label)}
-            <textarea rows={3} value={roster.templates[key]}
-              ref={el => { tplRefs.current[key] = el; }}
-              onFocus={() => { lastTpl.current = key; }}
-              onInput={e => dispatch({ type: 'setTemplate', key, text: e.currentTarget.value })} />
-          </label>
-        ))}
-        <button type="button" onClick={() => dispatch({ type: 'resetTemplates' })}>{tr('resetTemplates')}</button>
-      </details>
+      <TemplateEditor lang={lang} templates={roster.templates} dispatch={dispatch} />
     </div>
   );
 }
