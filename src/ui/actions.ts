@@ -10,7 +10,7 @@ import type { SpeechCache } from '../tts/speechCache';
  * Everything the speaker can play. The buttons of the panels and the commands that arrive from a
  * phone remote both go through these functions, so there is one implementation of each action.
  */
-export type LineupPart = 'both' | 'guests' | 'home';
+export type LineupPart = 'all' | 'guests' | 'home';
 
 export interface ActionEnv {
   state: AppState;
@@ -47,7 +47,7 @@ function sidesFor(roster: Roster, part: LineupPart): Side[] {
 /** Every speech text a full lineup needs (both teams), as passed to Prepare voices. */
 export function lineupTexts(state: AppState): string[] {
   const roster = currentRoster(state);
-  return sidesFor(roster, 'both').flatMap(side => teamTexts(side, roster)).map(x => speechText(x, roster)).filter(x => x.trim());
+  return sidesFor(roster, 'all').flatMap(side => teamTexts(side, roster)).map(x => speechText(x, roster)).filter(x => x.trim());
 }
 
 /** A lazy speech item: made when its turn comes; a failure is reported and the item skipped. */
@@ -69,7 +69,7 @@ export function lineupSequence(
   speech: Pick<SpeechCache, 'get'>,
   introSound: Blob | null,
   onError?: (e: unknown) => void,
-  part: LineupPart = 'both',
+  part: LineupPart = 'all',
 ): Array<Blob | (() => Promise<Blob>)> {
   const roster = currentRoster(state);
   const items: Array<Blob | (() => Promise<Blob>)> = [];

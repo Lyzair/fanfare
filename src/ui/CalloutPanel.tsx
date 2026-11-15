@@ -148,7 +148,7 @@ export default function CalloutPanel({ state, dispatch }: PanelProps) {
   return (
     <div class="callout-panel">
       <div class="callout-actions">
-        <button type="button" class="primary big" onClick={() => announce('both')}>{tr('announceLineup')}</button>
+        <button type="button" class="primary big" onClick={() => announce('all')}>{tr('announceLineup')}</button>
         {playing && <button type="button" class="stop" onClick={() => stopPlaying(env)}>{tr('stopPlaying')}</button>}
       </div>
       {hasGuests && (
