@@ -6,6 +6,7 @@ import { t } from '../i18n';
 import type { UiStrings } from '../i18n';
 import { VOICES } from '../tts/voices';
 import { ESPEAK_VOICES, defaultEspeakVoice, isEspeakVoice } from '../tts/espeakVoices';
+import { fill } from './fill';
 import { ServicesContext } from './types';
 
 type RunOptions = Omit<SuggestOptions, 'phonemize'>;
@@ -44,7 +45,6 @@ function languageOptions(): Array<{ code: string; label: string }> {
 }
 
 const dots = (level: 1 | 2 | 3) => '●'.repeat(level) + '○'.repeat(3 - level);
-const fill = (tpl: string, text: string) => tpl.replace('{text}', text);
 
 /** ✨ Suggest: the toggle button and the panel under the "Say it like…" field. */
 export default function SuggestPanel(p: SuggestPanelProps) {
@@ -84,11 +84,11 @@ export default function SuggestPanel(p: SuggestPanelProps) {
   const level = (l: 1 | 2 | 3) => (l === 3 ? tr('suggestClose3') : l === 2 ? tr('suggestClose2') : tr('suggestClose1'));
   const row = (text: string, l: 1 | 2 | 3, plain: boolean) => (
     <li class="suggest-row" key={`${plain ? 'plain' : 'c'}-${text}`}>
-      <button type="button" aria-label={fill(tr('suggestHearOne'), text)} title={fill(tr('suggestHearOne'), text)} onClick={() => hear(text)}>▶</button>
+      <button type="button" aria-label={fill(tr('suggestHearOne'), { text })} title={fill(tr('suggestHearOne'), { text })} onClick={() => hear(text)}>▶</button>
       <span class="suggest-text">{text}{plain && <span class="hint"> ({tr('suggestPlain')})</span>}</span>
       <span class={`closeness c${l}`} role="img" aria-label={level(l)} title={level(l)}>{dots(l)}</span>
       {!plain && (
-        <button type="button" class="suggest-use" aria-label={fill(tr('suggestUseFor'), text)} onClick={() => p.onUse(text)}>{tr('suggestUse')}</button>
+        <button type="button" class="suggest-use" aria-label={fill(tr('suggestUseFor'), { text })} onClick={() => p.onUse(text)}>{tr('suggestUse')}</button>
       )}
     </li>
   );

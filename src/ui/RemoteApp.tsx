@@ -7,7 +7,7 @@ import type { SportId } from '../domain/model';
 import { detectLang, getPack, t } from '../i18n';
 import type { UiStrings } from '../i18n';
 import { ACCENT_CSS } from './accent';
-import { fill } from './PlayerEditor';
+import { fill } from './fill';
 
 const ERRORS: Record<Exclude<PairResult, { ok: true }>['error'], keyof UiStrings> = {
   'wrong-code': 'remoteWrongCode', locked: 'remoteLocked', expired: 'remoteCodeExpired', full: 'remoteFull', network: 'remoteConnectFail',

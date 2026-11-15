@@ -7,6 +7,7 @@ import { t } from '../i18n';
 import type { UiStrings } from '../i18n';
 import { announce as announceAction, lineupTexts, playText as playTextAction } from './actions';
 import type { ActionEnv, LineupPart } from './actions';
+import { fill } from './fill';
 import { useCustomSoundBlob } from './soundMemory';
 import { LocalError } from './LocalError';
 import { ServicesContext } from './types';
@@ -22,8 +23,6 @@ const TEMPLATE_KEYS: { key: TemplateKey; label: keyof UiStrings }[] = [
   { key: 'score', label: 'templateScore' },
   { key: 'guestScore', label: 'templateGuestScore' },
 ];
-const fill = (tpl: string, vars: Record<string, string | number>) =>
-  tpl.replace(/\{(\w+)\}/g, (m, k: string) => (k in vars ? String(vars[k]) : m));
 
 export { lineupSequence, lineupTexts } from './actions';
 export type { LineupPart } from './actions';

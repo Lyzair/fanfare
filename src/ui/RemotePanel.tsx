@@ -5,7 +5,7 @@ import type { RemoteHealth } from '../remote/links';
 import { runRemoteCommand } from '../remote/dispatch';
 import { buildSnapshot } from '../remote/protocol';
 import { t } from '../i18n';
-import { fill } from './PlayerEditor';
+import { fill } from './fill';
 import { useCustomSoundBlob } from './soundMemory';
 import { ServicesContext } from './types';
 import { useQueuePlaying } from './useQueuePlaying';

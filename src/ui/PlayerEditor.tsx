@@ -5,13 +5,12 @@ import { SPORTS } from '../domain/sports';
 import { getPack, t } from '../i18n';
 import type { UiStrings } from '../i18n';
 import { currentRoster } from '../state/reducer';
+import { fill } from './fill';
 import { useSayAs } from './useSayAs';
 import SuggestPanel from './SuggestPanel';
 import type { PanelProps } from './types';
 
 const UNDO_MS = 5000;
-export const fill = (tpl: string, vars: Record<string, string | number>) =>
-  tpl.replace(/\{(\w+)\}/g, (m, k: string) => (k in vars ? String(vars[k]) : m));
 
 interface Removed { player: Player; index: number }
 

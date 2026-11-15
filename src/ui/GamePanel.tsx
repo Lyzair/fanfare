@@ -5,7 +5,7 @@ import { getPack, t } from '../i18n';
 import { currentRoster } from '../state/reducer';
 import { callScore, stopPlaying } from './actions';
 import type { ActionEnv } from './actions';
-import { fill } from './PlayerEditor';
+import { fill } from './fill';
 import { useCustomSoundBlob } from './soundMemory';
 import { ServicesContext } from './types';
 import { useQueuePlaying } from './useQueuePlaying';
