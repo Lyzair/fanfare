@@ -81,7 +81,7 @@ can be built for amd64, arm64 and arm/v7.
 
 - **Project code:** MIT, provided as is, without warranty (see `LICENSE`).
 - **Voices:** per [`public/voices/LICENSES.md`](public/voices/LICENSES.md): CC0, public domain, or CC BY 4.0 with attribution. The Arabic voice's licence is unclear; it is included by maintainer decision.
-- **eSpeak NG** (inside the phonemizer WebAssembly): GPL-3.0-or-later. Full text in [`public/licenses/GPL-3.0.txt`](public/licenses/GPL-3.0.txt); corresponding source linked in [`public/voices/LICENSES.md`](public/voices/LICENSES.md#espeak-ng-gpl-30-or-later) (`@diffusionstudio/piper-wasm@1.0.0` and [espeak-ng](https://github.com/espeak-ng/espeak-ng)).
+- **eSpeak NG** (inside the phonemizer WebAssembly): GPL-3.0-or-later. Full text in [`public/licenses/GPL-3.0.txt`](public/licenses/GPL-3.0.txt); the exact corresponding source (package, commit and eSpeak NG revisions) is listed in [`public/voices/LICENSES.md`](public/voices/LICENSES.md#espeak-ng-gpl-30-or-later).
 - **ONNX Runtime:** MIT.
 - **qrcode-generator** (the QR code for the phone remote, bundled and generated locally): MIT, © Kazuhiko Arase.
-- **Other npm dependencies:** under their own licences.
+- **Other bundled libraries** (Preact, fflate, piper-tts-web: MIT; idb-keyval: Apache-2.0): their copyright and permission notices are shipped with the app in [`public/licenses/THIRD-PARTY-NOTICES.txt`](public/licenses/THIRD-PARTY-NOTICES.txt). In the app, step 5 links to the licence overview.

@@ -250,3 +250,10 @@ test('delete all empties the speech cache before storage is wiped, so a running 
   await waitFor(() => expect(names()).toEqual([]));
   expect(clipsAtWipe).toBe(0);
 });
+
+test('step 5 links to the licences of the voices and the bundled software', () => {
+  setup('de');
+  const link = screen.getByRole('link', { name: t('de', 'licencesLink') });
+  expect(link).toHaveAttribute('href', './voices/LICENSES.md');
+  expect(link).toHaveAttribute('rel', 'noopener');
+});

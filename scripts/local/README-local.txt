@@ -49,6 +49,10 @@ Privacy: the server only answers requests from this computer / your Wi-Fi, never
 contacts the internet and logs nothing except "GET /path 200". Names and sounds stay in
 your browser. The certificate files are kept in your user folder (not in this folder).
 
+Licences: Fanfare is MIT-licensed (file LICENSE). The voices and the bundled software have
+their own licences, among them eSpeak NG under the GPL-3.0-or-later: see voices/LICENSES.md,
+licenses/THIRD-PARTY-NOTICES.txt and licenses/GPL-3.0.txt in this folder.
+
 Options: --port N   use another port (default 8080; 8443 with --https)
          --lan      also reachable from phones (plain http)
          --https    with --lan: HTTPS (optional, has risks, see above)
@@ -108,6 +112,11 @@ Datenschutz: Der Server antwortet nur Anfragen von diesem Rechner / deinem WLAN,
 verbindet sich nie mit dem Internet und protokolliert nur "GET /pfad 200". Namen und
 Sounds bleiben in deinem Browser. Die Zertifikatsdateien liegen in deinem
 Benutzerordner (nicht in diesem Ordner).
+
+Lizenzen: Fanfare steht unter der MIT-Lizenz (Datei LICENSE). Die Stimmen und die
+mitgelieferte Software haben eigene Lizenzen, darunter eSpeak NG unter GPL-3.0-or-later:
+siehe voices/LICENSES.md, licenses/THIRD-PARTY-NOTICES.txt und licenses/GPL-3.0.txt in
+diesem Ordner.
 
 Optionen: --port N   anderer Port (Standard 8080; 8443 mit --https)
           --lan      auch für Handys erreichbar (einfaches http)

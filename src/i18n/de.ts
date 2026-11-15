@@ -58,6 +58,7 @@ export const de = {
     "deleteDone": "Alle Daten auf diesem Gerät wurden gelöscht.",
     "exportFailed": "Der Export ist fehlgeschlagen. Bitte versuche es erneut.",
     "privacyNote": "🔒 Alles bleibt auf diesem Gerät. Namen und Sounds werden nur in diesem Browser gespeichert und nie an einen Server gesendet – auch nicht an diese Webseite. Mit „Exportieren“ nimmst du dein Team auf ein anderes Gerät mit.",
+    licencesLink: "Lizenzen der Stimmen und der Software",
     saveUnavailable: "Speichern auf diesem Gerät ist nicht möglich – nutze „Exportieren“, um dein Team zu behalten.",
     matchTitle: "Spiel",
     homeTeam: "Heimmannschaft",

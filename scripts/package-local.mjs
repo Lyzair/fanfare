@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // npm run package:local: release/fanfare-local-<version>.zip = dist/ + fanfare-local.py +
-// the three start files + README-local.txt. Streams to disk (dist/ holds hundreds of MB).
+// the three start files + README-local.txt + LICENSE. Streams to disk (dist/ holds hundreds of MB).
 import { closeSync, existsSync, mkdirSync, openSync, readFileSync, readSync, readdirSync, statSync, writeSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -27,6 +27,7 @@ files.push(['scripts/fanfare-local.py', `${top}/fanfare-local.py`, 0o755]);
 for (const f of ['start-fanfare.sh', 'start-fanfare.command']) files.push([`scripts/local/${f}`, `${top}/${f}`, 0o755]);
 files.push(['scripts/local/start-fanfare.bat', `${top}/start-fanfare.bat`, 0o644]);
 files.push(['scripts/local/README-local.txt', `${top}/README-local.txt`, 0o644]);
+files.push(['LICENSE', `${top}/LICENSE`, 0o644]);
 
 mkdirSync('release', { recursive: true });
 const out = `release/${top}.zip`;

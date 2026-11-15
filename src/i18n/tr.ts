@@ -59,6 +59,7 @@ export const tr = {
     "deleteDone": "Bu cihazdaki tüm veriler silindi.",
     "exportFailed": "Dışa aktarma başarısız oldu. Lütfen tekrar dene.",
     "privacyNote": "🔒 Her şey bu cihazda kalır. İsimler ve sesler yalnızca bu tarayıcıda saklanır ve hiçbir sunucuya, bu web sitesine bile gönderilmez. Takımını başka bir cihaza taşımak için Dışa aktar'ı kullan.",
+    licencesLink: "Seslerin ve yazılımın lisansları",
     saveUnavailable: "Bu cihazda kaydetme kullanılamıyor — takımını saklamak için Dışa aktar'ı kullan.",
     matchTitle: "Maç",
     homeTeam: "Ev sahibi takım",

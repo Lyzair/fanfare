@@ -1,0 +1,106 @@
+THIRD-PARTY NOTICES
+===================
+
+Fanfare bundles the software listed below. This file carries the copyright and
+permission notices their licences ask to be kept with copies. The voices and
+the eSpeak NG components (GPL-3.0-or-later) are described in
+../voices/LICENSES.md; the GPL text is in GPL-3.0.txt next to this file.
+
+
+1. Fanfare (this app)
+---------------------
+
+MIT License
+
+Copyright (c) 2026 Fanfare contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
+2. Bundled libraries under the MIT License
+------------------------------------------
+
+Preact (preact 11.2.0)
+  https://github.com/preactjs/preact
+  Copyright (c) 2015-present Jason Miller
+
+fflate 0.8.3
+  https://github.com/101arrowz/fflate
+  Copyright (c) 2026 Arjun Barrett
+
+QR Code Generator for JavaScript (qrcode-generator 2.0.4)
+  https://github.com/kazuhikoarase/qrcode-generator
+  Copyright (c) 2009 Kazuhiko Arase
+  The word 'QR Code' is registered trademark of DENSO WAVE INCORPORATED.
+
+@mintplex-labs/piper-tts-web 1.0.5 (patched, see patches/ in the source repository)
+  https://github.com/Mintplex-Labs/piper-tts-web
+  Copyright (c) Mintplex Labs Inc. and contributors
+  (the package states "license: MIT" and no copyright line)
+
+ONNX Runtime Web (onnxruntime-web 1.18.0): JavaScript and the ort/*.wasm files
+  https://github.com/microsoft/onnxruntime
+  Copyright (c) Microsoft Corporation. All rights reserved.
+
+@diffusionstudio/piper-wasm 1.0.0: piper/piper_phonemize.wasm, piper/piper_phonemize.data and their loader
+  https://github.com/diffusionstudio/piper-wasm
+  Copyright (c) Konstantin Paulus
+  (the package states "license: MIT" and no copyright line; it contains
+  piper-phonemize, MIT, Copyright (c) 2023 Michael Hansen, and eSpeak NG,
+  GPL-3.0-or-later, see ../voices/LICENSES.md)
+
+The MIT License, which applies to each library in this section:
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
+3. Bundled library under the Apache License, Version 2.0
+--------------------------------------------------------
+
+idb-keyval 6.3.0
+  https://github.com/jakearchibald/idb-keyval
+  Copyright 2016, Jake Archibald
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.

@@ -59,6 +59,7 @@ export const nl = {
     "deleteDone": "Alle gegevens op dit apparaat zijn verwijderd.",
     "exportFailed": "Exporteren is mislukt. Probeer het opnieuw.",
     "privacyNote": "🔒 Alles blijft op dit apparaat. Namen en geluiden worden alleen in deze browser opgeslagen en nooit naar een server gestuurd, ook niet naar deze website. Gebruik Exporteren om je team naar een ander apparaat mee te nemen.",
+    licencesLink: "Licenties van stemmen en software",
     saveUnavailable: "Opslaan op dit apparaat is niet mogelijk — gebruik Exporteren om je team te bewaren.",
     matchTitle: "Wedstrijd",
     homeTeam: "Thuisploeg",

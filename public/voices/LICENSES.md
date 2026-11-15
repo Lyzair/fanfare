@@ -68,6 +68,11 @@ the only Arabic voice the Piper library supports.)
 | `piper/piper_phonemize.wasm`, `piper/piper_phonemize.data` | [`@diffusionstudio/piper-wasm@1.0.0`](https://github.com/diffusionstudio/piper-wasm) (build of [piper-phonemize](https://github.com/rhasspy/piper-phonemize)) | Package: MIT. Contains eSpeak NG code and data (see below). |
 | bundled JS | [`@mintplex-labs/piper-tts-web@1.0.5`](https://github.com/Mintplex-Labs/piper-tts-web) (patched, see `patches/`) | MIT |
 
+The copyright and permission notices of these packages and of the other
+libraries bundled into the app (Preact, fflate, idb-keyval, QR Code Generator),
+together with Fanfare's own MIT licence, are served with this site:
+[`../licenses/THIRD-PARTY-NOTICES.txt`](../licenses/THIRD-PARTY-NOTICES.txt).
+
 ### eSpeak NG (GPL-3.0-or-later)
 
 `piper/piper_phonemize.wasm` and `piper/piper_phonemize.data` contain
@@ -76,14 +81,37 @@ licensed under the **GNU General Public License, version 3 or (at your option)
 any later version (GPL-3.0-or-later)**. The full licence text is served with
 this site: [`../licenses/GPL-3.0.txt`](../licenses/GPL-3.0.txt).
 
-Corresponding source:
+Corresponding source (looked up on 2026-11-15):
 
-- The WebAssembly build is from
-  [`@diffusionstudio/piper-wasm@1.0.0`](https://github.com/diffusion-studio/piper-wasm)
-  (npm: <https://www.npmjs.com/package/@diffusionstudio/piper-wasm/v/1.0.0>;
-  repository `https://github.com/diffusion-studio/piper-wasm`), which compiles
-  [piper-phonemize](https://github.com/rhasspy/piper-phonemize) and eSpeak NG.
-- eSpeak NG upstream source: <https://github.com/espeak-ng/espeak-ng>.
+- **Object code as shipped.** The two files are copied unchanged from the npm
+  package `@diffusionstudio/piper-wasm` version 1.0.0:
+  <https://registry.npmjs.org/@diffusionstudio/piper-wasm/-/piper-wasm-1.0.0.tgz>
+  (sha1 `42c15fec08bf8af3f167d5c5285a61cd0f789120`).
+- **Where that package was published from.** Commit
+  [`69522c832bd52d7c16389e9a8aee568065027689`](https://github.com/diffusionstudio/piper-wasm/tree/69522c832bd52d7c16389e9a8aee568065027689)
+  of <https://github.com/diffusionstudio/piper-wasm> (the npm metadata names the
+  repository's earlier address `github.com/diffusion-studio/piper-wasm`, which
+  redirects there). The repository has no tags. It holds the built files and, in
+  its `README.md`, the build steps (Emscripten 3.1.47, "as of June 2024").
+- **eSpeak NG program code** (inside `piper_phonemize.wasm`): revision
+  [`0f65aa301e0d6bae5e172cc74197d32a6182200f`](https://github.com/rhasspy/espeak-ng/tree/0f65aa301e0d6bae5e172cc74197d32a6182200f)
+  of <https://github.com/rhasspy/espeak-ng> (a fork of
+  <https://github.com/espeak-ng/espeak-ng>). This revision is pinned by the
+  `CMakeLists.txt` of the piper-phonemize revision below.
+- **eSpeak NG data** (`piper_phonemize.data`, the `espeak-ng-data` directory):
+  the upstream build steps do not pin a revision; they clone the default branch
+  of <https://github.com/rhasspy/espeak-ng>. That branch has not changed since
+  November 2023, so the revision at build time was
+  [`8593723f10cfd9befd50de447f14bf0a9d2a14a4`](https://github.com/rhasspy/espeak-ng/tree/8593723f10cfd9befd50de447f14bf0a9d2a14a4).
+- **piper-phonemize** (MIT, Copyright (c) 2023 Michael Hansen): the build steps
+  clone the default branch `wide.video` of
+  <https://github.com/wide-video/piper-phonemize> (a fork of
+  <https://github.com/rhasspy/piper-phonemize>) without pinning; that branch has
+  not changed since April 2024, so the revision at build time was
+  [`cfff8e52ebaea37c7e953ae2d06b174acb827ac4`](https://github.com/wide-video/piper-phonemize/tree/cfff8e52ebaea37c7e953ae2d06b174acb827ac4).
+
+The two unpinned revisions are derived from the repositories' histories, not
+stated by the package itself.
 
 Fanfare's own code is not a derivative of eSpeak NG; it loads the phonemizer as
 a separate WebAssembly module. The GPL applies to the eSpeak NG components.

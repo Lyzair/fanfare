@@ -59,6 +59,7 @@ export const pl = {
     "deleteDone": "Wszystkie dane na tym urządzeniu zostały usunięte.",
     "exportFailed": "Eksport się nie udał. Spróbuj ponownie.",
     "privacyNote": "🔒 Wszystko zostaje na tym urządzeniu. Nazwy i dźwięki są zapisywane tylko w tej przeglądarce i nigdy nie są wysyłane na żaden serwer, nawet na tę stronę. Użyj Eksportu, aby przenieść drużynę na inne urządzenie.",
+    licencesLink: "Licencje głosów i oprogramowania",
     saveUnavailable: "Zapisywanie na tym urządzeniu jest niedostępne — użyj Eksportu, aby zachować swoją drużynę.",
     matchTitle: "Mecz",
     homeTeam: "Drużyna gospodarzy",

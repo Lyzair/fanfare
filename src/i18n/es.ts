@@ -59,6 +59,7 @@ export const es = {
     "deleteDone": "Se han borrado todos los datos de este dispositivo.",
     "exportFailed": "La exportación ha fallado. Inténtalo de nuevo.",
     "privacyNote": "🔒 Todo se queda en este dispositivo. Los nombres y sonidos se guardan solo en este navegador y nunca se envían a ningún servidor, ni siquiera a este sitio web. Usa Exportar para llevar tu equipo a otro dispositivo.",
+    licencesLink: "Licencias de las voces y del software",
     saveUnavailable: "Guardar en este dispositivo no está disponible — usa Exportar para conservar tu equipo.",
     matchTitle: "Partido",
     homeTeam: "Equipo local",

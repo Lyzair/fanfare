@@ -135,6 +135,7 @@ export default function DataPanel({ state, dispatch }: PanelProps) {
       {message?.kind === 'error' && <p role="alert" class="error">{tr(message.key)}</p>}
       {message?.kind === 'ok' && <p role="status">{tr(message.key)}</p>}
       <p class="privacy-note">{tr('privacyNote')}</p>
+      <p class="licences-link"><a href="./voices/LICENSES.md" target="_blank" rel="noopener">{tr('licencesLink')}</a></p>
     </div>
   );
 }

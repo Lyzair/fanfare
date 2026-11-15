@@ -57,6 +57,7 @@ export const en = {
     "deleteDone": "All data on this device was deleted.",
     "exportFailed": "The export failed. Please try again.",
     "privacyNote": "🔒 Everything stays on this device. Names and sounds are stored only in this browser and are never sent to any server — not even to this website. Use Export to move your team to another device.",
+    licencesLink: "Licences of voices and software",
     saveUnavailable: "Saving on this device isn't available — use Export to keep your team.",
     matchTitle: "Match",
     homeTeam: "Home team",
