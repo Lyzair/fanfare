@@ -206,6 +206,7 @@ export const it = {
     remoteReconnecting: "Riconnessione…",
     remoteEnded: "Il telecomando è stato terminato sul portatile.",
     remoteQrLabel: "Codice QR per il telecomando",
+    remoteLockedSpeaker: "Troppi codici errati — premi Nuovo codice.",
   },
   sports,
   staffHeadings: ['Allenatore', 'Vice allenatore', 'Staff', 'Dirigenti della squadra'],

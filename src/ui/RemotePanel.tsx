@@ -25,6 +25,7 @@ export default function RemotePanel({ state }: PanelProps) {
   const [ttsFailed, setTtsFailed] = useState(false);
   const [code, setCode] = useState<{ code: string; expiresAt: number } | null>(null);
   const [expired, setExpired] = useState(false);
+  const [locked, setLocked] = useState(false);
   const [count, setCount] = useState(0);
   const [playing, setPlaying] = useState(false);
   const link = useRef<SpeakerLink | null>(null);
@@ -68,8 +69,8 @@ export default function RemotePanel({ state }: PanelProps) {
     onStart: () => setTtsFailed(false), onError: () => setTtsFailed(true),
   };
 
-  const showCode = (c: string, expiresIn: number) => setCode({ code: c, expiresAt: Date.now() + expiresIn * 1000 });
-  const reset = () => { link.current = null; setPhase('idle'); setCode(null); setCount(0); };
+  const showCode = (c: string, expiresIn: number) => { setLocked(false); setCode({ code: c, expiresAt: Date.now() + expiresIn * 1000 }); };
+  const reset = () => { link.current = null; setPhase('idle'); setCode(null); setCount(0); setLocked(false); };
 
   const activate = async () => {
     queue.unlock(); // the tap that lets the browser play sound later; must happen synchronously in the click
@@ -80,6 +81,7 @@ export default function RemotePanel({ state }: PanelProps) {
       onCommand: cmd => { if (env.current) runRemoteCommand(cmd, env.current, activated.current); },
       onRemotes: setCount,
       onCode: showCode,
+      onLocked: () => setLocked(true),
       onEnded: reset,
     });
     try {
@@ -124,9 +126,9 @@ export default function RemotePanel({ state }: PanelProps) {
         <QrCode text={url} label={tr('remoteQrLabel')} />
         <p class="hint">{tr('remoteScan')}</p>
         <p class="remote-url"><code>{url}</code></p>
-        {expired ? (
+        {expired || locked ? (
           <>
-            <p class="hint">{tr('remoteCodeExpired')}</p>
+            <p class="hint" role={locked ? 'alert' : undefined}>{tr(locked ? 'remoteLockedSpeaker' : 'remoteCodeExpired')}</p>
             <button type="button" onClick={() => void renew()}>{tr('remoteNewCode')}</button>
           </>
         ) : (

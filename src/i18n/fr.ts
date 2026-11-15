@@ -206,6 +206,7 @@ export const fr = {
     remoteReconnecting: "Reconnexion…",
     remoteEnded: "La télécommande a été arrêtée sur l'ordinateur.",
     remoteQrLabel: "QR code pour la télécommande",
+    remoteLockedSpeaker: "Trop de codes erronés — appuie sur Nouveau code.",
   },
   sports,
   staffHeadings: ['Entraîneur', 'Entraîneur adjoint', 'Encadrement', "Officiels de l'équipe"],

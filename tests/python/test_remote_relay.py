@@ -107,6 +107,57 @@ class RelayTests(unittest.TestCase):
         self.assertEqual(status, 423)
         self.assertEqual(p['error'], 'locked')
 
+    def test_new_code_lifts_the_pairing_lock_and_the_speaker_is_told(self):
+        s = self.session()
+        speaker = self.relay.open_stream(s['speakerToken'])
+        drain(speaker)
+        wrong = '000000' if s['code'] != '000000' else '000001'
+        for _ in range(5):
+            self.relay.pair(wrong)
+        self.assertIn(('locked', {}), drain(speaker))
+        self.assertEqual(self.relay.pair(s['code'])[0], 423)
+        status, p = self.relay.new_code(s['speakerToken'])
+        self.assertEqual(status, 200)
+        self.assertEqual(self.relay.session.wrong, 0)
+        self.assertEqual(self.relay.pair(p['code'])[0], 200)  # unlocked
+        for _ in range(4):  # and the counter really restarted
+            self.assertEqual(self.relay.pair(wrong)[0], 403)
+
+    def test_a_stranger_cannot_keep_the_speaker_locked_out(self):
+        s = self.session()
+        wrong = '000000' if s['code'] != '000000' else '000001'
+        for _ in range(7):
+            self.relay.pair(wrong)
+        code = self.relay.new_code(s['speakerToken'])[1]['code']
+        self.assertEqual(self.relay.pair(code)[0], 200)
+
+    def test_at_most_two_streams_per_token(self):
+        s = self.session()
+        tok = self.pair(s)
+        a = self.relay.open_stream(tok)
+        b = self.relay.open_stream(tok)
+        self.assertIsNotNone(a)
+        self.assertIsNotNone(b)
+        self.assertIs(self.relay.open_stream(tok), fl.Relay.TOO_MANY)
+        self.relay.close_stream(a)  # a slot is free again; the older stream stayed untouched
+        self.assertIsNotNone(self.relay.open_stream(tok))
+        self.assertIsNone(self.relay.open_stream('nope'))
+        sp = [self.relay.open_stream(s['speakerToken']) for _ in range(2)]
+        self.assertTrue(all(sp))
+        self.assertIs(self.relay.open_stream(s['speakerToken']), fl.Relay.TOO_MANY)
+
+    def test_a_stream_nobody_reads_is_cut_instead_of_growing(self):
+        s = self.session()
+        remote = self.relay.open_stream(self.pair(s))
+        self.assertEqual(remote.q.maxsize, 100)
+        for i in range(500):
+            self.relay.set_state(s['speakerToken'], dict(SNAPSHOT, scoreWord='w%d' % i))
+        self.assertLessEqual(remote.q.qsize(), 100)
+        items = drain(remote)
+        self.assertIsNone(items[-1])  # the stream was closed on overflow
+        self.relay.set_state(s['speakerToken'], SNAPSHOT)  # and nothing more is queued
+        self.assertEqual(drain(remote), [])
+
     def test_malformed_codes_are_rejected_without_counting(self):
         s = self.session()
         for bad in ['', '12345', '1234567', 'abcdef', None, 123456]:
@@ -391,7 +442,8 @@ class RelayHttpTests(base.TempDirCase):
             self.events, self.comments, self.headers = [], [], {}
             self.closed = threading.Event()
             self.sock = socket.create_connection(('127.0.0.1', r.primary.server_address[1]), timeout=10)
-            self.sock.sendall(('GET /remote/events?token=%s HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n' % token).encode())
+            port = r.primary.server_address[1]
+            self.sock.sendall(('GET /remote/events?token=%s HTTP/1.1\r\nHost: 127.0.0.1:%d\r\n\r\n' % (token, port)).encode())
             self.fp = self.sock.makefile('rb')
             self.status = int(self.fp.readline().split()[1])
             while True:
@@ -485,25 +537,59 @@ class RelayHttpTests(base.TempDirCase):
         self.assertIn('token', json.loads(resp.read()))
         s.close()
 
-    def test_session_only_from_the_laptop_or_with_the_secret(self):
+    def test_session_only_from_a_loopback_peer_with_a_loopback_host(self):
         r = self.start()
-        secret = r.primary.relay.speaker_secret
-        with self.peer('192.168.1.50'):
-            resp, _ = self.call(r, 'POST', '/remote/session', {})
-            self.assertEqual(resp.status, 403)
-            resp, _ = self.call(r, 'POST', '/remote/session', {}, headers={'X-Fanfare-Speaker-Secret': 'wrong'})
-            self.assertEqual(resp.status, 403)
-            resp, p = self.call(r, 'POST', '/remote/session', {}, headers={'X-Fanfare-Speaker-Secret': secret})
-            self.assertEqual(resp.status, 200)
-            self.assertRegex(p['code'], r'^\d{6}$')
+        port = r.primary.server_address[1]
+        with self.peer('192.168.1.50'):  # a phone / anyone on the LAN: refused whatever it sends
+            for headers in [{}, {'X-Fanfare-Speaker-Secret': 'anything'}, {'Host': 'localhost:%d' % port},
+                            {'Host': '127.0.0.1:%d' % port}, {'X-Fanfare-Speaker-Token': 'x'}]:
+                resp, _ = self.call(r, 'POST', '/remote/session', {}, headers=headers)
+                self.assertEqual(resp.status, 403, headers)
+        self.assertIsNone(r.primary.relay.session)
         for ip in ['127.0.0.1', '::1', '::ffff:127.0.0.1']:
             with self.peer(ip):
-                resp, _ = self.call(r, 'POST', '/remote/session', {})
+                resp, p = self.call(r, 'POST', '/remote/session', {})
                 self.assertEqual(resp.status, 200, ip)
-        # a failed attempt created no session
-        with self.peer('192.168.1.50'):
-            self.call(r, 'POST', '/remote/session', {})
-        self.assertIsNotNone(r.primary.relay.session)
+                self.assertRegex(p['code'], r'^\d{6}$')
+        for host in ['localhost:%d' % port, '127.0.0.1:%d' % port, '[::1]:%d' % port]:
+            resp, _ = self.call(r, 'POST', '/remote/session', {}, headers={'Host': host})
+            self.assertEqual(resp.status, 200, host)
+
+    def test_loopback_peer_with_a_rebinding_host_is_refused(self):
+        r = self.start()
+        port = r.primary.server_address[1]
+        for host in ['evil.example:%d' % port, 'evil.example', '192.168.1.23:%d' % port, 'testhost.local:%d' % port,
+                     'localhost:%d' % (port + 1), 'localhost:80', 'localhost.evil.example:%d' % port, '']:
+            resp, _ = self.call(r, 'POST', '/remote/session', {}, headers={'Host': host})
+            self.assertEqual(resp.status, 403, host)
+        self.assertIsNone(r.primary.relay.session)
+        # the other speaker-only endpoints apply the same rule
+        s = self.create(r)
+        for method, path in [('POST', '/remote/state'), ('DELETE', '/remote/session'), ('POST', '/remote/code')]:
+            resp, _ = self.call(r, method, path, {}, headers={'Host': 'evil.example:%d' % port,
+                                                              'X-Fanfare-Speaker-Token': s['speakerToken']})
+            self.assertEqual(resp.status, 403, path)
+        resp, _ = self.call(r, 'GET', '/remote/events?token=' + s['speakerToken'], headers={'Host': 'evil.example:%d' % port})
+        self.assertEqual(resp.status, 403)
+        self.assertIsNotNone(r.primary.relay.session)  # nothing was ended
+
+    def test_there_is_no_speaker_secret_anywhere(self):
+        r = self.start()
+        self.assertFalse(hasattr(r.primary.relay, 'speaker_secret'))
+        for path in ['/', '/index.html', '/a.txt', '/remote/health']:
+            for ip in ['127.0.0.1', '192.168.1.50']:
+                with self.peer(ip):
+                    c = self.conn(r)
+                    c.request('GET', path, headers={'Sec-Fetch-Dest': 'document'})
+                    resp = c.getresponse()
+                    body = resp.read()
+                    c.close()
+                self.assertNotIn(b'secret', body.lower(), path)
+                self.assertNotIn(b'<meta name="fanfare', body, path)
+                self.assertEqual(body, PAGE.encode() if path in ('/', '/index.html') else body)
+        resp, _ = self.call(r, 'GET', '/')
+        self.assertEqual(resp.status, 200)
+        self.assertEqual(int(resp.getheader('Content-Length')), len(PAGE.encode()))
 
     def test_phone_cannot_use_speaker_endpoints_with_a_stolen_remote_token(self):
         r = self.start()
@@ -513,42 +599,14 @@ class RelayHttpTests(base.TempDirCase):
             self.assertEqual(resp.status, 200)
             tok = p['token']
             for method, path in [('POST', '/remote/state'), ('DELETE', '/remote/session'), ('POST', '/remote/code')]:
-                resp, _ = self.call(r, method, path, {}, headers={'X-Fanfare-Speaker-Token': tok})
-                self.assertEqual(resp.status, 401, path)
-                resp, _ = self.call(r, method, path, {})
-                self.assertEqual(resp.status, 401, path)
+                for headers in [{'X-Fanfare-Speaker-Token': tok}, {'X-Fanfare-Speaker-Token': s['speakerToken']}, {}]:
+                    resp, _ = self.call(r, method, path, {}, headers=headers)
+                    self.assertEqual(resp.status, 403, (path, headers))  # not a loopback peer: refused outright
+            resp, _ = self.call(r, 'GET', '/remote/events?token=' + s['speakerToken'])
+            self.assertEqual(resp.status, 403)
             resp, _ = self.call(r, 'GET', '/remote/events?token=nope')
             self.assertEqual(resp.status, 403)
-
-    def test_secret_is_injected_only_into_the_page_for_the_laptop(self):
-        r = self.start()
-        secret = r.primary.relay.speaker_secret
-        meta = '<meta name="fanfare-speaker-secret" content="%s">' % secret
-
-        def page(path='/', ip='127.0.0.1', dest='document'):
-            h = {'Sec-Fetch-Dest': dest} if dest else {}
-            with self.peer(ip):
-                c = self.conn(r)
-                c.request('GET', path, headers=h)
-                resp = c.getresponse()
-                body = resp.read()
-                c.close()
-            self.assertEqual(int(resp.getheader('Content-Length')), len(body))
-            return body.decode()
-
-        for path in ['/', '/index.html']:
-            self.assertIn(meta, page(path))
-        self.assertTrue(page().startswith('<!doctype html><html><head>'))
-        self.assertNotIn('fanfare-speaker-secret', page(ip='192.168.1.50'))  # phones never get it
-        self.assertNotIn('fanfare-speaker-secret', page(dest=None))  # e.g. the service worker's hash-checked fetch
-        self.assertEqual(page(dest='empty'), PAGE)
-        self.assertNotIn(secret, page('/a.txt'))
-
-    def test_secret_never_in_logs_or_other_responses(self):
-        r = self.start()
-        secret = r.primary.relay.speaker_secret
-        self.call(r, 'GET', '/remote/health')
-        self.assertNotIn(secret, '\n'.join(self.lines))
+        self.assertIsNotNone(r.primary.relay.session)
 
     def test_content_type_origin_and_host_checks(self):
         r = self.start()
@@ -564,9 +622,14 @@ class RelayHttpTests(base.TempDirCase):
         # DNS rebinding: a public name that resolves to this laptop is not an accepted Host
         resp, _ = self.call(r, 'POST', '/remote/session', {}, headers={'Host': 'evil.example:%d' % port})
         self.assertEqual(resp.status, 403)
-        for host in ['localhost:%d' % port, '192.168.1.23:%d' % port, 'testhost.local:%d' % port, '[::1]:%d' % port]:
+        for host in ['localhost:%d' % port, '[::1]:%d' % port]:
             resp, _ = self.call(r, 'POST', '/remote/session', {}, headers={'Host': host})
             self.assertEqual(resp.status, 200, host)
+        # phones may use the LAN address or a .local name for the pairing and the stream
+        for host in ['192.168.1.23:%d' % port, 'testhost.local:%d' % port]:
+            resp, _ = self.call(r, 'POST', '/remote/pair', {'code': '000000'}, headers={'Host': host})
+            self.assertEqual(resp.status, 403, host)
+            self.assertNotEqual(resp.getheader('Content-Type', '').count('json'), 0)
 
     def test_oversized_and_broken_bodies(self):
         r = self.start()
@@ -672,6 +735,33 @@ class RelayHttpTests(base.TempDirCase):
             time.sleep(0.05)
         self.assertTrue(speaker.comments and speaker.comments[0].startswith(': '))
 
+    def test_third_stream_for_a_token_is_429_and_the_older_ones_stay(self):
+        r = self.start()
+        s = self.create(r)
+        speaker = self.stream(r, s['speakerToken'])
+        speaker.wait('remotes')
+        tok = self.call(r, 'POST', '/remote/pair', {'code': s['code']})[1]['token']
+        a, b = self.stream(r, tok), self.stream(r, tok)
+        self.assertEqual((a.status, b.status), (200, 200))
+        resp, p = self.call(r, 'GET', '/remote/events?token=' + tok)
+        self.assertEqual((resp.status, p['error']), (429, 'too-many-streams'))
+        self.assertFalse(a.closed.is_set())
+        self.assertFalse(b.closed.is_set())
+
+    def test_speaker_is_told_when_pairing_locks_and_new_code_unlocks(self):
+        r = self.start()
+        s = self.create(r)
+        speaker = self.stream(r, s['speakerToken'])
+        speaker.wait('remotes')
+        wrong = '000000' if s['code'] != '000000' else '000001'
+        for _ in range(5):
+            self.call(r, 'POST', '/remote/pair', {'code': wrong})
+        speaker.wait('locked')
+        resp, p = self.call(r, 'POST', '/remote/code', {}, headers={'X-Fanfare-Speaker-Token': s['speakerToken']})
+        self.assertEqual(resp.status, 200)
+        resp, _ = self.call(r, 'POST', '/remote/pair', {'code': p['code']})
+        self.assertEqual(resp.status, 200)
+
     def test_default_keep_alive_is_fifteen_seconds(self):
         self.assertEqual(fl.Relay().keepalive, 15)
 
@@ -718,7 +808,7 @@ class RelayHttpTests(base.TempDirCase):
         remote.closed.wait(5)
         time.sleep(0.2)
         log = '\n'.join(self.lines)
-        for secret in [s['speakerToken'], tok, s['code'], r.primary.relay.speaker_secret, 'Lea', 'FC Example', '127.0.0.1']:
+        for secret in [s['speakerToken'], tok, s['code'], 'Lea', 'FC Example', '127.0.0.1']:
             self.assertNotIn(secret, log)
         self.assertNotIn('?', log)
         self.assertGreater(len(self.lines), 5)

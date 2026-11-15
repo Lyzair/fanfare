@@ -46,7 +46,6 @@ function routes(extra: Record<string, unknown> = {}, health: unknown = { fanfare
 beforeEach(() => {
   FakeEventSource.reset();
   vi.stubGlobal('EventSource', FakeEventSource);
-  document.head.querySelectorAll('meta[name="fanfare-speaker-secret"]').forEach(m => m.remove());
 });
 afterEach(() => { vi.unstubAllGlobals(); });
 
@@ -108,15 +107,27 @@ test('the QR carries the scheme, host and port of the run, never loopback', asyn
   expect(screen.queryByText(/localhost|127\.0\.0\.1/)).toBeNull();
 });
 
-test('speaker secret from the page is sent when creating the session', async () => {
+test('no secret is read from the page or sent: the laptop is recognised by the server alone', async () => {
   const meta = document.createElement('meta');
   meta.name = 'fanfare-speaker-secret'; meta.content = 'S3CRET';
   document.head.appendChild(meta);
   const f = routes();
   vi.stubGlobal('fetch', f.fn);
   await activate(makeServices().services);
-  expect(f.find('POST', '/remote/session')[0].headers['X-Fanfare-Speaker-Secret']).toBe('S3CRET');
+  expect(JSON.stringify(f.calls)).not.toMatch(/S3CRET|Secret/i);
   meta.remove();
+});
+
+test('a pairing lock is shown to the speaker until a new code is requested', async () => {
+  const f = routes();
+  vi.stubGlobal('fetch', f.fn);
+  await activate(makeServices().services);
+  act(() => FakeEventSource.last.emit('locked', {}));
+  expect(await screen.findByText('Too many wrong codes — press New code.')).toBeInTheDocument();
+  expect(screen.queryByText('123456')).toBeNull();
+  await userEvent.click(screen.getByRole('button', { name: 'New code' }));
+  expect(await screen.findByText('654321')).toBeInTheDocument();
+  expect(screen.queryByText('Too many wrong codes — press New code.')).toBeNull();
 });
 
 test('plain-http warning is shown on the speaker panel unless the phones use https', async () => {

@@ -206,6 +206,7 @@ export const uk = {
     remoteReconnecting: "Повторне підключення…",
     remoteEnded: "Пульт завершено на ноутбуці.",
     remoteQrLabel: "QR-код для пульта на телефоні",
+    remoteLockedSpeaker: "Забагато хибних кодів — натисни «Новий код».",
   },
   sports,
   staffHeadings: ['Тренер', 'Асистент тренера', 'Персонал', 'Офіційні особи команди'],

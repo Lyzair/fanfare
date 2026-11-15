@@ -30,15 +30,12 @@ function parseData<T>(e: unknown): T | null {
   try { return JSON.parse((e as { data: string }).data) as T; } catch { return null; }
 }
 
-function speakerSecret(): string | null {
-  if (typeof document === 'undefined') return null;
-  return document.querySelector('meta[name="fanfare-speaker-secret"]')?.getAttribute('content') || null;
-}
-
 export interface SpeakerHandlers {
   onCommand(cmd: RemoteCommand): void;
   onRemotes(count: number): void;
   onCode(code: string, expiresIn: number): void;
+  /** Too many wrong codes: pairing is locked until the speaker asks for a new code. */
+  onLocked(): void;
   /** The relay closed the session (ended elsewhere, laptop server restarted). */
   onEnded(): void;
 }
@@ -58,10 +55,7 @@ export class SpeakerLink {
   constructor(h: SpeakerHandlers) { this.h = h; }
 
   async start(): Promise<SessionInfo> {
-    const headers: Record<string, string> = { ...JSON_HEADERS };
-    const secret = speakerSecret();
-    if (secret) headers['X-Fanfare-Speaker-Secret'] = secret;
-    const res = await fetch(`${BASE}session`, { method: 'POST', headers, body: '{}' });
+    const res = await fetch(`${BASE}session`, { method: 'POST', headers: JSON_HEADERS, body: '{}' });
     if (!res.ok) throw new Error(`session: HTTP ${res.status}`);
     const j = await res.json() as { speakerToken: string; code: string; expiresIn: number };
     this.token = j.speakerToken;
@@ -73,6 +67,7 @@ export class SpeakerLink {
     });
     es.addEventListener('remotes', e => { const d = parseData<{ count: number }>(e); if (d) this.h.onRemotes(d.count); });
     es.addEventListener('code', e => { const d = parseData<SessionInfo>(e); if (d) this.h.onCode(d.code, d.expiresIn); });
+    es.addEventListener('locked', () => this.h.onLocked());
     es.onerror = () => { if (es.readyState === 2 && !this.closed) { this.stopLocal(); this.h.onEnded(); } };
     return { code: j.code, expiresIn: j.expiresIn };
   }

@@ -206,6 +206,7 @@ export const tr = {
     remoteReconnecting: "Yeniden bağlanıyor…",
     remoteEnded: "Kumanda dizüstü bilgisayarda bitirildi.",
     remoteQrLabel: "Telefon kumandası için QR kodu",
+    remoteLockedSpeaker: "Çok fazla yanlış kod — Yeni kod'a bas.",
   },
   sports,
   staffHeadings: ['Antrenör', 'Yardımcı antrenör', 'Ekip', 'Takım yetkilileri'],

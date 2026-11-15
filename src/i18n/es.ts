@@ -206,6 +206,7 @@ export const es = {
     remoteReconnecting: "Reconectando…",
     remoteEnded: "El mando se terminó en el portátil.",
     remoteQrLabel: "Código QR para el mando a distancia",
+    remoteLockedSpeaker: "Demasiados códigos incorrectos — pulsa Código nuevo.",
   },
   sports,
   staffHeadings: ['Entrenador', 'Entrenador asistente', 'Staff', 'Oficiales del equipo'],

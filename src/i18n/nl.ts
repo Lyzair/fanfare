@@ -206,6 +206,7 @@ export const nl = {
     remoteReconnecting: "Opnieuw verbinden…",
     remoteEnded: "De afstandsbediening is op de laptop gestopt.",
     remoteQrLabel: "QR-code voor de afstandsbediening",
+    remoteLockedSpeaker: "Te veel foute codes — tik op Nieuwe code.",
   },
   sports,
   staffHeadings: ['Trainer', 'Assistent-trainer', 'Staf', 'Teamofficials'],

@@ -604,12 +604,14 @@ code{word-break:break-all;font-family:ui-monospace,Menlo,Consolas,monospace}
 
 CODE_TTL = 600          # a pairing code is valid for 10 minutes
 MAX_WRONG_CODES = 5     # then the session is locked
+MAX_STREAMS_PER_TOKEN = 2
 MAX_REMOTES = 3         # phones per session
 IDLE_REMOTE_SECONDS = 120   # a phone that left frees its slot after this long
 RATE_PER_SECOND = 5     # commands per remote token
 KEEPALIVE_SECONDS = 15
 MAX_BODY = 64 * 1024
 ID_RE = re.compile(r'^[A-Za-z0-9_-]{1,64}$')
+SPEAKER_ROUTES = ('/remote/session', '/remote/code', '/remote/state')  # loopback peer + loopback Host only
 REMOTE_ROUTES = {
     '/remote/health': ('GET',), '/remote/events': ('GET',), '/remote/session': ('POST', 'DELETE'),
     '/remote/pair': ('POST',), '/remote/command': ('POST',), '/remote/state': ('POST',), '/remote/code': ('POST',),
@@ -671,17 +673,40 @@ def clean_command(body):
 
 
 class Stream:
-    """One open event stream (the speaker's or a phone's). The handler thread drains `q`."""
+    """One open event stream (the speaker's or a phone's). The handler thread drains `q`.
+    The queue is bounded: a reader that stops reading is cut off instead of piling up memory."""
+    MAXSIZE = 100
 
     def __init__(self, kind, owner):
         self.kind, self.owner = kind, owner
-        self.q = queue.Queue()
+        self.q = queue.Queue(maxsize=self.MAXSIZE)
+        self.dead = False
+
+    def _cut(self):
+        self.dead = True
+        try:
+            while True:
+                self.q.get_nowait()
+        except queue.Empty:
+            pass
+        self.q.put_nowait(None)
 
     def send(self, event, data):
-        self.q.put((event, data))
+        if self.dead:
+            return
+        try:
+            self.q.put_nowait((event, data))
+        except queue.Full:
+            self._cut()
 
     def close(self):
-        self.q.put(None)
+        if self.dead:
+            return
+        try:
+            self.q.put_nowait(None)
+        except queue.Full:
+            self._cut()
+        self.dead = True
 
 
 class _Remote:
@@ -712,11 +737,12 @@ class Relay:
     """In-memory pairing and command relay between the laptop (speaker) and phones (remotes).
     One session at a time. Pure logic: every method returns data, the HTTP layer only wires it up."""
 
+    TOO_MANY = object()  # open_stream result: this token already has MAX_STREAMS_PER_TOKEN streams
+
     def __init__(self, clock=time.monotonic, urls=(), secure=False):
         self.clock = clock
         self.urls, self.secure = list(urls), secure
         self.keepalive = KEEPALIVE_SECONDS
-        self.speaker_secret = secrets.token_urlsafe(24)
         self.session = None
         self.lock = threading.RLock()
 
@@ -733,6 +759,10 @@ class Relay:
             self._end()
             self.session = _Session(self)
             return {'speakerToken': self.session.speaker_token, 'code': self.session.code, 'expiresIn': CODE_TTL}
+
+    def is_speaker_token(self, token):
+        with self.lock:
+            return self._speaker_ok(token)
 
     def _speaker_ok(self, token):
         s = self.session
@@ -752,6 +782,7 @@ class Relay:
         with self.lock:
             if not self._speaker_ok(speaker_token):
                 return 401, {'error': 'unauthorized'}
+            self.session.wrong = 0  # a new code also lifts a pairing lock
             self.session.fresh_code(self)
             return 200, {'code': self.session.code, 'expiresIn': CODE_TTL}
 
@@ -796,6 +827,8 @@ class Relay:
             match = hmac.compare_digest(code.encode(), s.code.encode())  # always compared, constant time
             if not match:
                 s.wrong += 1
+                if s.wrong >= MAX_WRONG_CODES:
+                    self._to_speaker(s, 'locked', {})
                 return 403, {'error': 'wrong-code', 'attemptsLeft': max(0, MAX_WRONG_CODES - s.wrong)}
             if self.clock() > s.code_expires:
                 return 410, {'error': 'expired'}
@@ -870,6 +903,8 @@ class Relay:
             if s is None:
                 return None
             if self._speaker_ok(token):
+                if len(s.speaker_streams) >= MAX_STREAMS_PER_TOKEN:
+                    return self.TOO_MANY
                 st = Stream('speaker', None)
                 s.speaker_streams.append(st)
                 st.send('remotes', {'count': self._count(s)})
@@ -878,6 +913,8 @@ class Relay:
             r = self._find_remote(token)
             if r is None:
                 return None
+            if len(r.streams) >= MAX_STREAMS_PER_TOKEN:
+                return self.TOO_MANY
             st = Stream('remote', r)
             r.streams.append(st)
             r.last_seen = self.clock()
@@ -989,12 +1026,18 @@ class Handler(BaseHTTPRequestHandler):
         return a.is_loopback
 
     def _is_speaker(self):
-        """The laptop itself: a loopback client, or whoever holds this run's secret (only ever written
-        into the page handed to the laptop's own browser)."""
-        if self._is_loopback():
-            return True
-        given = self.headers.get('X-Fanfare-Speaker-Secret') or ''
-        return bool(given) and hmac.compare_digest(given.encode(), self.server.relay.speaker_secret.encode())
+        """The laptop itself: a loopback socket peer that also addresses us as localhost / 127.0.0.1 / [::1]
+        on our own port. A name that merely resolves to 127.0.0.1 (DNS rebinding) is refused even then."""
+        if not self._is_loopback():
+            return False
+        try:
+            u = urlsplit('//' + (self.headers.get('Host') or ''))
+            name, port = (u.hostname or '').lower(), u.port
+        except ValueError:
+            return False
+        if name not in ('localhost', '127.0.0.1', '::1'):
+            return False
+        return (port if port is not None else 80) == self.server.server_address[1]
 
     def _host_ok(self):
         """Only IP addresses, localhost and *.local: a public name pointing at this laptop (DNS rebinding) is refused."""
@@ -1064,9 +1107,9 @@ class Handler(BaseHTTPRequestHandler):
             if isinstance(body, tuple):
                 return self._fail(*body)
         stoken = self.headers.get('X-Fanfare-Speaker-Token')
+        if path in SPEAKER_ROUTES and not self._is_speaker():
+            return self._fail(403, 'not-the-speaker')
         if path == '/remote/session' and method == 'POST':
-            if not self._is_speaker():
-                return self._fail(403, 'not-the-speaker')
             return self._json(200, relay.create_session())
         if path == '/remote/session':  # DELETE
             if relay.end_session(stoken):
@@ -1082,7 +1125,11 @@ class Handler(BaseHTTPRequestHandler):
 
     def _events(self, token):
         relay = self.server.relay
+        if relay.is_speaker_token(token) and not self._is_speaker():
+            return self._fail(403, 'not-the-speaker')
         stream = relay.open_stream(token)
+        if stream is Relay.TOO_MANY:
+            return self._fail(429, 'too-many-streams')
         if stream is None:
             return self._json(403, {'error': 'bad-token'})
         self.close_connection = True
@@ -1124,22 +1171,6 @@ class Handler(BaseHTTPRequestHandler):
             return None
         return segs
 
-    def _gets_secret(self):
-        # Only the laptop's own browser, and only for a page load: the service worker's hash-checked
-        # download of index.html (no "document" destination) stays byte-identical.
-        return self._is_loopback() and self.headers.get('Sec-Fetch-Dest') == 'document'
-
-    def _with_secret(self, target):
-        try:
-            data = Path(target).read_bytes()
-        except OSError:
-            return None
-        m = re.search(rb'<head[^>]*>', data, re.I)
-        if m is None:
-            return None
-        meta = ('<meta name="fanfare-speaker-secret" content="%s">' % self.server.relay.speaker_secret).encode('ascii')
-        return data[:m.end()] + meta + data[m.end():]
-
     def _serve(self, head):
         try:
             segs = self._segments()
@@ -1168,10 +1199,6 @@ class Handler(BaseHTTPRequestHandler):
             target = index
         if not os.path.isfile(target):
             return self._reply(404, b'Not found\n', head=head)
-        if os.path.dirname(target) == root and os.path.basename(target) == 'index.html' and self._gets_secret():
-            injected = self._with_secret(target)
-            if injected is not None:
-                return self._reply(200, injected, guess_type(target), [('Vary', 'Sec-Fetch-Dest')], head=head)
         try:
             with open(target, 'rb') as f:
                 size = os.fstat(f.fileno()).st_size

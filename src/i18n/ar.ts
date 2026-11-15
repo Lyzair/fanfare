@@ -206,6 +206,7 @@ export const ar = {
     remoteReconnecting: "جارٍ إعادة الاتصال…",
     remoteEnded: "تم إنهاء جهاز التحكم على الحاسوب المحمول.",
     remoteQrLabel: "رمز QR لجهاز التحكم على الهاتف",
+    remoteLockedSpeaker: "رموز خاطئة كثيرة — اضغط رمز جديد.",
   },
   sports,
   staffHeadings: ['المدرب', 'مساعد المدرب', 'الطاقم', 'مسؤولو الفريق'],

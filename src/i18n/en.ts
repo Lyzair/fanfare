@@ -204,6 +204,7 @@ export const en = {
     remoteReconnecting: "Reconnecting…",
     remoteEnded: "The remote was ended on the laptop.",
     remoteQrLabel: "QR code for the phone remote",
+    remoteLockedSpeaker: "Too many wrong codes — press New code.",
   },
   sports,
   staffHeadings: ['Coach', 'Assistant coach', 'Staff', 'Team officials'],

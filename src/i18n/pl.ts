@@ -206,6 +206,7 @@ export const pl = {
     remoteReconnecting: "Łączenie ponownie…",
     remoteEnded: "Pilot został zakończony na laptopie.",
     remoteQrLabel: "Kod QR dla pilota w telefonie",
+    remoteLockedSpeaker: "Za dużo błędnych kodów — naciśnij Nowy kod.",
   },
   sports,
   staffHeadings: ['Trener', 'Asystent trenera', 'Obsługa', 'Działacze drużyny'],

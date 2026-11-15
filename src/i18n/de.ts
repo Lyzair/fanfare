@@ -205,6 +205,7 @@ export const de = {
     remoteReconnecting: "Verbindung wird wiederhergestellt …",
     remoteEnded: "Die Fernbedienung wurde am Laptop beendet.",
     remoteQrLabel: "QR-Code für die Handy-Fernbedienung",
+    remoteLockedSpeaker: "Zu viele falsche Codes – drück „Neuer Code“.",
   },
   sports,
   staffHeadings: ['Trainer', 'Co-Trainer', 'Betreuer', 'Teamoffizielle'],
