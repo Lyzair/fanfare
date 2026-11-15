@@ -1,5 +1,6 @@
 import { defaultSoundBlob } from '../audio/defaultSounds';
 import type { AudioQueue, QueueItem } from '../audio/queue';
+import { playersOf } from '../domain/model';
 import type { AppState, Player, Roster, Side, SoundSlot } from '../domain/model';
 import { calloutText, guestIntroText, guestScoreText, introText, scoreText, speechText } from '../domain/template';
 import { currentRoster } from '../state/reducer';
@@ -27,7 +28,7 @@ export interface ActionEnv {
 
 /** The texts of one team in announcing order: intro, field players, bench players. */
 function teamTexts(side: Side, roster: Roster): string[] {
-  const players = side === 'guest' ? roster.guestPlayers : roster.players;
+  const players = playersOf(roster, side);
   return [
     side === 'guest' ? guestIntroText(roster) : introText(roster),
     ...players.filter(p => p.onField).map(p => calloutText(p, roster)),

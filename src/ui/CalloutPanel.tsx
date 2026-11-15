@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
+import { playersOf } from '../domain/model';
 import type { Player, Side, TemplateKey } from '../domain/model';
 import { calloutText, guestIntroText, introText, speechText } from '../domain/template';
 import { currentRoster } from '../state/reducer';
@@ -138,7 +139,7 @@ export default function CalloutPanel({ state, dispatch }: PanelProps) {
           {badge(introLine)}
         </span>
       </li>
-      {ordered(side === 'guest' ? roster.guestPlayers : roster.players).map(p => row(p, side))}
+      {ordered(playersOf(roster, side)).map(p => row(p, side))}
     </ul>
   );
   const teamTitle = (title: string, name: string) => (name.trim() ? `${title}: ${name.trim()}` : title);

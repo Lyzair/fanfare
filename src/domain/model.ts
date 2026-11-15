@@ -1,6 +1,7 @@
 export type Lang = 'de' | 'en' | 'fr' | 'es' | 'it' | 'nl' | 'pl' | 'tr' | 'uk' | 'ar';
 export type SportId = 'football' | 'handball' | 'basketball' | 'volleyball' | 'fieldhockey' | 'icehockey' | 'floorball';
 export type SoundSlot = 'score' | 'intro';
+export const SOUND_SLOTS: SoundSlot[] = ['score', 'intro'];
 export type TemplateKey = 'intro' | 'field' | 'bench' | 'score' | 'guestIntro' | 'guestScore';
 /** Which team's list an edit applies to: our own (`players`) or the guests (`guestPlayers`). */
 export type Side = 'home' | 'guest';
@@ -36,7 +37,9 @@ export interface Roster {
   templates: Record<TemplateKey, string>;
 }
 
-/** The audio blob is stored separately, keyed by slot. */
+/** One team's players. */
+export const playersOf = (roster: Roster, side: Side | undefined): Player[] => (side === 'guest' ? roster.guestPlayers : roster.players);
+
 /** What one coach sends to the other: names only, no clips or settings. */
 export interface TeamFile {
   fanfareTeam: 1;
@@ -48,6 +51,7 @@ export interface TeamFile {
   players: Array<Pick<Player, 'name' | 'number' | 'position' | 'onField' | 'sayAs' | 'origSpelling' | 'nameLang'>>;
 }
 
+/** The audio blob is stored separately, keyed by slot. */
 export interface CustomSound {
   name: string;
   mime: string;

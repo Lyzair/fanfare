@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'preact/hooks';
 import { AudioQueue } from '../audio/queue';
-import { detectLang, getPack, t } from '../i18n';
+import { browserLang, getPack, t } from '../i18n';
 import type { UiStrings } from '../i18n';
 import { initialState, reducer } from '../state/reducer';
 import { loadState, saveState } from '../state/persist';
@@ -30,13 +30,8 @@ function welcomeDismissedBefore(): boolean {
   try { return localStorage.getItem(WELCOME_KEY) === '1'; } catch { return false; }
 }
 
-function firstRunLang() {
-  const prefs = typeof navigator === 'undefined' ? [] : navigator.languages?.length ? navigator.languages : [navigator.language];
-  return detectLang(prefs.filter(Boolean));
-}
-
 export function App() {
-  const [state, dispatch] = useReducer(reducer, undefined, () => initialState(firstRunLang()));
+  const [state, dispatch] = useReducer(reducer, undefined, () => initialState(browserLang()));
   const [loaded, setLoaded] = useState(false);
   const [storageFailed, setStorageFailed] = useState(false);
   const [, setClipsLoaded] = useState(false);

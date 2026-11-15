@@ -1,9 +1,12 @@
 import { unzip, zip, strFromU8, strToU8, type Unzipped } from 'fflate';
 import { newId } from '../domain/id';
+import { isObj } from '../domain/guards';
+import { SOUND_SLOTS } from '../domain/model';
 import type { AppState, Lang, Player, Roster, SoundSlot, SportId, TemplateKey, CustomSound } from '../domain/model';
 import { SPORT_IDS } from '../domain/sports';
 import { LANGS, defaultTemplates } from '../i18n';
 import { isLocalUrl } from '../tts/httpEngine';
+import { blobBytes } from './blob';
 
 export interface ArchiveContent {
   state: AppState;
@@ -30,13 +33,8 @@ const IMPORT_LIMITS: ImportLimits = { bytes: 400 * 1024 * 1024, entries: 5000 };
 /** The only entries an export contains; everything else in a zip is skipped without inflating it. */
 const ENTRY_NAME = /^(fanfare\.json|sounds\/(score|intro)\.[^/]+|speech\/\d+\.wav)$/;
 
-const SLOTS: SoundSlot[] = ['score', 'intro'];
 /** The templates every export has; the guest ones are optional for older files. */
 const TEMPLATE_KEYS: TemplateKey[] = ['intro', 'field', 'bench', 'score'];
-
-function blobBytes(b: Blob): Promise<ArrayBuffer> {
-  return typeof b.arrayBuffer === 'function' ? b.arrayBuffer() : new Response(b).arrayBuffer();
-}
 
 function extFor(mime: string): string {
   switch (mime) {
@@ -80,7 +78,7 @@ export async function exportArchive(c: ArchiveContent): Promise<Blob> {
   const files: Record<string, Uint8Array> = {};
   const speechIndex: Record<string, string> = {};
   const customSounds: AppState['customSounds'] = {};
-  for (const slot of SLOTS) {
+  for (const slot of SOUND_SLOTS) {
     const blob = c.sounds[slot];
     const meta = c.state.customSounds[slot];
     if (!blob || !meta) continue;
@@ -98,17 +96,17 @@ export async function exportArchive(c: ArchiveContent): Promise<Blob> {
   return new Blob([data as BlobPart], { type: 'application/zip' });
 }
 
-const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
-const bad = () => new ImportError('invalid-data');
+/** The error for a file whose content is not what an export contains. */
+export const invalidData = () => new ImportError('invalid-data');
 
 /** `seen` holds the ids used so far in this roster: a missing or repeated id gets a fresh one. */
 function parsePlayer(v: unknown, seen: Set<string>): Player {
-  if (!isObj(v)) throw bad();
+  if (!isObj(v)) throw invalidData();
   const { name, number, position, onField, customText, id } = v;
-  if (typeof name !== 'string' || typeof number !== 'string' || typeof position !== 'string') throw bad();
-  if (typeof onField !== 'boolean') throw bad();
-  if (customText !== null && typeof customText !== 'string') throw bad();
-  for (const k of ['sayAs', 'origSpelling', 'nameLang'] as const) if (v[k] !== undefined && typeof v[k] !== 'string') throw bad();
+  if (typeof name !== 'string' || typeof number !== 'string' || typeof position !== 'string') throw invalidData();
+  if (typeof onField !== 'boolean') throw invalidData();
+  if (customText !== null && typeof customText !== 'string') throw invalidData();
+  for (const k of ['sayAs', 'origSpelling', 'nameLang'] as const) if (v[k] !== undefined && typeof v[k] !== 'string') throw invalidData();
   const ownId = typeof id === 'string' && id && !seen.has(id) ? id : newId();
   seen.add(ownId);
   return {
@@ -120,14 +118,14 @@ function parsePlayer(v: unknown, seen: Set<string>): Player {
 }
 
 function parseRoster(v: unknown, sport: SportId, lang: Lang): Roster {
-  if (!isObj(v)) throw bad();
+  if (!isObj(v)) throw invalidData();
   const str = (x: unknown) => {
     if (x === undefined) return '';
-    if (typeof x !== 'string') throw bad();
+    if (typeof x !== 'string') throw invalidData();
     return x;
   };
-  if (v.showPositions !== undefined && typeof v.showPositions !== 'boolean') throw bad();
-  if (!Array.isArray(v.players)) throw bad();
+  if (v.showPositions !== undefined && typeof v.showPositions !== 'boolean') throw invalidData();
+  if (!Array.isArray(v.players)) throw invalidData();
   const defaults = defaultTemplates(sport, lang);
   const t = isObj(v.templates) ? v.templates : {};
   const valid = TEMPLATE_KEYS.every((k) => typeof t[k] === 'string');
@@ -139,7 +137,7 @@ function parseRoster(v: unknown, sport: SportId, lang: Lang): Roster {
         guestScore: typeof t.guestScore === 'string' ? t.guestScore : defaults.guestScore,
       } as Record<TemplateKey, string>)
     : defaults;
-  if (v.guestPlayers !== undefined && !Array.isArray(v.guestPlayers)) throw bad();
+  if (v.guestPlayers !== undefined && !Array.isArray(v.guestPlayers)) throw invalidData();
   const seen = new Set<string>();
   const player = (p: unknown) => parsePlayer(p, seen);
   return {
@@ -159,37 +157,37 @@ function parseRoster(v: unknown, sport: SportId, lang: Lang): Roster {
 }
 
 function parseState(j: unknown): { state: AppState; speechIndex: Record<string, string> } {
-  if (!isObj(j)) throw bad();
+  if (!isObj(j)) throw invalidData();
   if (j.version !== 1) throw new ImportError('bad-version');
-  if (!SPORT_IDS.includes(j.sport as SportId)) throw bad();
-  if (!LANGS.includes(j.lang as Lang)) throw bad();
-  if (typeof j.voiceId !== 'string' || typeof j.soundsEnabled !== 'boolean') throw bad();
+  if (!SPORT_IDS.includes(j.sport as SportId)) throw invalidData();
+  if (!LANGS.includes(j.lang as Lang)) throw invalidData();
+  if (typeof j.voiceId !== 'string' || typeof j.soundsEnabled !== 'boolean') throw invalidData();
   const lang = j.lang as Lang;
-  if (!isObj(j.rosters)) throw bad();
+  if (!isObj(j.rosters)) throw invalidData();
   const rosters: AppState['rosters'] = {};
   for (const [k, r] of Object.entries(j.rosters)) {
-    if (!SPORT_IDS.includes(k as SportId)) throw bad();
+    if (!SPORT_IDS.includes(k as SportId)) throw invalidData();
     rosters[k as SportId] = parseRoster(r, k as SportId, lang);
   }
   const customSounds: Partial<Record<SoundSlot, CustomSound>> = {};
   const cs = j.customSounds === undefined ? {} : j.customSounds;
-  if (!isObj(cs)) throw bad();
+  if (!isObj(cs)) throw invalidData();
   for (const [k, m] of Object.entries(cs)) {
-    if (!SLOTS.includes(k as SoundSlot) || !isObj(m)) throw bad();
-    if (typeof m.name !== 'string' || typeof m.mime !== 'string') throw bad();
+    if (!SOUND_SLOTS.includes(k as SoundSlot) || !isObj(m)) throw invalidData();
+    if (typeof m.name !== 'string' || typeof m.mime !== 'string') throw invalidData();
     customSounds[k as SoundSlot] = { name: m.name, mime: m.mime };
   }
   const speechIndex: Record<string, string> = {};
   if (j.speechIndex !== undefined) {
-    if (!isObj(j.speechIndex)) throw bad();
+    if (!isObj(j.speechIndex)) throw invalidData();
     for (const [k, v] of Object.entries(j.speechIndex)) {
-      if (typeof v !== 'string') throw bad();
+      if (typeof v !== 'string') throw invalidData();
       speechIndex[k] = v;
     }
   }
   let localTts: AppState['localTts'] = null;
   if (j.localTts !== undefined && j.localTts !== null) {
-    if (!isObj(j.localTts) || typeof j.localTts.url !== 'string' || !isLocalUrl(j.localTts.url)) throw bad();
+    if (!isObj(j.localTts) || typeof j.localTts.url !== 'string' || !isLocalUrl(j.localTts.url)) throw invalidData();
     localTts = { url: j.localTts.url };
   }
   return {
@@ -212,7 +210,7 @@ export async function importArchive(file: Blob, limits: ImportLimits = IMPORT_LI
   try {
     raw = JSON.parse(strFromU8(jsonBytes));
   } catch {
-    throw bad();
+    throw invalidData();
   }
   const { state, speechIndex } = parseState(raw);
 
@@ -231,6 +229,6 @@ export async function importArchive(file: Blob, limits: ImportLimits = IMPORT_LI
       speech.set(speechIndex[sp[1]], new Blob([data as BlobPart], { type: 'audio/wav' }));
     }
   }
-  for (const slot of SLOTS) if (!sounds[slot]) delete state.customSounds[slot];
+  for (const slot of SOUND_SLOTS) if (!sounds[slot]) delete state.customSounds[slot];
   return { state, sounds, speech };
 }

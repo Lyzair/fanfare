@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
+import { playersOf } from '../domain/model';
 import type { Player, Side } from '../domain/model';
 import { parseSinglePlayer } from '../domain/roster';
 import { SPORTS } from '../domain/sports';
@@ -20,7 +21,7 @@ export default function PlayerEditor({ state, dispatch, side }: PanelProps & { s
   const lang = state.lang;
   const tr = (k: keyof UiStrings) => t(lang, k);
   const roster = currentRoster(state);
-  const players = side === 'guest' ? roster.guestPlayers : roster.players;
+  const players = playersOf(roster, side);
   const positions = getPack(lang).sports[state.sport].positions;
   const max = SPORTS[state.sport].fieldPlayers;
   const sayAs = useSayAs(state);

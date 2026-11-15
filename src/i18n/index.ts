@@ -50,6 +50,12 @@ export function detectLang(preferred: readonly string[]): Lang {
   return 'en';
 }
 
+/** The language the browser asks for, if Fanfare has it, else English. */
+export function browserLang(): Lang {
+  const prefs = typeof navigator === 'undefined' ? [] : navigator.languages?.length ? navigator.languages : [navigator.language];
+  return detectLang(prefs.filter(Boolean));
+}
+
 export function defaultTemplates(sport: SportId, lang: Lang): Record<TemplateKey, string> {
   return PACKS[lang].templates(sport);
 }

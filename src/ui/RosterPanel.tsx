@@ -3,6 +3,7 @@ import type { Side } from '../domain/model';
 import { getPack, t } from '../i18n';
 import type { UiStrings } from '../i18n';
 import { ImportError } from '../io/archive';
+import { blobText } from '../io/blob';
 import { MAX_TEAM_FILE_BYTES, parseTeamFile } from '../io/teamFile';
 import { currentRoster } from '../state/reducer';
 import { fill } from './fill';
@@ -14,10 +15,6 @@ import type { PanelProps } from './types';
 
 type Message = { kind: 'ok' | 'error'; text: string } | null;
 const TABS: Side[] = ['home', 'guest'];
-
-async function readText(file: Blob): Promise<string> {
-  return typeof file.text === 'function' ? file.text() : new Response(file).text();
-}
 
 export default function RosterPanel({ state, dispatch }: PanelProps) {
   const lang = state.lang;
@@ -56,7 +53,7 @@ export default function RosterPanel({ state, dispatch }: PanelProps) {
     if (file.size > MAX_TEAM_FILE_BYTES) return fail('teamFile.too-large');
     let team;
     try {
-      team = parseTeamFile(JSON.parse(await readText(file)));
+      team = parseTeamFile(JSON.parse(await blobText(file)));
     } catch (e) {
       return fail(e instanceof ImportError && e.code === 'bad-version' ? 'teamFile.bad-version' : 'teamFile.invalid-data');
     }

@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from 'preact/hooks';
-import type { SoundSlot } from '../domain/model';
+import { SOUND_SLOTS } from '../domain/model';
 import { t } from '../i18n';
 import type { UiStrings } from '../i18n';
 import { ImportError, exportArchive, importArchive } from '../io/archive';
@@ -15,8 +15,6 @@ import { usePwaState } from '../pwa/register';
 import { lineupTexts } from './actions';
 import { ServicesContext } from './types';
 import type { PanelProps } from './types';
-
-const SLOTS: SoundSlot[] = ['score', 'intro'];
 
 export default function DataPanel({ state, dispatch }: PanelProps) {
   const services = useContext(ServicesContext);
@@ -52,7 +50,7 @@ export default function DataPanel({ state, dispatch }: PanelProps) {
     setMessage(null);
     try {
       const sounds: ArchiveContent['sounds'] = {};
-      for (const slot of SLOTS) {
+      for (const slot of SOUND_SLOTS) {
         if (!state.customSounds[slot]) continue;
         let blob: Blob | null | undefined = recalledSound(slot);
         if (!blob) { try { blob = await loadSoundBlob(slot); } catch { blob = null; } }
@@ -99,8 +97,8 @@ export default function DataPanel({ state, dispatch }: PanelProps) {
       setMessage({ kind: 'error', key: 'import.failed' });
       return;
     }
-    for (const slot of SLOTS) rememberSound(slot, content.sounds[slot] ?? null);
-    for (const slot of SLOTS) {
+    for (const slot of SOUND_SLOTS) rememberSound(slot, content.sounds[slot] ?? null);
+    for (const slot of SOUND_SLOTS) {
       try { await saveSoundBlob(slot, content.sounds[slot] ?? null); } catch { /* private mode: in-memory copy is used */ }
     }
     setMessage({ kind: 'ok', key: 'importDone' });
@@ -111,7 +109,7 @@ export default function DataPanel({ state, dispatch }: PanelProps) {
     setMessage(null);
     speech.clear(); // first: a clip still being made must not be stored after the wipe
     try { await clearAll(); } catch { /* nothing stored or storage unavailable */ }
-    for (const slot of SLOTS) rememberSound(slot, null);
+    for (const slot of SOUND_SLOTS) rememberSound(slot, null);
     dispatch({ type: 'replaceAll', state: initialState(lang) });
     setMessage({ kind: 'ok', key: 'deleteDone' });
   };

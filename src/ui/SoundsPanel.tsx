@@ -1,4 +1,5 @@
 import { useRef, useState } from 'preact/hooks';
+import { SOUND_SLOTS } from '../domain/model';
 import type { Lang, SoundSlot } from '../domain/model';
 import { LANGS, getPack, t } from '../i18n';
 import type { UiStrings } from '../i18n';
@@ -16,10 +17,7 @@ import type { PanelProps } from './types';
 import { usePlayback } from './usePlayback';
 
 const MAX_BYTES = 10 * 1024 * 1024;
-const SLOTS: { slot: SoundSlot; label: keyof UiStrings }[] = [
-  { slot: 'score', label: 'slotScore' },
-  { slot: 'intro', label: 'slotIntro' },
-];
+const SLOT_LABEL: Record<SoundSlot, keyof UiStrings> = { score: 'slotScore', intro: 'slotIntro' };
 
 const getPackName = (code: string): string => ((LANGS as readonly string[]).includes(code) ? getPack(code as Lang).nativeName : code);
 
@@ -122,9 +120,9 @@ export default function SoundsPanel({ state, dispatch }: PanelProps) {
         {tr('playSounds')}
       </label>
       {error && <p role="alert" class="error">{tr(error)}</p>}
-      {SLOTS.map(({ slot, label }) => {
+      {SOUND_SLOTS.map(slot => {
         const custom = state.customSounds[slot];
-        const name = tr(label);
+        const name = tr(SLOT_LABEL[slot]);
         return (
           <div class="sound-slot" key={slot}>
             <strong>{name}</strong>

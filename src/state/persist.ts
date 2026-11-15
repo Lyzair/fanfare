@@ -1,5 +1,6 @@
 import { clear, createStore, del, get, keys, set } from 'idb-keyval';
 import type { AppState, SoundSlot } from '../domain/model';
+import { blobBytes } from '../io/blob';
 
 const store = createStore('fanfare', 'kv');
 
@@ -7,18 +8,8 @@ const store = createStore('fanfare', 'kv');
 // unreliable in some environments; the public API still uses Blob.
 interface StoredBlob { type: string; bytes: ArrayBuffer }
 
-function readBytes(b: Blob): Promise<ArrayBuffer> {
-  if (typeof b.arrayBuffer === 'function') return b.arrayBuffer();
-  return new Promise((res, rej) => {
-    const r = new FileReader();
-    r.onload = () => res(r.result as ArrayBuffer);
-    r.onerror = () => rej(r.error);
-    r.readAsArrayBuffer(b);
-  });
-}
-
 async function putBlob(key: string, b: Blob): Promise<void> {
-  const stored: StoredBlob = { type: b.type, bytes: await readBytes(b) };
+  const stored: StoredBlob = { type: b.type, bytes: await blobBytes(b) };
   await set(key, stored, store);
 }
 

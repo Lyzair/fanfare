@@ -4,7 +4,7 @@ import type { LinkStatus, PairResult } from '../remote/links';
 import type { RemoteCommand, RemotePlayer, RemoteStateEvent } from '../remote/protocol';
 import { SPORTS } from '../domain/sports';
 import type { SportId } from '../domain/model';
-import { detectLang, getPack, t } from '../i18n';
+import { browserLang, getPack, t } from '../i18n';
 import type { UiStrings } from '../i18n';
 import { ACCENT_CSS } from './accent';
 import { fill } from './fill';
@@ -13,14 +13,9 @@ const ERRORS: Record<Exclude<PairResult, { ok: true }>['error'], keyof UiStrings
   'wrong-code': 'remoteWrongCode', locked: 'remoteLocked', expired: 'remoteCodeExpired', full: 'remoteFull', network: 'remoteConnectFail',
 };
 
-function phoneLang() {
-  const prefs = typeof navigator === 'undefined' ? [] : navigator.languages?.length ? navigator.languages : [navigator.language];
-  return detectLang(prefs.filter(Boolean));
-}
-
 /** The soundboard on the phone (page opened with #remote). It only sends commands and never plays audio itself. */
 export default function RemoteApp() {
-  const lang = useMemo(phoneLang, []);
+  const lang = useMemo(browserLang, []);
   const tr = (k: keyof UiStrings) => t(lang, k);
   const dir = getPack(lang).dir;
   const [phase, setPhase] = useState<'code' | 'board' | 'ended'>(() => (RemoteLink.hasStoredSession() ? 'board' : 'code'));

@@ -1,5 +1,7 @@
 import type { AppState, CustomSound, Lang, Player, Roster, Side, SoundSlot, SportId, TeamFile, TemplateKey } from '../domain/model';
+import { isObj } from '../domain/guards';
 import { newId } from '../domain/id';
+import { playersOf } from '../domain/model';
 import { parsePlayerLines } from '../domain/roster';
 import { SPORT_IDS } from '../domain/sports';
 import { LANGS, defaultTemplates, getPack } from '../i18n';
@@ -38,7 +40,6 @@ export function currentRoster(s: AppState): Roster {
 }
 
 const strOr = (v: unknown): string => (typeof v === 'string' ? v : '');
-const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 
 function normalizePlayers(raw: unknown): Player[] {
   if (!Array.isArray(raw)) return [];
@@ -141,7 +142,7 @@ export function reducer(s: AppState, a: Action): AppState {
     }
     case 'removePlayer': return withPlayers(s, a.side, ps => ps.filter(p => p.id !== a.id));
     case 'restorePlayer': {
-      if (currentRoster(s)[listKey(a.side)].some(p => p.id === a.player.id)) return s;
+      if (playersOf(currentRoster(s), a.side).some(p => p.id === a.player.id)) return s;
       return withPlayers(s, a.side, ps => {
         const players = [...ps];
         players.splice(Math.min(Math.max(a.index, 0), players.length), 0, a.player);
@@ -149,7 +150,7 @@ export function reducer(s: AppState, a: Action): AppState {
       });
     }
     case 'movePlayer': {
-      const list = currentRoster(s)[listKey(a.side)];
+      const list = playersOf(currentRoster(s), a.side);
       const i = list.findIndex(p => p.id === a.id), j = i + a.delta;
       if (i < 0 || j < 0 || j >= list.length) return s;
       return withPlayers(s, a.side, ps => {

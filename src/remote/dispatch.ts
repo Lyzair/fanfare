@@ -1,3 +1,4 @@
+import { playersOf } from '../domain/model';
 import { currentRoster } from '../state/reducer';
 import { announce, callScore, playPlayer, playSound, stopPlaying } from '../ui/actions';
 import type { ActionEnv, LineupPart } from '../ui/actions';
@@ -18,8 +19,7 @@ export function runRemoteCommand(command: RemoteCommand, env: ActionEnv, activat
     case 'player': return playPlayer(env, command.args.id);
     case 'score': {
       const roster = currentRoster(env.state);
-      const list = command.args.team === 'guest' ? roster.guestPlayers : roster.players;
-      const scorer = list.find(p => p.onField && p.id === command.args.player) ?? null;
+      const scorer = playersOf(roster, command.args.team).find(p => p.onField && p.id === command.args.player) ?? null;
       callScore(env, command.args.team, scorer);
       return true;
     }
