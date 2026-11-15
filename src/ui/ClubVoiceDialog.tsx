@@ -127,6 +127,17 @@ export function ClubVoiceDialog({ lang, serverUrl, onSaved, onClose }: {
 
   const close = () => { active.current?.cancel(); dropRecording(); onClose(); };
 
+  /** Tab and Shift+Tab stay inside the dialog: the page behind it must not be reachable while the microphone may be on. */
+  const trapTab = (e: KeyboardEvent) => {
+    if (e.key !== 'Tab' || !root.current) return;
+    const controls = [...root.current.querySelectorAll<HTMLElement>('button:not([disabled]), input, select')];
+    if (controls.length === 0) return;
+    const first = controls[0], last = controls[controls.length - 1];
+    const from = document.activeElement;
+    if (e.shiftKey && (from === first || from === root.current)) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && from === last) { e.preventDefault(); first.focus(); }
+  };
+
   const errorView = () => {
     if (!error) return null;
     if (error instanceof RecordingError) {
@@ -139,7 +150,7 @@ export function ClubVoiceDialog({ lang, serverUrl, onSaved, onClose }: {
   return (
     <div class="club-dialog-backdrop">
       <div class="club-dialog" role="dialog" aria-modal="true" aria-labelledby="club-dialog-title" tabIndex={-1} ref={root}
-        onKeyDown={e => { if (e.key === 'Escape') { e.stopPropagation(); close(); } }}>
+        onKeyDown={e => { if (e.key === 'Escape') { e.stopPropagation(); close(); } else trapTab(e); }}>
         <h3 id="club-dialog-title">{tr('clubDialogTitle')}</h3>
         <p class="hint">{tr('clubReadIntro')}</p>
         <blockquote class="club-reading" lang={lang}>{tr('clubReadText')}</blockquote>

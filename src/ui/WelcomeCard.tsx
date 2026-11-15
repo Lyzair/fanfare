@@ -4,7 +4,7 @@ import { t } from '../i18n';
 export function WelcomeCard({ lang, onDismiss }: { lang: Lang; onDismiss: () => void }) {
   return (
     <section class="card welcome" aria-labelledby="welcome-title">
-      <h2 id="welcome-title">{t(lang, 'welcomeTitle')}</h2>
+      <h2 id="welcome-title" tabIndex={-1}>{t(lang, 'welcomeTitle')}</h2>
       <ol class="welcome-steps">
         <li>{t(lang, 'welcomeLine1')}</li>
         <li>{t(lang, 'welcomeLine2')}</li>

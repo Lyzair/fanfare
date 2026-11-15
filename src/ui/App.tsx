@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useReducer, useRef, useState } from 'preact/hooks';
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'preact/hooks';
 import { AudioQueue } from '../audio/queue';
 import { browserLang, getPack, t } from '../i18n';
 import { initialState, reducer } from '../state/reducer';
+import type { Action } from '../state/reducer';
 import { loadState, saveState } from '../state/persist';
 import { applyUpdate, usePwaState } from '../pwa/register';
 import { PiperEngine } from '../tts/engine';
@@ -33,7 +34,14 @@ function welcomeDismissedBefore(): boolean {
 }
 
 export function App() {
-  const [state, dispatch] = useReducer(reducer, undefined, () => initialState(browserLang()));
+  const [state, dispatchState] = useReducer(reducer, undefined, () => initialState(browserLang()));
+  // The player rows keep what was typed in their own inputs. When the whole state is replaced (load,
+  // import, delete all) the roster panel is built anew, so that it shows the new data.
+  const [rosterVersion, setRosterVersion] = useState(0);
+  const dispatch = useCallback((a: Action) => {
+    if (a.type === 'replaceAll') setRosterVersion(n => n + 1);
+    dispatchState(a);
+  }, []);
   const [loaded, setLoaded] = useState(false);
   const [storageFailed, setStorageFailed] = useState(false);
   const [, setClipsLoaded] = useState(false);
@@ -89,6 +97,11 @@ export function App() {
     };
   }, []);
 
+  const showHelp = () => {
+    setShowWelcome(true);
+    // the card is at the top: without moving focus, nothing visible happens further down the page
+    requestAnimationFrame(() => document.getElementById('welcome-title')?.focus());
+  };
   const dismissWelcome = () => {
     setShowWelcome(false);
     try { localStorage.setItem(WELCOME_KEY, '1'); } catch { /* session-only dismissal */ }
@@ -105,7 +118,7 @@ export function App() {
     <ServicesContext.Provider value={value}>
       <style>{ACCENT_CSS}</style>
       <div class="app" data-sport={state.sport}>
-        <Header state={state} dispatch={dispatch} onHelp={() => setShowWelcome(true)} />
+        <Header state={state} dispatch={dispatch} onHelp={showHelp} />
         {storageFailed && <p class="notice" role="status">{t(state.lang, 'saveUnavailable')}</p>}
         {pwa.updateReady && (
           <p class="notice update-notice" role="status">
@@ -125,7 +138,7 @@ export function App() {
                 <h2 id={`step${n}-title`} tabIndex={-1}>{n} {t(state.lang, `step${n}Title`)}</h2>
                 <p class="hint">{t(state.lang, `step${n}Hint`)}</p>
                 <ShowMe lang={state.lang} step={n} />
-                <div class="panel-body"><Panel state={state} dispatch={dispatch} /></div>
+                <div class="panel-body"><Panel key={n === 1 ? rosterVersion : undefined} state={state} dispatch={dispatch} /></div>
               </section>
             );
           })}

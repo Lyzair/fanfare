@@ -146,3 +146,27 @@ test('a failed load never overwrites the stored data with defaults', async () =>
   await act(async () => { await new Promise(r => setTimeout(r, 450)); });
   expect(save).not.toHaveBeenCalled();
 });
+
+test('importing a backup with the same players shows the imported names, not what was typed before', async () => {
+  const { exportArchive } = await import('../../src/io/archive');
+  localStorage.setItem('fanfare.welcomeDismissed', '1');
+  const saved = reducer(initialState('en'), { type: 'addPlayers', text: 'Lea', onField: true });
+  await persist.saveState(saved);
+  const backup = new File([await exportArchive({ state: saved, sounds: {}, speech: new Map() })], 'backup.zip');
+  render(<App />);
+  const name = await screen.findByLabelText('Name: Lea');
+  await userEvent.type(name, 'nder');
+  expect(await screen.findByLabelText('Name: Leander')).toHaveValue('Leander');
+  vi.spyOn(window, 'confirm').mockReturnValue(true);
+  await userEvent.upload(screen.getByLabelText(t('en', 'importData'), { selector: 'input' }), backup);
+  expect(await screen.findByText(t('en', 'importDone'))).toBeInTheDocument();
+  expect(await screen.findByLabelText('Name: Lea')).toHaveValue('Lea');
+});
+
+test('the ? button shows the welcome card again and moves focus to it', async () => {
+  localStorage.setItem('fanfare.welcomeDismissed', '1');
+  render(<App />);
+  await userEvent.click(await screen.findByRole('button', { name: t('en', 'helpButton') }));
+  const title = await screen.findByRole('heading', { name: t('en', 'welcomeTitle') });
+  await waitFor(() => expect(title).toHaveFocus());
+});

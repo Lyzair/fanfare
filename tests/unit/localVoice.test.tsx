@@ -289,3 +289,21 @@ test('dialog: only server-supported languages are offered; an unsupported page l
   expect(select.value).toBe('en');
   expect(Array.from(select.options).map(o => o.value).sort()).toEqual(['ar', 'de', 'en', 'es', 'fr', 'it', 'nl', 'pl', 'tr']);
 });
+
+test('dialog: Tab stays inside the dialog (it wraps from the last control to the first and back)', async () => {
+  fetchMock.mockResolvedValue(json(VOICES));
+  setup();
+  await connect();
+  await userEvent.click(await screen.findByRole('button', { name: '🎙 Record club voice' }));
+  const dialog = screen.getByRole('dialog');
+  const controls = [...dialog.querySelectorAll<HTMLElement>('button:not([disabled]), input, select')];
+  const first = controls[0], last = controls[controls.length - 1];
+  last.focus();
+  await userEvent.tab();
+  expect(first).toHaveFocus();
+  await userEvent.tab({ shift: true });
+  expect(last).toHaveFocus();
+  dialog.focus(); // where focus lands when the dialog opens
+  await userEvent.tab({ shift: true });
+  expect(last).toHaveFocus();
+});

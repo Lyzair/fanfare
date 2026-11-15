@@ -103,7 +103,7 @@ button, input, textarea { min-height: 44px; font: inherit; }
 .roster-panel .tabs .tab[aria-selected="true"] { border-block-end-color: var(--accent, currentColor); background: var(--card); }
 .tabpanel { display: grid; gap: 12px; min-width: 0; }
 .roster-panel .file-button { min-height: 44px; }
-.guest-list-title { margin: 12px 0 0; font-size: 1.05rem; }
+.team-list-title { margin: 12px 0 0; font-size: 1.05rem; }
 .share-team { display: grid; gap: 4px; margin-block-start: 8px; justify-items: start; }
 .share-team .hint { margin: 0; }
 .callout-actions.secondary { margin-block-start: 0; }

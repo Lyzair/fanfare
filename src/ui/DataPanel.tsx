@@ -36,11 +36,12 @@ export default function DataPanel({ state, dispatch }: PanelProps) {
       if (cancelled) return;
       setVoiceStored(stored);
       setAllClips(clips);
-      if (!(stored || clips)) timer = setTimeout(() => void check(), 2000); // pick up a finished "Prepare voices"
+      // pick up a finished "Prepare voices"; without the offline shell the answer is "not ready" whatever the voice state
+      if (pwa.controlled && !(stored || clips)) timer = setTimeout(() => void check(), 2000);
     };
     void check();
     return () => { cancelled = true; clearTimeout(timer); };
-  }, [voiceId, state, speechForStatus]);
+  }, [voiceId, state, speechForStatus, pwa.controlled]);
   if (!services) return null;
   const { speech } = services;
   const offline: OfflineStatus = offlineStatus({ controlled: pwa.controlled, voiceStored, allClips });
