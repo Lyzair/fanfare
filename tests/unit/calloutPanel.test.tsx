@@ -221,8 +221,9 @@ test('Stop button visible only while playing', async () => {
 test('Prepare voices: second click while preparing does not start another prepare; done message on success', async () => {
   const { services, speech } = makeServices();
   let release!: () => void;
-  speech.prepare.mockImplementationOnce(async (_v, _t, onProgress) => {
+  speech.prepare.mockImplementationOnce(async (v, texts, onProgress) => {
     await new Promise<void>(r => { release = r; });
+    texts.forEach(x => void speech.get(v, x));
     onProgress(4, 4);
   });
   render(<Harness services={services} init={setup} />);
@@ -235,6 +236,22 @@ test('Prepare voices: second click while preparing does not start another prepar
   expect(await screen.findByText('All voices ready ✓')).toBeInTheDocument();
   expect(btn).toBeEnabled();
   expect(screen.queryByText(/^\d+ \/ \d+$/)).toBeNull();
+});
+
+test('Prepare voices cut short (the clips were replaced under it) does not claim that all voices are ready', async () => {
+  const { services, speech } = makeServices();
+  // what SpeechCache.prepare does when an import or "Delete all" lands: it stops and resolves
+  speech.prepare.mockImplementationOnce(async (v, texts, onProgress) => {
+    void speech.get(v, texts[0]);
+    onProgress(1, 4);
+  });
+  render(<Harness services={services} init={setup} />);
+  const btn = screen.getByRole('button', { name: /Prepare voices/ });
+  await userEvent.click(btn);
+  await waitFor(() => expect(btn).toBeEnabled());
+  expect(screen.queryByText(/^\d+ \/ \d+$/)).toBeNull();
+  expect(screen.queryByText('All voices ready ✓')).toBeNull();
+  expect(screen.queryByRole('alert')).toBeNull();
 });
 
 test('Prepare voices failure clears progress, re-enables the button and shows the alert', async () => {
