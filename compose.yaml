@@ -2,7 +2,7 @@
 # (the first build downloads about 660 MB of voices). Details: docs/self-hosting.md
 #
 # Default is plain HTTP on this computer only. HTTPS for phones on your Wi-Fi is OPT-IN and has
-# risks (a local certificate authority); read "HTTPS on the LAN" in docs/self-hosting.md first.
+# risks (a local certificate authority; compose.https.yaml); read "HTTPS on the LAN" in docs/self-hosting.md first.
 # This image serves the app only. The phone remote ("soundboard mode") needs fanfare-local.py.
 name: fanfare
 services:
@@ -13,9 +13,7 @@ services:
     ports:
       # Host port: FANFARE_PORT (default 8080; set it if something else already uses 8080).
       - "127.0.0.1:${FANFARE_PORT:-8080}:8080"
-      # LAN with HTTPS (opt-in, see the risks in docs/self-hosting.md): set FANFARE_HOST (for
-      # example fanfare.lan or this computer's LAN address) and publish the HTTPS port:
-      # - "8443:8443"
+      # LAN with HTTPS (opt-in, with risks): add -f compose.https.yaml (publishes 8443); see docs/self-hosting.md.
       # Real domain with Let's Encrypt (FANFARE_ACME=1 as well; open these on your router):
       # - "80:8080"
       # - "443:8443"
@@ -23,7 +21,7 @@ services:
       FANFARE_HOST: "${FANFARE_HOST:-}"
       FANFARE_ACME: "${FANFARE_ACME:-}"
     volumes:
-      - caddy-data:/data        # Caddy's certificates (only used with FANFARE_HOST)
+      - caddy-data:/data        # Caddy's storage (only used for Let's Encrypt, FANFARE_ACME=1)
     read_only: true
     tmpfs:
       - /tmp
@@ -31,7 +29,7 @@ services:
     security_opt:
       - no-new-privileges:true
     healthcheck:   # same as the Dockerfile HEALTHCHECK (images built in OCI format drop that one)
-      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/"]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8081/"]
       interval: 15s
       timeout: 4s
       retries: 3

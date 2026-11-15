@@ -45,5 +45,5 @@ ENV XDG_DATA_HOME=/data XDG_CONFIG_HOME=/config
 USER fanfare
 EXPOSE 8080 8443
 HEALTHCHECK --interval=15s --timeout=4s --start-period=5s --retries=3 \
-  CMD wget -q -O /dev/null http://127.0.0.1:8080/ || exit 1
+  CMD wget -q -O /dev/null http://127.0.0.1:8081/ || exit 1
 ENTRYPOINT ["/usr/local/bin/fanfare-entrypoint"]

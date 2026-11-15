@@ -50,6 +50,8 @@ jobs:
   # Builds the Docker image and runs tests/docker/smoke.sh against it. Nothing is published.
   docker-smoke:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3

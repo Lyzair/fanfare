@@ -47,3 +47,9 @@
 
 	file_server
 }
+
+# Container health check target: only reachable from inside the container (bound to loopback).
+(health) {
+	bind 127.0.0.1
+	respond "ok" 200
+}

@@ -1,15 +1,16 @@
-# Opt-in (FANFARE_HOST set): HTTPS on port 8443 with Caddy's own local certificate authority
-# ("tls internal"), plus the plain HTTP site on 8080. Chosen by docker/entrypoint.sh, which
-# prints the risks first. Remove the CA again: docs/self-hosting.md.
+# Opt-in (FANFARE_HOST + FANFARE_ACCEPT_CA_RISK=1 + certificates in /certs): HTTPS on port 8443
+# with a certificate from the name-constrained local CA made by `fanfare-local.py --issue-certs`
+# (the same CA as `fanfare-local --lan --https`). Caddy creates no CA of its own. The plain HTTP
+# site on 8080 stays. Chosen by docker/entrypoint.sh, which prints the risks and checks the files.
 {
 	admin off
 	persist_config off
 	http_port 8080
 	https_port 8443
 	auto_https disable_redirects
-	skip_install_trust
 	log {
 		level WARN
+		exclude http.log.error
 	}
 }
 
@@ -19,7 +20,11 @@ import /etc/caddy/fanfare.caddy
 	import fanfare
 }
 
+http://127.0.0.1:8081 {
+	import health
+}
+
 {$FANFARE_HOST}:8443 {
-	tls internal
+	tls /certs/server.crt /certs/server.key
 	import fanfare
 }

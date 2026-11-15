@@ -1,0 +1,22 @@
+# Optional override: HTTPS for phones on your LAN. OPT-IN, HAS RISKS: it uses the same
+# name-constrained local certificate authority as `fanfare-local --lan --https`; read the risk
+# list in docs/self-hosting.md (the container prints it too). Steps:
+#   1. python3 scripts/fanfare-local.py --issue-certs ./certs --name fanfare.local --ip 192.168.1.20
+#   2. FANFARE_HOST=fanfare.local FANFARE_ACCEPT_CA_RISK=1 \
+#        docker compose -f compose.yaml -f compose.https.yaml up -d --build
+# The container refuses to start HTTPS when the certificate files are missing, do not cover
+# FANFARE_HOST, or have expired. Without FANFARE_ACCEPT_CA_RISK=1 only plain HTTP is served.
+services:
+  fanfare:
+    # The private key is owned by whoever ran --issue-certs and has mode 0600, so the container must
+    # run as that user. Rootless Podman: the default 0 (root inside = you outside; capabilities are
+    # still all dropped). Docker: FANFARE_UID=$(id -u) FANFARE_GID=$(id -g)
+    user: "${FANFARE_UID:-0}:${FANFARE_GID:-0}"
+    ports:
+      # Reachable from the LAN on purpose. Limit with FANFARE_HTTPS_BIND=<this computer's LAN address>.
+      - "${FANFARE_HTTPS_BIND:-0.0.0.0}:${FANFARE_HTTPS_PORT:-8443}:8443"
+    environment:
+      FANFARE_ACCEPT_CA_RISK: "${FANFARE_ACCEPT_CA_RISK:-}"
+      XDG_DATA_HOME: /tmp          # Caddy keeps nothing across restarts in this mode
+    volumes:
+      - "${FANFARE_CERTS_DIR:-./certs}:/certs:ro"

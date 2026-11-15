@@ -18,7 +18,7 @@ services:
       - "127.0.0.1:5123:5123"
     environment:
       # Pages allowed to use Studio. Add the HTTPS address when you use FANFARE_HOST, for example
-      # FANFARE_STUDIO_EXTRA_ORIGINS=,https://fanfare.lan:8443
+      # FANFARE_STUDIO_EXTRA_ORIGINS=,https://fanfare.local:8443
       FANFARE_ALLOWED_ORIGINS: "http://localhost:${FANFARE_PORT:-8080},http://127.0.0.1:${FANFARE_PORT:-8080}${FANFARE_STUDIO_EXTRA_ORIGINS:-}"
       HF_HUB_DISABLE_TELEMETRY: "1"
     volumes:

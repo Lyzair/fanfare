@@ -6,6 +6,8 @@
 	auto_https off
 	log {
 		level WARN
+		# Error log lines carry the request (client address, User-Agent): never keep them (GDPR).
+		exclude http.log.error
 	}
 }
 
@@ -13,4 +15,8 @@ import /etc/caddy/fanfare.caddy
 
 :8080 {
 	import fanfare
+}
+
+http://127.0.0.1:8081 {
+	import health
 }

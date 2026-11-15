@@ -2,6 +2,7 @@
 """Serve Fanfare from your own computer. No internet needed, nothing leaves this machine.
 
     python3 fanfare-local.py [FOLDER] [--port N] [--lan [--https]] [--open] [--forget-ca]
+    python3 fanfare-local.py --issue-certs DIR --name fanfare.local [--ip 192.168.1.20]   (for the Docker setup)
 
 Python 3.9 or newer, standard library only. HTTPS for --lan needs either the `openssl`
 command or the `cryptography` Python package (to create a private local certificate).
@@ -533,6 +534,60 @@ def forget_ca(cfg, yes, out, ask, interactive):
     out('Deleted the local certificate authority and keys. Now remove the certificate on each phone:')
     out('  ' + REMOVAL['en'])
     return True
+
+
+def _not_after(path):
+    """Expiry of a PEM certificate as epoch seconds."""
+    try:
+        return ssl.cert_time_to_seconds(ssl._ssl._test_decode_cert(str(path))['notAfter'])
+    except Exception:  # private helper missing: fall back to "issued now + SERVER_DAYS"
+        return int(Path(path).stat().st_mtime) + SERVER_DAYS * 86400
+
+
+def issue_certs(target, names, ips, cfg, accept_risk, out, ask, interactive):
+    """Write ONLY server.crt, server.key and two small info files into `target`, then stop.
+
+    Uses the same name-constrained local CA as --lan --https (created after the same risk
+    prompt when it does not exist yet). The CA key never leaves `cfg`.
+    """
+    target, cfg = Path(target).resolve(), Path(cfg).resolve()
+    if target == cfg or cfg in target.parents or target in cfg.parents:
+        raise StartError('The output folder and the CA folder (%s) must be separate folders.' % cfg)
+    if not names and not ips:
+        raise StartError('Give at least one --name (for example fanfare.local) or --ip (for example 192.168.1.20).')
+    try:
+        keep_ips, keep_names, skipped = _sans(ips, names)
+    except ValueError as e:
+        raise StartError('Not a valid IPv4 address: %s' % e)
+    if skipped:
+        out('Left out of the certificate (outside private/local ranges, which the local CA is limited to): '
+            + ', '.join(skipped))
+    if not keep_ips and not keep_names:
+        raise StartError('Nothing left to certify. Use a name ending in .local (or localhost) or a private IPv4 address.')
+    if not available_backends():
+        raise StartError('Neither the "openssl" command nor the Python package "cryptography" was found. '
+                         'Install OpenSSL, or run: pip install cryptography')
+    if not ca_is_current(cfg) and not confirm_new_ca(accept_risk, out, ask, interactive):
+        raise StartError('No certificate authority and no certificate were created.')
+    certs = ensure_certs(cfg, keep_ips, keep_names)
+    for note in certs.notices:
+        out('NOTICE: ' + note)
+    target.mkdir(parents=True, exist_ok=True)
+    (target / 'server.crt').write_bytes(certs.server_cert.read_bytes())
+    _write_private(target / 'server.key', certs.server_key.read_bytes())
+    (target / 'hosts.txt').write_text('\n'.join(keep_names + keep_ips) + '\n')
+    expires = _not_after(target / 'server.crt')
+    (target / 'expires.txt').write_text('%d\n' % expires)
+    out('Wrote server.crt, server.key (private), hosts.txt and expires.txt to %s' % target)
+    out('  Covers: %s' % ', '.join(keep_names + keep_ips))
+    out('  Valid until: %s' % datetime.datetime.fromtimestamp(expires, datetime.timezone.utc).strftime('%Y-%m-%d'))
+    out('  Issue again before then (the Docker setup warns 30 days ahead and refuses an expired certificate).')
+    out('  SHA-256 of the local CA: %s' % certs.fingerprint)
+    out('  Phones: install %s as a CA certificate (Android: Settings > Security > Encryption & credentials > '
+        'Install a certificate > CA certificate; iPhone: open the file, install the profile, then Settings > General > '
+        'About > Certificate Trust Settings > switch it on) and compare the fingerprint above.' % certs.ca_cert)
+    out('  ' + REMOVAL['en'])
+    return certs
 
 
 # ----------------------------------------------------------------------------- trust page
@@ -1288,6 +1343,11 @@ def _parser():
                    help='with --https: create the certificate authority without asking (for scripts / no terminal)')
     p.add_argument('--forget-ca', action='store_true',
                    help='delete the local certificate authority and keys from this computer, then exit')
+    p.add_argument('--issue-certs', metavar='DIR',
+                   help='write server.crt and server.key (never the CA key) for the given --name/--ip into DIR, then exit '
+                        '(for the Docker setup; creates the local CA after the same risk prompt as --https)')
+    p.add_argument('--name', action='append', default=[], help='with --issue-certs: a name, e.g. fanfare.local (repeatable)')
+    p.add_argument('--ip', action='append', default=[], help='with --issue-certs: a private IPv4 address (repeatable)')
     p.add_argument('--yes', action='store_true', help='with --forget-ca: do not ask for confirmation')
     p.add_argument('--open', action='store_true', help='open the browser')
     p.add_argument('--config-dir', help='where the local CA and keys are kept (default: your user config folder)')
@@ -1315,6 +1375,9 @@ def start(argv, out=say, ask=input, interactive=None):
 
     if args.forget_ca:
         forget_ca(cfg, args.yes, out, ask, interactive)
+        return None
+    if args.issue_certs:
+        issue_certs(args.issue_certs, args.name, args.ip, cfg, args.accept_ca_risk, out, ask, interactive)
         return None
 
     host = '0.0.0.0' if args.lan else '127.0.0.1'

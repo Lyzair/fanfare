@@ -69,8 +69,8 @@ docker compose up -d --build     # then open http://localhost:8080 (FANFARE_PORT
 ```
 
 Builds the site and serves it with Caddy: plain HTTP on this computer, no access logs. HTTPS for phones
-on your LAN is optional and **has risks** (a local certificate authority; the same risk list as
-`fanfare-local --https`, printed at start-up and in the guide). Optional Fanfare Studio, updating and
+on your LAN is optional and **has risks** (the same name-constrained local certificate authority and risk list as
+`fanfare-local --https`; certificates come from `fanfare-local.py --issue-certs`). Optional Fanfare Studio, updating and
 removal: [docs/self-hosting.md](docs/self-hosting.md). The phone remote needs `fanfare-local`.
 
 ## Third-party licences

@@ -54,9 +54,13 @@ BASE="http://127.0.0.1:${FANFARE_PORT}"
 
 dc() { "${COMPOSE[@]}" -p "$PROJECT" -f compose.yaml "$@"; }
 
+TMP=$(mktemp -d)
+dch() { "${COMPOSE[@]}" -p "$PROJECT" -f compose.yaml -f compose.https.yaml "$@"; }
 cleanup() {
   echo "smoke: cleaning up"
+  dch down -v >/dev/null 2>&1 || true
   dc down -v >/dev/null 2>&1 || true
+  rm -rf "$TMP"
 }
 trap cleanup EXIT
 
@@ -144,12 +148,72 @@ marker="smoke-nolog-$$-$RANDOM"
 curl -s -o /dev/null -H 'User-Agent: smoke-ua-marker' "$BASE/$marker?q=secret"
 sleep 1
 logs=$($ENGINE logs "$CID" 2>&1)
-if echo "$logs" | grep -q -e "$marker" -e 'smoke-ua-marker' -e 'handled request' -e '127\.0\.0\.1:[0-9]*"'; then
+if echo "$logs" | grep -q -e "$marker" -e 'smoke-ua-marker' -e 'handled request' -e '"remote_ip"' -e '"client_ip"' -e '"remote_addr"' -e 'User-Agent'; then
   bad "the container log contains request details"; echo "$logs" | tail -5
 else ok "no access-log lines after a request"; fi
 lines=$(echo "$logs" | grep -c . || true)
 echo "  info container log has $lines line(s) in total"
 
+# default mode: no certificate authority, nothing on 8443, version
+echo "  info $($ENGINE exec "$CID" caddy version)"
+if $ENGINE exec "$CID" sh -c 'test -e /data/caddy/pki'; then bad "default mode created a PKI folder"; else ok "default mode created no CA / PKI folder"; fi
+if $ENGINE exec "$CID" sh -c 'grep -qiE ":20FB [0-9A-F:]+ 0A" /proc/net/tcp /proc/net/tcp6'; then bad "something listens on 8443 in default mode"; else ok "nothing listens on 8443 in default mode"; fi
+
 echo "smoke: image size: $($ENGINE image inspect "$FANFARE_IMAGE" --format '{{.Size}}' | awk '{printf "%.1f MB", $1/1048576}')"
+dc down -v >/dev/null 2>&1
+
+# ---- HTTPS mode: certificates from the name-constrained local CA (fanfare-local.py --issue-certs)
+echo "smoke: HTTPS mode"
+if command -v python3 >/dev/null && { command -v openssl >/dev/null || python3 -c 'import cryptography' 2>/dev/null; }; then
+  FL="python3 scripts/fanfare-local.py --config-dir $TMP/cfg"
+  # shellcheck disable=SC2086
+  $FL --issue-certs "$TMP/certs" --name fanfare.local --ip 127.0.0.1 --accept-ca-risk >"$TMP/issue.log" 2>&1 \
+    && ok "--issue-certs wrote the certificate" || { bad "--issue-certs failed"; cat "$TMP/issue.log"; }
+  [ ! -e "$TMP/certs/ca.key" ] && ok "CA key is not in the certificate folder" || bad "CA key leaked into the certificate folder"
+  HPORT=$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1",0)); print(s.getsockname()[1])')
+  export FANFARE_CERTS_DIR="$TMP/certs" FANFARE_HTTPS_BIND=127.0.0.1 FANFARE_HTTPS_PORT="$HPORT" FANFARE_HOST=fanfare.local
+  chmod 755 "$TMP" "$TMP/certs"
+
+  # 1. without the risk acknowledgement only HTTP is served
+  dch up -d >/dev/null 2>&1
+  for _ in $(seq 1 30); do [ "$(curl -s -o /dev/null -w '%{http_code}' "$BASE/")" = 200 ] && break; sleep 1; done
+  HCID=$($ENGINE ps -q --filter "label=com.docker.compose.project=$PROJECT" | head -n1)
+  hlogs=$($ENGINE logs "$HCID" 2>&1)
+  echo "$hlogs" | grep -q "only plain HTTP is served" && ok "without FANFARE_ACCEPT_CA_RISK=1 only HTTP is served (risks printed)" || bad "risk gate missing"
+  echo "$hlogs" | grep -q "Thanks to name constraints" && ok "risk list printed verbatim" || bad "risk list not printed"
+  curl -sk --max-time 3 -o /dev/null "https://127.0.0.1:$HPORT/" && bad "HTTPS answered without the risk flag" || ok "no HTTPS without the risk flag"
+  dch down -v >/dev/null 2>&1
+
+  # 2. with the flag
+  export FANFARE_ACCEPT_CA_RISK=1
+  dch up -d >/dev/null 2>&1
+  code=000
+  for _ in $(seq 1 30); do
+    code=$(curl -s -o /dev/null -w '%{http_code}' --cacert "$TMP/cfg/ca.crt" --resolve "fanfare.local:$HPORT:127.0.0.1" "https://fanfare.local:$HPORT/") || true
+    [ "$code" = 200 ] && break; sleep 1
+  done
+  expect "HTTPS with the local CA is 200" "$code" 200
+  hcsp=$(curl -s -D - -o /dev/null --cacert "$TMP/cfg/ca.crt" --resolve "fanfare.local:$HPORT:127.0.0.1" "https://fanfare.local:$HPORT/" | tr -d '\r' | grep -i '^content-security-policy:' | sed 's/^[^:]*: *//')
+  expect "HTTPS CSP header equals the CSP in index.html" "$hcsp" "$meta_csp"
+  curl -s --max-time 5 -o /dev/null --resolve "fanfare.local:$HPORT:127.0.0.1" "https://fanfare.local:$HPORT/" && bad "certificate is accepted without the CA" || ok "certificate is not trusted without the local CA"
+  HCID=$($ENGINE ps -q --filter "label=com.docker.compose.project=$PROJECT" | head -n1)
+  if $ENGINE exec "$HCID" sh -c 'test -e /data/caddy/pki'; then bad "Caddy made its own CA"; else ok "Caddy made no CA of its own"; fi
+  dch down -v >/dev/null 2>&1
+
+  # 3. a host the certificate does not cover is refused
+  export FANFARE_HOST=other.local
+  dch up -d >/dev/null 2>&1
+  sleep 3
+  dch logs 2>&1 | grep -q "does not cover FANFARE_HOST" \
+    && ok "uncovered FANFARE_HOST is refused" || bad "uncovered FANFARE_HOST was not refused"
+  dch down -v >/dev/null 2>&1
+  unset FANFARE_ACCEPT_CA_RISK FANFARE_CERTS_DIR FANFARE_HTTPS_BIND FANFARE_HTTPS_PORT FANFARE_HOST
+
+  # shellcheck disable=SC2086
+  $FL --forget-ca --yes >/dev/null 2>&1 && [ ! -e "$TMP/cfg/ca.key" ] && ok "--forget-ca removed the temporary CA" || bad "--forget-ca failed"
+else
+  echo "  skip HTTPS mode: python3 with openssl or cryptography is needed"
+fi
+
 echo "smoke: $pass passed, $fail failed"
 [ "$fail" -eq 0 ]
