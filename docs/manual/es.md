@@ -72,6 +72,10 @@ Abre el paso 4 **Sonidos y voz**. Aquí puedes:
 
 ![Ajustes de voz y sonidos](media/es/05-sounds.png)
 
+**Voces de tu propio ordenador (avanzado).** Si en tu ordenador funciona un servidor de voz como Fanfare Studio, abre **Servidor de voz local (avanzado)** en el paso 4 y pulsa **Conectar**. Sus voces aparecen en la lista de voces bajo **En este ordenador**. Elige una, pulsa **Preparar voces** y **Exportar**, e importa el zip en tu móvil: el día del partido el móvil reproduce los clips guardados sin el servidor. Si un clip suena raro, pulsa **↻ Regenerar** en su fila. Si Fanfare avisa de que el servidor no permite esta web, muestra el comando exacto (`fanfare-studio allow …`) que debes ejecutar una vez en ese ordenador, con un botón **Copiar comando**. Solo se aceptan direcciones de tu propio ordenador (localhost o 127.0.0.1). Fanfare Studio marca cada clip como generado por IA; comprueba la licencia de un modelo de voz antes de compartir clips fuera de tu club.
+
+**La voz de locutor de tu propio club.** Con un servidor de voz conectado puedes pulsar **🎙 Grabar la voz del club**, leer en voz alta el texto corto (unos 15 segundos; se detiene solo a los 20), escucharlo con ▶, ponerle un nombre a la voz y marcar la casilla de consentimiento. Usa solo tu propia voz o la de alguien que haya aceptado que se use para los anuncios de tu club, y nunca imites a personas famosas ni a nadie que no haya dado su consentimiento. La grabación va solo a tu propio ordenador y Fanfare no la conserva, ni siquiera en la exportación. La nueva voz aparece bajo **En este ordenador**. El botón **🗑** la borra, incluida su grabación en el servidor de voz.
+
 ## 6. Guardar, pasar a otro dispositivo, borrar
 
 Abre el paso 5 **Guardar y privacidad**.

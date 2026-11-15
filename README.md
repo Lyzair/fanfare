@@ -2,7 +2,7 @@
 
 Fanfare is a single static web page where a sports club enters its players and an in-browser AI voice announces the lineup, like a stadium announcer.
 
-**Privacy promise:** everything runs in your browser. Player data never leaves your device, and the page makes no requests to any origin other than its own: no CDNs, no analytics, no cloud text-to-speech.
+**Privacy promise:** everything runs in your browser. Player data never leaves your device, and the page makes no requests to any origin other than its own: no CDNs, no analytics, no cloud text-to-speech. The one optional exception is a voice server that you run yourself on your own computer (`localhost` / `127.0.0.1` only), contacted only after you connect it in step 4 (see [docs/local-voice-server.md](docs/local-voice-server.md)).
 
 **Live demo:** https://<user>.github.io/<repo>/
 

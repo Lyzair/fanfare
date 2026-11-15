@@ -72,6 +72,10 @@ Ouvrez l'étape 4 **Sons et voix**. Vous pouvez :
 
 ![Réglages de la voix et des sons](media/fr/05-sounds.png)
 
+**Des voix de ton propre ordinateur (avancé).** Si un serveur de voix comme Fanfare Studio tourne sur ton ordinateur, ouvre **Serveur de voix local (avancé)** à l'étape 4 et appuie sur **Connecter**. Ses voix apparaissent alors dans la liste des voix sous **Sur cet ordinateur**. Choisis-en une, appuie sur **Préparer les voix** puis **Exporter**, et importe le zip sur ton téléphone : le jour du match, le téléphone lit les clips enregistrés sans le serveur. Si un clip sonne bizarrement, appuie sur **↻ Régénérer** sur sa ligne. Si Fanfare indique que le serveur n'autorise pas ce site, il affiche la commande exacte (`fanfare-studio allow …`) à exécuter une fois sur cet ordinateur, avec un bouton **Copier la commande**. Seules les adresses de ton propre ordinateur (localhost ou 127.0.0.1) sont acceptées. Fanfare Studio marque chaque clip comme généré par IA ; vérifie la licence d'un modèle de voix avant de partager des clips en dehors de ton club.
+
+**La voix de speaker de ton club.** Avec un serveur de voix connecté, tu peux appuyer sur **🎙 Enregistrer la voix du club**, lire le court texte à voix haute (environ 15 secondes, l'enregistrement s'arrête seul après 20), l'écouter avec ▶, donner un nom à la voix et cocher la case de consentement. Utilise uniquement ta propre voix ou celle d'une personne qui a accepté qu'elle serve aux annonces de ton club, et n'imite jamais des personnes célèbres ni quelqu'un qui n'a pas donné son accord. L'enregistrement va uniquement vers ton propre ordinateur et n'est pas conservé dans Fanfare, pas même dans l'export. La nouvelle voix apparaît sous **Sur cet ordinateur**. Le bouton **🗑** la supprime, y compris son enregistrement sur le serveur de voix.
+
 ## 6. Sauvegarder, changer d'appareil, supprimer
 
 Ouvrez l'étape 5 **Sauvegarde et confidentialité**.

@@ -72,6 +72,10 @@ Open stap 4 **Geluiden en stem**. Hier kun je:
 
 ![Instellingen voor stem en geluiden](media/nl/05-sounds.png)
 
+**Stemmen van je eigen computer (geavanceerd).** Draait er op je computer een stemserver zoals Fanfare Studio, open dan in stap 4 **Lokale stemserver (geavanceerd)** en druk op **Verbinden**. De stemmen verschijnen dan in de stemlijst onder **Op deze computer**. Kies er een, druk op **Stemmen voorbereiden** en **Exporteren**, en importeer de zip op je telefoon: op wedstrijddag speelt de telefoon de opgeslagen clips af zonder de server. Klinkt een clip raar, druk dan in zijn rij op **↻ Opnieuw maken**. Meldt Fanfare dat de server deze website niet toestaat, dan toont het de exacte opdracht (`fanfare-studio allow …`) die je één keer op die computer uitvoert, met een knop **Commando kopiëren**. Alleen adressen op je eigen computer (localhost of 127.0.0.1) worden geaccepteerd. Fanfare Studio markeert elke clip als door AI gemaakt; controleer de licentie van een stemmodel voordat je clips buiten je club deelt.
+
+**De eigen omroepstem van je club.** Met een verbonden stemserver kun je op **🎙 Clubstem opnemen** drukken, de korte tekst hardop voorlezen (ongeveer 15 seconden, na 20 stopt de opname vanzelf), hem met ▶ beluisteren, de stem een naam geven en het vakje voor toestemming aanvinken. Gebruik alleen je eigen stem of de stem van iemand die ermee instemt dat die voor de omroepberichten van je club wordt gebruikt, en bootst nooit bekende mensen of mensen zonder toestemming na. De opname gaat alleen naar je eigen computer en wordt door Fanfare niet bewaard, ook niet in de export. De nieuwe stem verschijnt onder **Op deze computer**. Met **🗑** verwijder je hem, inclusief zijn opname op de stemserver.
+
 ## 6. Opslaan, naar een ander apparaat, verwijderen
 
 Open stap 5 **Opslaan en privacy**.

@@ -72,6 +72,10 @@ Otwórz krok 4 **Dźwięki i głos**. Tutaj możesz:
 
 ![Ustawienia głosu i dźwięków](media/pl/05-sounds.png)
 
+**Głosy z własnego komputera (zaawansowane).** Jeśli na Twoim komputerze działa serwer głosów, taki jak Fanfare Studio, otwórz w kroku 4 **Lokalny serwer głosów (zaawansowane)** i naciśnij **Połącz**. Jego głosy pojawią się na liście głosów w grupie **Na tym komputerze**. Wybierz jeden, naciśnij **Przygotuj głosy** i **Eksportuj**, a potem zaimportuj plik zip w telefonie: w dniu meczu telefon odtwarza zapisane nagrania bez serwera. Jeśli nagranie brzmi dziwnie, naciśnij **↻ Wygeneruj ponownie** w jego wierszu. Jeśli Fanfare pokaże, że serwer nie zezwala na tę stronę, wyświetli dokładne polecenie (`fanfare-studio allow …`), które trzeba raz uruchomić na tamtym komputerze, z przyciskiem **Kopiuj polecenie**. Akceptowane są tylko adresy na Twoim komputerze (localhost lub 127.0.0.1). Fanfare Studio oznacza każde nagranie jako wygenerowane przez AI; sprawdź licencję modelu głosu, zanim udostępnisz nagrania poza klubem.
+
+**Własny głos spikera Twojego klubu.** Przy połączonym serwerze głosów możesz nacisnąć **🎙 Nagraj głos klubu**, przeczytać na głos krótki tekst (około 15 sekund, po 20 nagrywanie zatrzyma się samo), odsłuchać go przyciskiem ▶, nadać głosowi nazwę i zaznaczyć zgodę. Używaj tylko własnego głosu albo głosu osoby, która zgodziła się, aby był używany w zapowiedziach Twojego klubu, i nigdy nie naśladuj znanych osób ani nikogo, kto się nie zgodził. Nagranie trafia tylko na Twój komputer i Fanfare go nie przechowuje, również w eksporcie. Nowy głos pojawia się w grupie **Na tym komputerze**. Przycisk **🗑** usuwa go razem z nagraniem na serwerze głosów.
+
 ## 6. Zapis, przenoszenie na inne urządzenie, usuwanie
 
 Otwórz krok 5 **Zapis i prywatność**.

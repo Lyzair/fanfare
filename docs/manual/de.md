@@ -70,6 +70,10 @@ Wenn der Torschütze genannt werden soll, tippe vorher unter dem Knopf auf den S
 
 ![Einstellungen für Stimme und Sounds](media/de/05-sounds.png)
 
+**Stimmen vom eigenen Computer (für Fortgeschrittene).** Wenn auf deinem Computer ein Stimmen-Server wie Fanfare Studio läuft, öffne in Schritt 4 **Lokaler Stimmen-Server (für Fortgeschrittene)** und drücke **Verbinden**. Seine Stimmen erscheinen dann in der Stimmenliste unter **Auf diesem Computer**. Wähle eine, drücke **Stimmen vorbereiten** und **Exportieren** und importiere die Zip-Datei auf deinem Handy: Am Spieltag spielt das Handy die gespeicherten Clips ohne den Server ab. Klingt ein Clip seltsam, drücke in seiner Zeile **↻ Neu erzeugen**. Meldet Fanfare, dass der Server diese Webseite nicht erlaubt, zeigt es den genauen Befehl (`fanfare-studio allow …`), den du einmal auf jenem Computer ausführst, mit einem Knopf **Befehl kopieren**. Akzeptiert werden nur Adressen auf deinem eigenen Computer (localhost oder 127.0.0.1). Fanfare Studio kennzeichnet jeden Clip als KI-erzeugt; prüfe die Lizenz eines Stimmenmodells, bevor du Clips außerhalb deines Vereins weitergibst.
+
+**Die eigene Ansagerstimme deines Vereins.** Mit verbundenem Stimmen-Server kannst du **🎙 Vereinsstimme aufnehmen** drücken, den kurzen Text laut vorlesen (etwa 15 Sekunden, nach 20 stoppt die Aufnahme von selbst), sie mit ▶ anhören, der Stimme einen Namen geben und das Einverständnis ankreuzen. Nimm nur deine eigene Stimme auf oder die Stimme einer Person, die zugestimmt hat, dass sie für die Ansagen deines Vereins genutzt wird, und ahme nie bekannte Personen oder Menschen nach, die nicht zugestimmt haben. Die Aufnahme geht nur an deinen eigenen Computer und wird in Fanfare nicht aufbewahrt, auch nicht im Export. Die neue Stimme erscheint unter **Auf diesem Computer**. Mit **🗑** löschst du sie samt ihrer Aufnahme auf dem Stimmen-Server.
+
 ## 6. Speichern, aufs andere Gerät holen, löschen
 
 Öffne Schritt 5 **Speichern & Datenschutz**.

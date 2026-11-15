@@ -70,6 +70,10 @@ Open step 4 **Sounds & voice**. Here you can:
 
 ![Voice and sounds settings](media/en/05-sounds.png)
 
+**Voices from your own computer (advanced).** If you run a voice server such as Fanfare Studio on your own computer, open **Local voice server (advanced)** in step 4 and press **Connect**. Its voices then appear in the voice list under **On this computer**. Pick one, press **Prepare voices** and **Export**, and import the zip on your phone: on game day the phone plays the saved clips without the server. If a clip sounds odd, press **↻ Regenerate** on its row. If Fanfare says the server does not allow this website, it shows the exact command (`fanfare-studio allow …`) to run once on that computer, with a **Copy command** button. Only addresses on your own computer (localhost or 127.0.0.1) are accepted. Fanfare Studio marks every clip as AI-generated; check the licence of a voice model before you share clips outside your club.
+
+**Your club's own announcer voice.** With a connected voice server you can press **🎙 Record club voice**, read the short text aloud (about 15 seconds, it stops by itself after 20), listen to it with ▶, give the voice a name and tick the consent box. Use only your own voice or the voice of someone who agreed that it may be used for your club's announcements, and never imitate famous people or anyone who has not agreed. The recording goes only to your own computer and is not kept in Fanfare, not even in the export. The new voice appears under **On this computer**. The **🗑** button deletes it, including its recording on the voice server.
+
 ## 6. Save, move to another device, delete
 
 Open step 5 **Save & privacy**.

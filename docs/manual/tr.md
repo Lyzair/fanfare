@@ -72,6 +72,10 @@ Golü atanı söyletmek için önce düğmenin altındaki oyuncuya dokunun, örn
 
 ![Ses ve ses efekti ayarları](media/tr/05-sounds.png)
 
+**Kendi bilgisayarındaki sesler (ileri düzey).** Bilgisayarında Fanfare Studio gibi bir ses sunucusu çalışıyorsa 4. adımda **Yerel ses sunucusu (ileri düzey)** bölümünü aç ve **Bağlan**'a bas. Sesleri ses listesinde **Bu bilgisayarda** başlığı altında görünür. Birini seç, **Sesleri hazırla** ve **Dışa aktar**'a bas, zip dosyasını telefonuna aktar: maç günü telefon kayıtlı klipleri sunucu olmadan çalar. Bir klip tuhaf geliyorsa satırındaki **↻ Yeniden üret**'e bas. Fanfare sunucunun bu web sitesine izin vermediğini söylerse, o bilgisayarda bir kez çalıştırman gereken tam komutu (`fanfare-studio allow …`) **Komutu kopyala** düğmesiyle birlikte gösterir. Yalnızca kendi bilgisayarındaki adresler (localhost veya 127.0.0.1) kabul edilir. Fanfare Studio her klibi yapay zekâ üretimi olarak işaretler; klipleri kulübün dışında paylaşmadan önce ses modelinin lisansını kontrol et.
+
+**Kulübünün kendi spiker sesi.** Bağlı bir ses sunucusuyla **🎙 Kulüp sesini kaydet**'e basabilir, kısa metni yüksek sesle okuyabilir (yaklaşık 15 saniye, 20 saniyede kendiliğinden durur), ▶ ile dinleyebilir, sese bir ad verip onay kutusunu işaretleyebilirsin. Yalnızca kendi sesini ya da kulübünün anonslarında kullanılmasını kabul eden birinin sesini kullan; ünlü kişileri veya onay vermemiş kimseyi asla taklit etme. Kayıt yalnızca kendi bilgisayarına gider, Fanfare'de saklanmaz, dışa aktarmada da yer almaz. Yeni ses **Bu bilgisayarda** altında görünür. **🗑** düğmesi onu, ses sunucusundaki kaydıyla birlikte siler.
+
 ## 6. Kaydet, başka cihaza taşı, sil
 
 5. adımı **Kaydet ve gizlilik** açın.
