@@ -49,6 +49,7 @@ export function guestScoreText(scorer: Player | null, roster: Roster): string {
   return renderTemplate(roster.templates.guestScore, varsFor(scorer, roster));
 }
 
+const WORD_END = /[\p{L}\p{N}]$/u;
 const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /**
@@ -67,6 +68,16 @@ export function speechText(displayText: string, roster: Roster): string {
   add(roster.opponent, roster.opponentSayAs);
   if (hints.size === 0) return displayText;
   const names = [...hints.keys()].sort((a, b) => b.length - a.length).map(escapeRegExp);
-  const re = new RegExp(`(?<![\\p{L}\\p{N}])(?:${names.join('|')})(?![\\p{L}\\p{N}])`, 'gu');
-  return displayText.replace(re, m => hints.get(m) ?? m);
+  // "Not after a letter or digit" is checked by hand: a lookbehind in the pattern needs Safari 16.4.
+  const re = new RegExp(`(?:${names.join('|')})(?![\\p{L}\\p{N}])`, 'gu');
+  let out = '', done = 0;
+  for (let m = re.exec(displayText); m; m = re.exec(displayText)) {
+    if (WORD_END.test(displayText.slice(0, m.index))) {
+      re.lastIndex = m.index + String.fromCodePoint(displayText.codePointAt(m.index)!).length; // inside a word: look on from the next character
+      continue;
+    }
+    out += displayText.slice(done, m.index) + (hints.get(m[0]) ?? m[0]);
+    done = re.lastIndex;
+  }
+  return out + displayText.slice(done);
 }

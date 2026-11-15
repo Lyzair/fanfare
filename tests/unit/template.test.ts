@@ -98,3 +98,32 @@ describe('guest texts', () => {
     expect(speechText('Welcome SV X and Gus!', r)).toBe('Welcome Ess Fau X and Goose!');
   });
 });
+
+describe('speechText without regex lookbehind (Safari before 16.4)', () => {
+  const named = (name: string, sayAs: string): Player => ({ ...player, id: name, name, sayAs });
+  const team: Roster = { ...roster, players: [named('Lea', 'Lay-ah'), named('Tom', 'Tomm'), named('Zoë', 'Tso-eh'), named('A.', 'Ay'), named('ab cd', 'X'), named('cd', 'Y')] };
+
+  test('adjacent names separated by one character are both replaced', () => {
+    expect(speechText('Lea, Tom', team)).toBe('Lay-ah, Tomm');
+    expect(speechText('Lea Tom Lea', team)).toBe('Lay-ah Tomm Lay-ah');
+    expect(speechText('Lea-Tom/Zoë', team)).toBe('Lay-ah-Tomm/Tso-eh');
+  });
+
+  test('names at the very start and end, and inside words', () => {
+    expect(speechText('Tom', team)).toBe('Tomm');
+    expect(speechText('Tomas and Leander, then Zoë', team)).toBe('Tomas and Leander, then Tso-eh');
+    expect(speechText('7Tom Tom7 xTom', team)).toBe('7Tom Tom7 xTom');
+  });
+
+  test('a rejected match inside a word does not hide a name that starts later', () => {
+    expect(speechText('xab cd', team)).toBe('xab Y');
+    expect(speechText('ab cd', team)).toBe('X');
+    expect(speechText('A.Tom A. Tom', team)).toBe('A.Tomm Ay Tomm');
+    expect(speechText('😀Tom 😀A.', team)).toBe('😀Tomm 😀Ay');
+  });
+
+  test('the pattern uses no lookbehind', async () => {
+    const { readFileSync } = await import('node:fs');
+    expect(readFileSync('src/domain/template.ts', 'utf8')).not.toContain('(?<');
+  });
+});
