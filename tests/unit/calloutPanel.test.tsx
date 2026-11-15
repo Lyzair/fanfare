@@ -428,3 +428,16 @@ test('the score callouts are editable: editing them changes what the score butto
   await userEvent.type(guest, 'One for {{opponent}');
   expect(guestScoreText(null, currentRoster(latest))).toBe('One for SV Gegner');
 });
+
+test('playText and playVoiceText do nothing for blank text', async () => {
+  const { playText, playVoiceText } = await import('../../src/ui/actions');
+  const { speech, queue } = makeServices();
+  const env = { state: setup(initialState('en')), queue, speech, blobs: {} };
+  playText(env, '   ');
+  playVoiceText(env, 'v', '');
+  expect(queue.unlock).not.toHaveBeenCalled();
+  expect(queue.play).not.toHaveBeenCalled();
+  expect(speech.get).not.toHaveBeenCalled();
+  playVoiceText(env, 'v', 'Tso-eh');
+  await waitFor(() => expect(speech.get).toHaveBeenCalledWith('v', 'Tso-eh'));
+});

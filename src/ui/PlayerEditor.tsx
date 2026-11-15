@@ -6,6 +6,7 @@ import { getPack, t } from '../i18n';
 import type { UiStrings } from '../i18n';
 import { currentRoster } from '../state/reducer';
 import { fill } from './fill';
+import { PlaybackError } from './PlaybackError';
 import { useSayAs } from './useSayAs';
 import SuggestPanel from './SuggestPanel';
 import type { PanelProps } from './types';
@@ -108,7 +109,7 @@ export default function PlayerEditor({ state, dispatch, side }: PanelProps & { s
 
   return (
     <div class="player-editor">
-      {sayAs.hearError && <p role="alert" class="error">{tr('ttsError')}</p>}
+      <PlaybackError lang={lang} error={sayAs.hearError} />
       <label class="stack">{tr('pasteLabel')}
         <textarea rows={5} value={listText} placeholder={tr('pastePlaceholder')}
           onInput={e => setListText(e.currentTarget.value)} />

@@ -144,3 +144,12 @@ describe('guest goals', () => {
     expect(speech.get.mock.calls[0][1]).toBe('Goal! Well played, Goose!');
   });
 });
+
+test('a local server that refuses this website shows the allow command, not only the general error', async () => {
+  const { LocalAccessError } = await import('../../src/tts/httpEngine');
+  const { services, speech } = makeServices();
+  render(<Harness services={services} />);
+  speech.get.mockRejectedValueOnce(new LocalAccessError('https://club.example'));
+  await userEvent.click(screen.getByRole('button', { name: /Goal!/ }));
+  expect(await screen.findByText('fanfare-studio allow https://club.example')).toBeInTheDocument();
+});

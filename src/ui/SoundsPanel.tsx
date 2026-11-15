@@ -1,4 +1,4 @@
-import { useContext, useRef, useState } from 'preact/hooks';
+import { useRef, useState } from 'preact/hooks';
 import type { Lang, SoundSlot } from '../domain/model';
 import { LANGS, getPack, t } from '../i18n';
 import type { UiStrings } from '../i18n';
@@ -11,9 +11,9 @@ import { playSound } from './actions';
 import { ClubVoiceDialog } from './ClubVoiceDialog';
 import { fill } from './fill';
 import { LocalError } from './LocalError';
-import { rememberSound, useCustomSoundBlob } from './soundMemory';
-import { ServicesContext } from './types';
+import { rememberSound } from './soundMemory';
 import type { PanelProps } from './types';
+import { usePlayback } from './usePlayback';
 
 const MAX_BYTES = 10 * 1024 * 1024;
 const SLOTS: { slot: SoundSlot; label: keyof UiStrings }[] = [
@@ -24,7 +24,6 @@ const SLOTS: { slot: SoundSlot; label: keyof UiStrings }[] = [
 const getPackName = (code: string): string => ((LANGS as readonly string[]).includes(code) ? getPack(code as Lang).nativeName : code);
 
 export default function SoundsPanel({ state, dispatch }: PanelProps) {
-  const services = useContext(ServicesContext);
   const lang = state.lang;
   const tr = (k: keyof UiStrings) => t(lang, k);
   const [error, setError] = useState<keyof UiStrings | null>(null);
@@ -35,14 +34,10 @@ export default function SoundsPanel({ state, dispatch }: PanelProps) {
   const [clubNote, setClubNote] = useState<{ name: string; warnings: string[] } | null>(null);
   const [clubError, setClubError] = useState<unknown>(null);
   const recordButton = useRef<HTMLButtonElement>(null);
-  const blobs: Record<SoundSlot, Blob | null> = {
-    score: useCustomSoundBlob('score', state.customSounds.score),
-    intro: useCustomSoundBlob('intro', state.customSounds.intro),
-  };
-  if (!services) return null;
-  const { queue, speech } = services;
+  const playback = usePlayback(state);
+  if (!playback) return null;
 
-  const preview = (slot: SoundSlot) => playSound({ state, queue, speech, blobs }, slot);
+  const preview = (slot: SoundSlot) => playSound(playback.env, slot);
 
   const upload = async (slot: SoundSlot, file: File | undefined) => {
     if (!file) return;

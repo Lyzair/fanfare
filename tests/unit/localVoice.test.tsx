@@ -7,6 +7,7 @@ import type { Services } from '../../src/ui/types';
 import { initialState, reducer } from '../../src/state/reducer';
 import type { AppState } from '../../src/domain/model';
 import * as persist from '../../src/state/persist';
+import { queueEvents } from './queueEvents';
 
 vi.mock('../../src/state/persist', () => ({
   loadSoundBlob: vi.fn(async () => null),
@@ -22,7 +23,7 @@ let fetchMock: ReturnType<typeof vi.fn>;
 let queue: { unlock: ReturnType<typeof vi.fn>; stop: ReturnType<typeof vi.fn>; play: ReturnType<typeof vi.fn>; playing: boolean };
 
 function setup(init?: (s: AppState) => AppState) {
-  queue = { playing: false, unlock: vi.fn(), stop: vi.fn(), play: vi.fn(async () => {}) };
+  queue = { playing: false, ...queueEvents(), unlock: vi.fn(), stop: vi.fn(), play: vi.fn(async () => {}) };
   const services = { queue, speech: { get: vi.fn() } } as unknown as Services;
   function H() {
     const [state, dispatch] = useReducer(reducer, undefined, () => (init ? init(initialState('en')) : initialState('en')));

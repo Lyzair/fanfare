@@ -1,18 +1,15 @@
-import { useContext, useEffect, useRef, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import type { Player, Side, TemplateKey } from '../domain/model';
 import { calloutText, guestIntroText, introText, speechText } from '../domain/template';
-import { LocalAccessError } from '../tts/httpEngine';
 import { currentRoster } from '../state/reducer';
 import { t } from '../i18n';
 import type { UiStrings } from '../i18n';
-import { announce as announceAction, lineupTexts, playText as playTextAction } from './actions';
+import { announce as announceAction, lineupTexts, playText as playTextAction, stopPlaying } from './actions';
 import type { ActionEnv, LineupPart } from './actions';
 import { fill } from './fill';
-import { useCustomSoundBlob } from './soundMemory';
-import { LocalError } from './LocalError';
-import { ServicesContext } from './types';
-import { useQueuePlaying } from './useQueuePlaying';
 import type { PanelProps } from './types';
+import { PlaybackError } from './PlaybackError';
+import { usePlayback } from './usePlayback';
 
 const PLACEHOLDERS = ['name', 'number', 'position', 'home', 'opponent'] as const;
 const TEMPLATE_KEYS: { key: TemplateKey; label: keyof UiStrings }[] = [
@@ -28,12 +25,10 @@ export { lineupSequence, lineupTexts } from './actions';
 export type { LineupPart } from './actions';
 
 export default function CalloutPanel({ state, dispatch }: PanelProps) {
-  const services = useContext(ServicesContext);
   const lang = state.lang;
   const tr = (k: keyof UiStrings) => t(lang, k);
   const roster = currentRoster(state);
-  const playing = useQueuePlaying(services?.queue);
-  const [error, setError] = useState<unknown>(null);
+  const playback = usePlayback(state);
   const [regenerating, setRegenerating] = useState<ReadonlySet<string>>(new Set());
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [preparing, setPreparing] = useState(false);
@@ -45,10 +40,8 @@ export default function CalloutPanel({ state, dispatch }: PanelProps) {
   const tplRefs = useRef<Partial<Record<TemplateKey, HTMLTextAreaElement | null>>>({});
   const lastTpl = useRef<TemplateKey>('field');
 
-  const introBlob = useCustomSoundBlob('intro', state.customSounds.intro);
-
-  if (!services) return null;
-  const { queue, speech } = services;
+  if (!playback) return null;
+  const { playing, error, setError, speech } = playback;
 
   const ordered = (list: Player[]) => [...list.filter(p => p.onField), ...list.filter(p => !p.onField)];
   const hasGuests = roster.guestPlayers.length > 0;
@@ -57,10 +50,7 @@ export default function CalloutPanel({ state, dispatch }: PanelProps) {
   const reportError = (e?: unknown) => setError(e ?? true);
   const refresh = () => setTick(n => n + 1);
 
-  const env: ActionEnv = {
-    state, queue, speech, blobs: { intro: introBlob },
-    onStart: () => setError(null), onError: reportError, onDone: refresh,
-  };
+  const env: ActionEnv = { ...playback.env, onDone: refresh };
   const playText = (text: string) => playTextAction(env, text);
   const announce = (part: LineupPart) => announceAction(env, part);
   const prepareTexts = lineupTexts(state);
@@ -161,7 +151,7 @@ export default function CalloutPanel({ state, dispatch }: PanelProps) {
     <div class="callout-panel">
       <div class="callout-actions">
         <button type="button" class="primary big" onClick={() => announce('both')}>{tr('announceLineup')}</button>
-        {playing && <button type="button" class="stop" onClick={() => queue.stop()}>{tr('stopPlaying')}</button>}
+        {playing && <button type="button" class="stop" onClick={() => stopPlaying(env)}>{tr('stopPlaying')}</button>}
       </div>
       {hasGuests && (
         <div class="callout-actions secondary">
@@ -172,9 +162,7 @@ export default function CalloutPanel({ state, dispatch }: PanelProps) {
       <button type="button" disabled={preparing} onClick={prepare}>{tr('prepareVoices')}</button>
       {preparing && progress && <p role="status" class="progress">{fill(tr('prepareProgress'), progress)}</p>}
       {!preparing && doneKey === prepareKey && <p role="status" class="progress">{tr('prepareDone')}</p>}
-      {error !== null && (error instanceof LocalAccessError
-        ? <LocalError lang={lang} error={error} prefix={() => ''} />
-        : <p role="alert" class="error">{tr('ttsError')}</p>)}
+      <PlaybackError lang={lang} error={error} />
       {!hasPlayers && <p class="hint">{tr('noPlayersYet')}</p>}
 
       {hasGuests && (

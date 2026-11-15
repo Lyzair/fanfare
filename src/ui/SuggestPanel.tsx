@@ -6,7 +6,9 @@ import { t } from '../i18n';
 import type { UiStrings } from '../i18n';
 import { VOICES } from '../tts/voices';
 import { ESPEAK_VOICES, defaultEspeakVoice, isEspeakVoice } from '../tts/espeakVoices';
+import { playVoiceText } from './actions';
 import { fill } from './fill';
+import { PlaybackError } from './PlaybackError';
 import { ServicesContext } from './types';
 
 type RunOptions = Omit<SuggestOptions, 'phonemize'>;
@@ -53,6 +55,7 @@ export default function SuggestPanel(p: SuggestPanelProps) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
+  const [hearError, setHearError] = useState<unknown>(null);
   const [result, setResult] = useState<Suggestions | null>(null);
   const ticket = useRef(0);
   const options = useMemo(languageOptions, []);
@@ -77,8 +80,7 @@ export default function SuggestPanel(p: SuggestPanelProps) {
 
   const hear = (text: string) => {
     if (!services) return;
-    services.queue.unlock(); // synchronously inside the click, before anything async
-    void services.queue.play([() => services.speech.get(p.voiceId, text)]);
+    playVoiceText({ ...services, onStart: () => setHearError(null), onError: e => setHearError(e ?? true) }, p.voiceId, text);
   };
 
   const level = (l: 1 | 2 | 3) => (l === 3 ? tr('suggestClose3') : l === 2 ? tr('suggestClose2') : tr('suggestClose1'));
@@ -112,6 +114,7 @@ export default function SuggestPanel(p: SuggestPanelProps) {
               <button type="button" class="suggest-run" disabled={busy} onClick={() => void find()}>{tr('suggestRun')}</button>
               {busy && <p role="status" class="suggest-busy"><span class="spinner" aria-hidden="true" />{tr('suggestBusy')}</p>}
               {error && <p role="alert" class="error">{tr('suggestError')}</p>}
+              <PlaybackError lang={p.lang} error={hearError} />
               {result && (
                 <>
                   <ul class="suggest-list">

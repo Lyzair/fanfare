@@ -1,6 +1,7 @@
 import { useContext, useState } from 'preact/hooks';
 import { t } from '../i18n';
 import type { AppState } from '../domain/model';
+import { playVoiceText } from './actions';
 import { ServicesContext } from './types';
 
 /** The 🗣 "Say it like…" toggle and ▶ hear button, shared by the match card and the player lists. */
@@ -8,7 +9,7 @@ export function useSayAs(state: AppState) {
   const services = useContext(ServicesContext);
   const tr = (k: 'pronunciation' | 'hearHint') => t(state.lang, k);
   const [open, setOpen] = useState<Set<string>>(new Set());
-  const [hearError, setHearError] = useState(false);
+  const [hearError, setHearError] = useState<unknown>(null);
 
   const toggle = (key: string) => setOpen(prev => {
     const next = new Set(prev);
@@ -18,17 +19,7 @@ export function useSayAs(state: AppState) {
   /** Speaks just the hint (or the name when there is none) with the current voice. */
   const hear = (name: string, sayAs: string) => {
     if (!services) return;
-    services.queue.unlock(); // synchronously inside the click, before anything async
-    setHearError(false);
-    const text = sayAs.trim() || name;
-    void services.queue.play([async () => {
-      try {
-        return await services.speech.get(state.voiceId, text);
-      } catch (e) {
-        setHearError(true);
-        throw e;
-      }
-    }]);
+    playVoiceText({ ...services, onStart: () => setHearError(null), onError: e => setHearError(e ?? true) }, state.voiceId, sayAs.trim() || name);
   };
   const isOpen = (key: string) => open.has(key);
   const hintToggle = (key: string, active: boolean) => (

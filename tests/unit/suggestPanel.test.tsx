@@ -137,3 +137,14 @@ test('a player normalized from an old saved state works: name shown as original 
   expect(await screen.findByRole('button', { name: 'Hear Wojtschech' })).toBeInTheDocument();
   expect(props.run).toHaveBeenCalledWith(expect.objectContaining({ origSpelling: 'Wojciech' }));
 });
+
+test('▶ shows the voice error when the candidate cannot be spoken, and clears it on the next try', async () => {
+  const { queue, speech } = setup();
+  queue.play.mockImplementation(async jobs => { for (const j of jobs) { try { await j(); } catch { /* skipped */ } } return undefined; });
+  await open(); await find();
+  speech.get.mockRejectedValueOnce(new Error('no voice'));
+  await userEvent.click(await screen.findByRole('button', { name: 'Hear Wojtschech' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent('The voice could not be loaded');
+  await userEvent.click(screen.getByRole('button', { name: 'Hear Wojtschech' }));
+  await waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
+});

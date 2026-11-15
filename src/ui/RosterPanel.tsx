@@ -7,6 +7,7 @@ import { MAX_TEAM_FILE_BYTES, parseTeamFile } from '../io/teamFile';
 import { currentRoster } from '../state/reducer';
 import { fill } from './fill';
 import PlayerEditor from './PlayerEditor';
+import { PlaybackError } from './PlaybackError';
 import { useSayAs } from './useSayAs';
 import SuggestPanel from './SuggestPanel';
 import type { PanelProps } from './types';
@@ -102,7 +103,7 @@ export default function RosterPanel({ state, dispatch }: PanelProps) {
         ))}
         <p class="hint">{tr('matchHint')}</p>
       </fieldset>
-      {sayAs.hearError && <p role="alert" class="error">{tr('ttsError')}</p>}
+      <PlaybackError lang={lang} error={sayAs.hearError} />
 
       <div class="tabs" role="tablist" aria-label={tr('tabsLabel')}>
         {TABS.map(side => (

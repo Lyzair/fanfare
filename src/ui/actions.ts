@@ -79,16 +79,30 @@ export function lineupSequence(
   return items;
 }
 
-export function playItems(env: ActionEnv, items: QueueItem[]): void {
+function playItems(env: Pick<ActionEnv, 'queue' | 'onStart' | 'onDone'>, items: QueueItem[]): void {
   env.queue.unlock(); // synchronously inside the click, before anything async
   env.onStart?.();
   const run = env.queue.play(items);
   if (env.onDone) void run.finally(env.onDone); else void run;
 }
 
-/** Say one text (e.g. one player's announcement). */
+/** Say one text (e.g. one player's announcement). Blank text plays nothing. */
 export function playText(env: ActionEnv, text: string): void {
+  if (!text.trim()) return;
   playItems(env, [lazySpeech(env.state, env.speech, text, env.onError)]);
+}
+
+/** Say `text` exactly as written, without the "say it like" replacements: the ▶ buttons that try out a spelling. */
+export function playVoiceText(env: Pick<ActionEnv, 'queue' | 'speech' | 'onStart' | 'onError'>, voiceId: string, text: string): void {
+  if (!text.trim()) return;
+  playItems(env, [async () => {
+    try {
+      return await env.speech.get(voiceId, text);
+    } catch (e) {
+      env.onError?.(e);
+      throw e;
+    }
+  }]);
 }
 
 export function announce(env: ActionEnv, part: LineupPart): void {

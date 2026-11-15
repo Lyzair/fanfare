@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { QrCode } from '../remote/qr';
 import { probeRemote, SpeakerLink } from '../remote/links';
 import type { RemoteHealth } from '../remote/links';
@@ -6,34 +6,30 @@ import { runRemoteCommand } from '../remote/dispatch';
 import { buildSnapshot } from '../remote/protocol';
 import { t } from '../i18n';
 import { fill } from './fill';
-import { useCustomSoundBlob } from './soundMemory';
-import { ServicesContext } from './types';
-import { useQueuePlaying } from './useQueuePlaying';
 import type { PanelProps } from './types';
 import type { ActionEnv } from './actions';
+import { PlaybackError } from './PlaybackError';
+import { usePlayback } from './usePlayback';
 
 type Probe = 'checking' | 'unavailable' | RemoteHealth;
 type Phase = 'idle' | 'starting' | 'active';
 
 /** Step 3: pair a phone as remote. Only works when this page is served by scripts/fanfare-local.py. */
 export default function RemotePanel({ state }: PanelProps) {
-  const services = useContext(ServicesContext);
   const lang = state.lang;
   const tr = (k: Parameters<typeof t>[1]) => t(lang, k);
   const [probe, setProbe] = useState<Probe>('checking');
   const [phase, setPhase] = useState<Phase>('idle');
   const [failed, setFailed] = useState(false);
-  const [ttsFailed, setTtsFailed] = useState(false);
   const [code, setCode] = useState<{ code: string; expiresAt: number } | null>(null);
   const [expired, setExpired] = useState(false);
   const [locked, setLocked] = useState(false);
   const [count, setCount] = useState(0);
-  const playing = useQueuePlaying(services?.queue);
   const link = useRef<SpeakerLink | null>(null);
   const activated = useRef(false);
-  const env = useRef<ActionEnv | null>(null);
-  const introBlob = useCustomSoundBlob('intro', state.customSounds.intro);
-  const scoreBlob = useCustomSoundBlob('score', state.customSounds.score);
+  const env = useRef<ActionEnv | null>(null); // the link's command handler always sees the current one
+  const playback = usePlayback(state);
+  const playing = playback?.playing ?? false;
 
   useEffect(() => {
     let cancelled = false;
@@ -54,18 +50,14 @@ export default function RemotePanel({ state }: PanelProps) {
 
   useEffect(() => () => link.current?.detach(), []); // the page goes away: stop listening (the laptop server keeps no trace)
 
-  if (!services) return null;
-  const { queue, speech } = services;
-  env.current = {
-    state, queue, speech, blobs: { intro: introBlob, score: scoreBlob },
-    onStart: () => setTtsFailed(false), onError: () => setTtsFailed(true),
-  };
+  if (!playback) return null;
+  env.current = playback.env;
 
   const showCode = (c: string, expiresIn: number) => { setLocked(false); setCode({ code: c, expiresAt: Date.now() + expiresIn * 1000 }); };
   const reset = () => { link.current = null; setPhase('idle'); setCode(null); setCount(0); setLocked(false); };
 
   const activate = async () => {
-    queue.unlock(); // the tap that lets the browser play sound later; must happen synchronously in the click
+    playback.env.queue.unlock(); // the tap that lets the browser play sound later; must happen synchronously in the click
     activated.current = true;
     setFailed(false);
     setPhase('starting');
@@ -139,7 +131,7 @@ export default function RemotePanel({ state }: PanelProps) {
     <section class="remote-panel" aria-labelledby="remote-title">
       <h3 id="remote-title">{tr('remoteTitle')}</h3>
       {body}
-      {ttsFailed && <p role="alert" class="error">{tr('ttsError')}</p>}
+      <PlaybackError lang={lang} error={playback.error} />
     </section>
   );
 }

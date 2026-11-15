@@ -1,28 +1,22 @@
-import { useContext, useState } from 'preact/hooks';
+import { useState } from 'preact/hooks';
 import type { Player } from '../domain/model';
 import { SPORTS } from '../domain/sports';
 import { getPack, t } from '../i18n';
 import { currentRoster } from '../state/reducer';
 import { callScore, stopPlaying } from './actions';
-import type { ActionEnv } from './actions';
 import { fill } from './fill';
-import { useCustomSoundBlob } from './soundMemory';
-import { ServicesContext } from './types';
-import { useQueuePlaying } from './useQueuePlaying';
 import type { PanelProps } from './types';
+import { PlaybackError } from './PlaybackError';
+import { usePlayback } from './usePlayback';
 
 export default function GamePanel({ state }: PanelProps) {
-  const services = useContext(ServicesContext);
   const lang = state.lang;
   const roster = currentRoster(state);
   const [scorerId, setScorerId] = useState<string | null>(null);
   const [guestScorerId, setGuestScorerId] = useState<string | null>(null);
-  const [error, setError] = useState(false);
-  const playing = useQueuePlaying(services?.queue);
-  const scoreBlob = useCustomSoundBlob('score', state.customSounds.score);
-
-  if (!services) return null;
-  const { queue, speech } = services;
+  const playback = usePlayback(state);
+  if (!playback) return null;
+  const { env, playing, error } = playback;
 
   const fieldPlayers = roster.players.filter(p => p.onField);
   const scorer = fieldPlayers.find(p => p.id === scorerId) ?? null;
@@ -30,11 +24,6 @@ export default function GamePanel({ state }: PanelProps) {
   const guestScorer = guestField.find(p => p.id === guestScorerId) ?? null;
   const word = getPack(lang).sports[state.sport].scoreWord;
   const guestName = roster.opponent.trim() || t(lang, 'tabGuests');
-
-  const env: ActionEnv = {
-    state, queue, speech, blobs: { score: scoreBlob },
-    onStart: () => setError(false), onError: () => setError(true),
-  };
 
   const chip = (p: Player, selected: boolean, set: (id: string | null) => void) => (
     <button type="button" class="chip" key={p.id} aria-pressed={selected}
@@ -47,7 +36,7 @@ export default function GamePanel({ state }: PanelProps) {
         <button type="button" class="primary score-button" onClick={() => callScore(env, 'home', scorer)}>{`${SPORTS[state.sport].icon} ${word}!`}</button>
         {playing && <button type="button" class="stop" onClick={() => stopPlaying(env)}>{t(lang, 'stopPlaying')}</button>}
       </div>
-      {error && <p role="alert" class="error">{t(lang, 'ttsError')}</p>}
+      <PlaybackError lang={lang} error={error} />
       <p class="hint" id="scorer-label">{t(lang, 'scorerLabel')}</p>
       <div class="chips" role="group" aria-labelledby="scorer-label">
         {fieldPlayers.map(p => chip(p, p.id === scorerId, setScorerId))}
