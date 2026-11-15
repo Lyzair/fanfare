@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
 """Serve Fanfare from your own computer. No internet needed, nothing leaves this machine.
 
-    python3 fanfare-local.py [FOLDER] [--port N] [--lan [--http]] [--open]
+    python3 fanfare-local.py [FOLDER] [--port N] [--lan [--https]] [--open] [--forget-ca]
 
 Python 3.9 or newer, standard library only. HTTPS for --lan needs either the `openssl`
 command or the `cryptography` Python package (to create a private local certificate).
+HTTPS is opt-in and asks first: it creates a local certificate authority whose key stays on
+this computer (see the risks it prints). `--forget-ca` removes it again.
 The server only answers GET and HEAD, never lists folders, never contacts the internet,
 and logs nothing but "METHOD /path STATUS" (no addresses, no query strings).
 """
 import argparse
 import datetime
 import hashlib
+import html
 import ipaddress
 import os
 import re
@@ -242,14 +245,19 @@ def _nc_openssl():
          for n in map(ipaddress.IPv4Network, PERMITTED_NETS)] + ['permitted;DNS:%s' % d for d in PERMITTED_DNS])
 
 
-def _openssl_dates(days):
-    """Extra x509 arguments: notBefore one day back (clock skew) with total validity <= days.
-    Needs OpenSSL 3.4+; older versions just start now."""
+def _openssl_supports_not_before():
+    """True for OpenSSL 3.4+ (`x509 -not_before`); older OpenSSL and LibreSSL lack it."""
     try:
         helptext = subprocess.run(['openssl', 'x509', '-help'], capture_output=True, text=True, timeout=20)
-        if '-not_before' not in helptext.stdout + helptext.stderr:
-            return ['-days', str(days)]
     except (OSError, subprocess.SubprocessError):
+        return False
+    return '-not_before' in helptext.stdout + helptext.stderr
+
+
+def _openssl_dates(days):
+    """Extra x509 arguments: notBefore one day back (clock skew) with total validity <= days.
+    Needs OpenSSL 3.4+; otherwise the certificate simply starts now (-days)."""
+    if not _openssl_supports_not_before():
         return ['-days', str(days)]
     start = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=1)
     fmt = '%Y%m%d%H%M%SZ'
@@ -407,6 +415,105 @@ def ensure_certs(cfg, ips, names, backend=None):
     return Certs(ca_crt, ca_key, srv_crt, srv_key, fingerprint_of(ca_crt), tuple(skipped), tuple(notices))
 
 
+# ----------------------------------------------------------------------------- risks, opt-in, removal
+
+RISKS = {
+    'en': [
+        "Phones that trust this certificate trust everything signed with this laptop's key. Thanks to name constraints "
+        "this is limited to local network addresses, but that includes routers, NAS drives and smart-home devices on that Wi-Fi.",
+        "The key is stored unencrypted on this computer. Anyone with access to this computer or user account could create "
+        "fake certificates for local devices. Only use this on a computer you trust.",
+        "Remove it when you no longer need it: run start-fanfare with --forget-ca on the laptop (or: python3 fanfare-local.py "
+        "--forget-ca), and remove the certificate on each phone (Android: Settings > Security > Encryption & credentials > "
+        "User credentials; iPhone: Settings > General > VPN & Device Management > profile > Remove).",
+        "Without HTTPS, Fanfare still works over Wi-Fi, but phones can't use offline mode or the microphone.",
+        "Simpler alternatives: the online demo on the phone, or Fanfare directly on the laptop with the speakers. "
+        "No certificate is needed for those.",
+    ],
+    'de': [
+        "Handys, die diesem Zertifikat vertrauen, vertrauen allem, was mit dem Schlüssel dieses Laptops signiert wird. Durch "
+        "Namensbeschränkungen gilt das nur für Adressen im lokalen Netz, aber dazu gehören Router, NAS-Laufwerke und "
+        "Smart-Home-Geräte in diesem WLAN.",
+        "Der Schlüssel liegt unverschlüsselt auf diesem Computer. Wer Zugriff auf diesen Computer oder dieses Benutzerkonto "
+        "hat, könnte gefälschte Zertifikate für lokale Geräte erstellen. Nutze das nur auf einem Computer, dem du vertraust.",
+        "Entferne es, wenn du es nicht mehr brauchst: start-fanfare mit --forget-ca auf dem Laptop starten (oder: python3 "
+        "fanfare-local.py --forget-ca) und das Zertifikat auf jedem Handy löschen (Android: Einstellungen > Sicherheit > "
+        "Verschlüsselung und Anmeldedaten > Nutzerzertifikate; iPhone: Einstellungen > Allgemein > VPN und Geräteverwaltung "
+        "> Profil > Entfernen).",
+        "Ohne HTTPS funktioniert Fanfare im WLAN trotzdem, aber Handys können weder den Offline-Modus noch das Mikrofon nutzen.",
+        "Einfachere Alternativen: die Online-Demo auf dem Handy oder Fanfare direkt auf dem Laptop mit den Lautsprechern. "
+        "Dafür ist kein Zertifikat nötig.",
+    ],
+}
+REMOVAL = {
+    'en': "Remove it later. Android: Settings > Security > Encryption & credentials > User credentials > fanfare-local CA > "
+          "Remove. iPhone: Settings > General > VPN & Device Management > fanfare-local CA > Remove Profile. "
+          "Laptop: run start-fanfare with --forget-ca.",
+    'de': "Später entfernen. Android: Einstellungen > Sicherheit > Verschlüsselung und Anmeldedaten > Nutzerzertifikate > "
+          "fanfare-local CA > Entfernen. iPhone: Einstellungen > Allgemein > VPN und Geräteverwaltung > fanfare-local CA > "
+          "Profil entfernen. Laptop: start-fanfare mit --forget-ca starten.",
+}
+CA_FILES = ['ca.crt', 'ca.key', 'ca.marker', 'san.txt', 'server.crt', 'server.key']
+
+
+def ca_is_current(cfg):
+    """True when a CA with the current name constraints already exists (no new CA is created)."""
+    cfg = Path(cfg)
+    marker = cfg / 'ca.marker'
+    return (cfg / 'ca.crt').exists() and (cfg / 'ca.key').exists() and marker.exists() \
+        and marker.read_text().strip() == CA_MARKER
+
+
+def _yes(ask, prompt):
+    try:
+        return ask(prompt).strip().lower() == 'yes'
+    except EOFError:
+        return False
+
+
+def confirm_new_ca(accept_risk, out, ask, interactive):
+    """Creating the CA needs an explicit yes (or --accept-ca-risk when there is no terminal)."""
+    out('You asked for HTTPS. That needs a local certificate authority (CA) on this computer. Read this first:')
+    for i, text in enumerate(RISKS['en'], 1):
+        out('  %d. %s' % (i, text))
+    if accept_risk:
+        out('  --accept-ca-risk given: creating the certificate authority.')
+        return True
+    if not interactive:
+        out('No terminal to ask on, so no certificate authority was created. Using plain http. '
+            'To accept the risks, add --accept-ca-risk.')
+        return False
+    if _yes(ask, 'Type yes to create a local certificate authority: '):
+        return True
+    out('No certificate authority was created. Using plain http.')
+    return False
+
+
+def forget_ca(cfg, yes, out, ask, interactive):
+    """Delete the CA, the server certificate and all keys from the config folder."""
+    cfg = Path(cfg)
+    present = [n for n in CA_FILES if (cfg / n).exists()]
+    if not present:
+        out('No local certificate authority found in %s. Nothing to remove.' % cfg)
+        return False
+    if not yes:
+        if not interactive:
+            raise StartError('This deletes the local certificate authority and keys in %s. Add --yes to confirm.' % cfg)
+        out('This deletes the local certificate authority and the keys in %s.' % cfg)
+        if not _yes(ask, 'Type yes to delete them: '):
+            out('Nothing was deleted.')
+            return False
+    for n in present:
+        (cfg / n).unlink()
+    try:
+        cfg.rmdir()
+    except OSError:
+        pass
+    out('Deleted the local certificate authority and keys. Now remove the certificate on each phone:')
+    out('  ' + REMOVAL['en'])
+    return True
+
+
 # ----------------------------------------------------------------------------- trust page
 
 def trust_page(fingerprint, csp=CSP):
@@ -429,6 +536,8 @@ code{word-break:break-all;font-family:ui-monospace,Menlo,Consolas,monospace}
 <p><a class="btn" href="/fanfare-ca.crt">Download certificate</a></p>
 <p>Fingerprint (SHA-256). It must match the one shown in the laptop's terminal:</p>
 <p class="fp"><code>%(fp)s</code></p>
+<h2>Read this first</h2>
+<ul>%(risks_en)s</ul>
 <h2>Android</h2>
 <ol><li>Tap <b>Download certificate</b> above.</li>
 <li>Open <b>Settings</b>, then <b>Security</b> (or <b>Security and privacy</b>), then <b>More security settings</b>, then <b>Encryption and credentials</b>.</li>
@@ -439,13 +548,17 @@ code{word-break:break-all;font-family:ui-monospace,Menlo,Consolas,monospace}
 <li>Open <b>Settings</b>, tap <b>Profile Downloaded</b> (or <b>General, VPN &amp; Device Management</b>), choose <b>fanfare-local CA</b>, tap <b>Install</b>.</li>
 <li>Open <b>Settings, General, About, Certificate Trust Settings</b> and switch on full trust for <b>fanfare-local CA</b>.</li>
 <li>Reload Fanfare in Safari.</li></ol>
-<p>Only install this if the fingerprint above matches your laptop. Remove it any time in the same settings.</p>
+<p>Only install this if the fingerprint above matches your laptop.</p>
+<h2>Remove it</h2>
+<p>%(remove_en)s</p>
 
 <h1 lang="de">Fanfare: Diesem Laptop vertrauen</h1>
 <p lang="de">Dieser Laptop nutzt sein eigenes privates Zertifikat, damit dein Handy Fanfare im WLAN sicher öffnen kann. Installiere es einmal. Danach funktionieren der Offline-Modus und das Mikrofon.</p>
 <p lang="de"><a class="btn" href="/fanfare-ca.crt">Zertifikat herunterladen</a></p>
 <p lang="de">Fingerabdruck (SHA-256). Er muss mit dem im Terminal des Laptops übereinstimmen:</p>
 <p class="fp"><code>%(fp)s</code></p>
+<h2 lang="de">Bitte zuerst lesen</h2>
+<ul lang="de">%(risks_de)s</ul>
 <h2 lang="de">Android</h2>
 <ol lang="de"><li>Tippe oben auf <b>Zertifikat herunterladen</b>.</li>
 <li>Öffne <b>Einstellungen</b>, dann <b>Sicherheit</b> (oder <b>Sicherheit und Datenschutz</b>), <b>Weitere Sicherheitseinstellungen</b>, <b>Verschlüsselung und Anmeldedaten</b>.</li>
@@ -456,9 +569,14 @@ code{word-break:break-all;font-family:ui-monospace,Menlo,Consolas,monospace}
 <li>Öffne <b>Einstellungen</b>, tippe auf <b>Profil geladen</b> (oder <b>Allgemein, VPN und Geräteverwaltung</b>), wähle <b>fanfare-local CA</b> und tippe auf <b>Installieren</b>.</li>
 <li>Öffne <b>Einstellungen, Allgemein, Info, Zertifikatsvertrauenseinstellungen</b> und aktiviere das volle Vertrauen für <b>fanfare-local CA</b>.</li>
 <li>Lade Fanfare in Safari neu.</li></ol>
-<p lang="de">Installiere das nur, wenn der Fingerabdruck oben zu deinem Laptop passt. In denselben Einstellungen kannst du es jederzeit entfernen.</p>
+<p lang="de">Installiere das nur, wenn der Fingerabdruck oben zu deinem Laptop passt.</p>
+<h2 lang="de">Entfernen</h2>
+<p lang="de">%(remove_de)s</p>
 </body></html>
-''' % {'csp': csp, 'fp': fp}).encode('utf-8')
+''' % {'csp': csp, 'fp': fp,
+          'risks_en': ''.join('<li>%s</li>' % html.escape(t) for t in RISKS['en']),
+          'risks_de': ''.join('<li>%s</li>' % html.escape(t) for t in RISKS['de']),
+          'remove_en': html.escape(REMOVAL['en']), 'remove_de': html.escape(REMOVAL['de'])}).encode('utf-8')
 
 
 # ----------------------------------------------------------------------------- server
@@ -636,8 +754,16 @@ def _parser():
     p = argparse.ArgumentParser(prog='fanfare-local.py', description='Serve Fanfare from this computer, offline.')
     p.add_argument('folder', nargs='?', help='folder to serve (default: the folder this script is in)')
     p.add_argument('--port', type=int, help='port (default 8080, or 8443 with HTTPS; a busy default moves on to the next free port)')
-    p.add_argument('--lan', action='store_true', help='also reachable from phones on the same Wi-Fi (HTTPS)')
-    p.add_argument('--http', action='store_true', help='with --lan: plain http instead of HTTPS')
+    p.add_argument('--lan', action='store_true', help='also reachable from phones on the same Wi-Fi (plain http)')
+    p.add_argument('--https', action='store_true',
+                   help='with --lan: serve HTTPS with a local certificate authority (asks first; phones then work offline '
+                        'and can use the microphone; read the risks it prints)')
+    p.add_argument('--http', action='store_true', help=argparse.SUPPRESS)  # old name for the default, still accepted
+    p.add_argument('--accept-ca-risk', action='store_true',
+                   help='with --https: create the certificate authority without asking (for scripts / no terminal)')
+    p.add_argument('--forget-ca', action='store_true',
+                   help='delete the local certificate authority and keys from this computer, then exit')
+    p.add_argument('--yes', action='store_true', help='with --forget-ca: do not ask for confirmation')
     p.add_argument('--open', action='store_true', help='open the browser')
     p.add_argument('--config-dir', help='where the local CA and keys are kept (default: your user config folder)')
     return p
@@ -647,8 +773,14 @@ def say(message):
     print(message, flush=True)  # flushed so wrappers and pipes see it immediately
 
 
-def start(argv, out=say):
+def start(argv, out=say, ask=input, interactive=None):
     args = _parser().parse_args(argv)
+    if interactive is None:
+        interactive = bool(sys.stdin and sys.stdin.isatty())
+    if args.https and not args.lan:
+        raise StartError('--https only makes sense together with --lan.')
+    if args.https and args.http:
+        raise StartError('Choose either --https or --http, not both.')
     root = Path(args.folder).resolve() if args.folder else Path(__file__).resolve().parent
     if not root.is_dir():
         raise StartError('Folder not found: %s' % root)
@@ -656,8 +788,12 @@ def start(argv, out=say):
     if cfg == root or root in cfg.parents:
         raise StartError('The certificate folder must not be inside the served folder (%s).' % cfg)
 
+    if args.forget_ca:
+        forget_ca(cfg, args.yes, out, ask, interactive)
+        return None
+
     host = '0.0.0.0' if args.lan else '127.0.0.1'
-    https = args.lan and not args.http
+    https = args.lan and args.https
     certs = None
     ips = lan_ipv4s() if args.lan else []
     if https:
@@ -666,7 +802,12 @@ def start(argv, out=say):
                 '  To get HTTPS for phones, install OpenSSL, or run: pip install cryptography\n'
                 '  Falling back to plain http for now.')
             https = False
+        elif not ca_is_current(cfg) and not confirm_new_ca(args.accept_ca_risk, out, ask, interactive):
+            https = False
         else:
+            if ca_is_current(cfg):
+                out('Using the local certificate authority in %s. Remove it any time with: '
+                    'start-fanfare --forget-ca (or: python3 fanfare-local.py --forget-ca)' % cfg)
             certs = ensure_certs(cfg, ips, host_names())
             for note in certs.notices:
                 out('NOTICE: ' + note)
@@ -717,7 +858,7 @@ def start(argv, out=say):
                 out('  Phones: open %s/trust.html once to trust this laptop (needed for offline mode and the microphone)' % urls[0])
         else:
             out('  Note: over plain http, phones cannot use offline mode (the service worker needs https), '
-                'and the microphone is blocked. Use --lan without --http for HTTPS.')
+                'and the microphone is blocked. For HTTPS add --https (it explains the risks and asks first).')
     out('  Stop with Ctrl+C.')
     running = Running(server, scheme, urls, certs.fingerprint if certs else None, loopback, local_url)
     if args.open:
@@ -731,6 +872,8 @@ def main(argv=None):
     except StartError as e:
         sys.stderr.write('Error: %s\n' % e)
         return 2
+    if running is None:  # --forget-ca
+        return 0
     running.serve_forever()
     return 0
 

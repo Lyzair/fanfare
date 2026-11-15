@@ -1,5 +1,5 @@
 #!/bin/sh
-# Starts Fanfare on this computer. Extra options are passed on, e.g. ./start-fanfare.sh --lan
+# Starts Fanfare on this computer. Options are passed on: --lan (phones on the same Wi-Fi), --lan --https (optional, with risks), --forget-ca (remove the local certificate), --help
 cd "$(dirname "$0")" || exit 1
 for py in python3 python; do
   if command -v "$py" >/dev/null 2>&1 && "$py" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 9) else 1)' 2>/dev/null; then

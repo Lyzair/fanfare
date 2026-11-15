@@ -1,4 +1,7 @@
 """Unit tests for scripts/fanfare-local.py (stdlib unittest, Python >= 3.9)."""
+import contextlib
+import html
+import io
 import http.client
 import importlib.util
 import ipaddress
@@ -9,6 +12,7 @@ import ssl
 import sys
 import tempfile
 import threading
+import time
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -43,11 +47,11 @@ class TempDirCase(unittest.TestCase):
         (base / 'outside.txt').write_text('OUTSIDE', encoding='utf-8')
         self.logs = []
 
-    def run_server(self, *args, lan_ips=(LAN_IP,)):
+    def run_server(self, *args, lan_ips=(LAN_IP,), ask=None, interactive=False):
         argv = [str(self.root), '--config-dir', str(self.cfg), *args]
         with mock.patch.object(fl, 'lan_ipv4s', return_value=list(lan_ips)), \
                 mock.patch.object(fl, 'host_names', return_value=list(HOSTS)):
-            running = fl.start(argv, out=self.logs.append)
+            running = fl.start(argv, out=self.logs.append, ask=ask or (lambda prompt: ''), interactive=interactive)
         running.serve_in_threads()
         self.addCleanup(running.close)
         return running
@@ -133,7 +137,7 @@ class HttpServerTests(TempDirCase):
         self.assertEqual(r.scheme, 'http')
 
     def test_lan_http_binds_all_interfaces_and_warns(self):
-        r = self.run_server('--lan', '--http', '--port', '0')
+        r = self.run_server('--lan', '--port', '0')
         self.assertEqual(r.primary.server_address[0], '0.0.0.0')
         text = '\n'.join(self.logs)
         self.assertIn(LAN_IP, text)
@@ -232,7 +236,7 @@ class HttpServerTests(TempDirCase):
 class FallbackTests(TempDirCase):
     def test_lan_without_backend_falls_back_to_http(self):
         with mock.patch.object(fl, 'available_backends', return_value=[]):
-            r = self.run_server('--lan', '--port', '0')
+            r = self.run_server('--lan', '--https', '--accept-ca-risk', '--port', '0')
         self.assertEqual(r.scheme, 'http')
         text = '\n'.join(self.logs)
         self.assertIn('openssl', text.lower())
@@ -241,6 +245,95 @@ class FallbackTests(TempDirCase):
 
 
 BACKENDS = fl.available_backends()
+
+
+@unittest.skipUnless(BACKENDS, 'no certificate backend available')
+class OptInTests(TempDirCase):
+    def test_lan_alone_is_plain_http_and_creates_nothing(self):
+        r = self.run_server('--lan', '--port', '0')
+        self.assertEqual(r.scheme, 'http')
+        self.assertFalse(self.cfg.exists())
+        self.assertIn('--https', '\n'.join(self.logs))
+
+    def test_https_without_tty_and_without_flag_falls_back(self):
+        r = self.run_server('--lan', '--https', '--port', '0')
+        self.assertEqual(r.scheme, 'http')
+        self.assertFalse(self.cfg.exists())
+        text = '\n'.join(self.logs)
+        self.assertIn('--accept-ca-risk', text)
+        self.assertIn('unencrypted', text)  # the risks were shown
+
+    def test_accept_flag_creates_ca(self):
+        r = self.run_server('--lan', '--https', '--accept-ca-risk', '--port', '0')
+        self.assertEqual(r.scheme, 'https')
+        self.assertTrue((self.cfg / 'ca.crt').exists())
+
+    def test_interactive_yes_creates_ca_and_prompts_exactly(self):
+        prompts = []
+        r = self.run_server('--lan', '--https', '--port', '0', interactive=True,
+                            ask=lambda p: prompts.append(p) or ' YES ')
+        self.assertEqual(r.scheme, 'https')
+        self.assertEqual(prompts, ['Type yes to create a local certificate authority: '])
+
+    def test_interactive_anything_else_falls_back(self):
+        for answer in ['no', '', 'y', 'yes please']:
+            r = self.run_server('--lan', '--https', '--port', '0', interactive=True, ask=lambda p, a=answer: a)
+            self.assertEqual(r.scheme, 'http', answer)
+            self.assertFalse(self.cfg.exists(), answer)
+            r.close()
+
+    def test_eof_on_prompt_falls_back(self):
+        def eof(prompt):
+            raise EOFError
+        r = self.run_server('--lan', '--https', '--port', '0', interactive=True, ask=eof)
+        self.assertEqual(r.scheme, 'http')
+
+    def test_existing_ca_no_prompt_but_reminder(self):
+        self.run_server('--lan', '--https', '--accept-ca-risk', '--port', '0').close()
+        self.logs.clear()
+
+        def boom(prompt):
+            raise AssertionError('must not ask again')
+        r = self.run_server('--lan', '--https', '--port', '0', interactive=True, ask=boom)
+        self.assertEqual(r.scheme, 'https')
+        self.assertIn('--forget-ca', '\n'.join(self.logs))
+
+    def test_https_requires_lan(self):
+        with self.assertRaises(fl.StartError):
+            fl.start([str(self.root), '--https', '--port', '0'], out=print)
+
+    def test_forget_ca_removes_everything_after_confirmation(self):
+        self.run_server('--lan', '--https', '--accept-ca-risk', '--port', '0').close()
+        self.assertTrue(self.cfg.exists())
+        self.logs.clear()
+        argv = [str(self.root), '--config-dir', str(self.cfg), '--forget-ca']
+        self.assertIsNone(fl.start(argv, out=self.logs.append, ask=lambda p: 'no', interactive=True))
+        self.assertTrue((self.cfg / 'ca.key').exists())
+        self.assertIsNone(fl.start(argv, out=self.logs.append, ask=lambda p: 'yes', interactive=True))
+        self.assertFalse(self.cfg.exists())
+        text = '\n'.join(self.logs)
+        self.assertIn('Remove', text)
+        self.assertIn('VPN & Device Management', text)
+
+    def test_forget_ca_yes_flag_and_non_tty_needs_it(self):
+        self.run_server('--lan', '--https', '--accept-ca-risk', '--port', '0').close()
+        argv = [str(self.root), '--config-dir', str(self.cfg), '--forget-ca']
+        with self.assertRaises(fl.StartError):
+            fl.start(argv, out=self.logs.append, interactive=False)
+        self.assertTrue((self.cfg / 'ca.key').exists())
+        fl.start(argv + ['--yes'], out=self.logs.append, interactive=False)
+        self.assertFalse(self.cfg.exists())
+
+    def test_forget_ca_with_nothing_to_remove(self):
+        fl.start([str(self.root), '--config-dir', str(self.cfg), '--forget-ca', '--yes'], out=self.logs.append)
+        self.assertIn('Nothing to remove', '\n'.join(self.logs))
+
+    def test_main_forget_ca_exits_zero(self):
+        self.cfg.mkdir()
+        (self.cfg / 'ca.key').write_text('x')
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(fl.main([str(self.root), '--config-dir', str(self.cfg), '--forget-ca', '--yes']), 0)
+        self.assertFalse(self.cfg.exists())
 
 
 class CertTests(TempDirCase):
@@ -290,22 +383,47 @@ class CertTests(TempDirCase):
             self.assertIn('IP Address:' + LAN_IP, out, name)
             self.assertIn('DNS:testhost.local', out, name)
 
+    def check_validity(self, name):
+        certs = fl.ensure_certs(Path(self._tmp.name) / ('v-' + name), [LAN_IP], HOSTS, backend=name)
+        info = ssl._ssl._test_decode_cert(str(certs.server_cert))
+        nb, na = ssl.cert_time_to_seconds(info['notBefore']), ssl.cert_time_to_seconds(info['notAfter'])
+        days = (na - nb) / 86400
+        self.assertLessEqual(days, 825)
+        self.assertGreater(days, 800)
+        return nb
+
     def test_validity_within_apple_limit_for_every_backend(self):
+        if not BACKENDS:
+            self.skipTest('no backend')
         for name in BACKENDS:
             with self.subTest(backend=name):
-                certs = fl.ensure_certs(Path(self._tmp.name) / ('v-' + name), [LAN_IP], HOSTS, backend=name)
-                info = ssl._ssl._test_decode_cert(str(certs.server_cert))
-                nb, na = ssl.cert_time_to_seconds(info['notBefore']), ssl.cert_time_to_seconds(info['notAfter'])
-                days = (na - nb) / 86400
-                self.assertLessEqual(days, 825)
-                self.assertGreater(days, 800)
-                import time
-                self.assertLess(nb, time.time() - 3600, 'notBefore should be backdated for skewed phone clocks'
-                                if name == 'cryptography' else 'notBefore not in the future')
+                nb = self.check_validity(name)
+                backdated = name == 'cryptography' or fl._openssl_supports_not_before()
+                if backdated:  # phones with a slightly slow clock must not see "not yet valid"
+                    self.assertLess(nb, time.time() - 3600)
+                else:
+                    self.assertLessEqual(nb, time.time() + 1)
+
+    def test_openssl_days_fallback_when_not_before_is_unsupported(self):
+        if 'openssl' not in BACKENDS:
+            self.skipTest('openssl missing')
+        with mock.patch.object(fl, '_openssl_supports_not_before', return_value=False):
+            self.assertEqual(fl._openssl_dates(825), ['-days', '825'])
+            nb = self.check_validity('openssl')
+        self.assertLessEqual(nb, time.time() + 1)
+        self.assertGreater(nb, time.time() - 3600)
+
+    def test_openssl_dates_with_not_before_support(self):
+        with mock.patch.object(fl, '_openssl_supports_not_before', return_value=True):
+            args = fl._openssl_dates(825)
+        self.assertEqual([args[0], args[2]], ['-not_before', '-not_after'])
+        self.assertNotIn('-days', args)
 
     def test_ca_has_critical_name_constraints_for_every_backend(self):
         want_ips = {'10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16', '100.64.0.0/10', '127.0.0.0/8'}
         want_dns = {'localhost', 'local'}
+        if not BACKENDS:
+            self.skipTest('no backend')
         for name in BACKENDS:
             with self.subTest(backend=name):
                 certs = fl.ensure_certs(Path(self._tmp.name) / ('n-' + name), [LAN_IP], HOSTS, backend=name)
@@ -323,13 +441,15 @@ class CertTests(TempDirCase):
                                          capture_output=True, text=True, check=True).stdout
                     self.assertIn('Name Constraints: critical', out)
                     permitted = out.split('Permitted:')[1]
-                    got_ips = {str(ipaddress.IPv4Network(m.replace('/', '/'), strict=False)) for m in
+                    got_ips = {str(ipaddress.IPv4Network(m, strict=False)) for m in
                                re.findall(r'IP:(\S+)', permitted)}
                     got_dns = set(re.findall(r'DNS:(\S+)', permitted))
                 self.assertEqual(got_ips, want_ips)
                 self.assertEqual(got_dns, want_dns)
 
     def test_public_and_out_of_range_sans_are_skipped(self):
+        if not BACKENDS:
+            self.skipTest('no backend')
         for name in BACKENDS:
             with self.subTest(backend=name):
                 cfg = Path(self._tmp.name) / ('s-' + name)
@@ -348,6 +468,8 @@ class CertTests(TempDirCase):
             self.assertEqual(fl.host_names(), ['localhost', 'mylaptop.local'])
 
     def test_unconstrained_old_ca_is_replaced_once_with_notice(self):
+        if not BACKENDS:
+            self.skipTest('no backend')
         name = BACKENDS[0]
         certs = fl.ensure_certs(self.cfg, [LAN_IP], HOSTS, backend=name)
         old_fp = certs.fingerprint
@@ -404,7 +526,7 @@ class CertTests(TempDirCase):
 @unittest.skipUnless(BACKENDS, 'no certificate backend available')
 class HttpsServerTests(TempDirCase):
     def start_https(self):
-        r = self.run_server('--lan', '--port', '0')
+        r = self.run_server('--lan', '--https', '--accept-ca-risk', '--port', '0')
         self.assertEqual(r.scheme, 'https')
         return r
 
@@ -425,6 +547,11 @@ class HttpsServerTests(TempDirCase):
         self.assertIn('iOS', page)
         self.assertIn('Zertifikat', page)  # German section
         self.assertNotIn('<script', page.lower())
+        for text in fl.RISKS['en'] + fl.RISKS['de']:
+            self.assertIn(html.escape(text), page)
+        self.assertLess(page.index(html.escape(fl.RISKS['en'][0])), page.index('<h2>Android</h2>'))
+        self.assertGreater(page.index(html.escape(fl.REMOVAL['en'])), page.index('<h2>iPhone'))
+        self.assertIn(html.escape(fl.REMOVAL['de']), page)
         self.assertEqual(resp.getheader('Content-Security-Policy'), index_csp())
 
     def test_keys_are_never_served(self):

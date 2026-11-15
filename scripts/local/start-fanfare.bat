@@ -1,5 +1,5 @@
 @echo off
-rem Starts Fanfare on this computer. Extra options are passed on, e.g. start-fanfare.bat --lan
+rem Starts Fanfare on this computer. Options are passed on: --lan (phones on the same Wi-Fi), --lan --https (optional, with risks), --forget-ca (remove the local certificate), --help
 cd /d "%~dp0"
 where py >nul 2>nul && (py -3 fanfare-local.py --open %* & goto :done)
 where python >nul 2>nul && (python fanfare-local.py --open %* & goto :done)
