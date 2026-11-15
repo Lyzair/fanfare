@@ -3,8 +3,9 @@
 # Build:  docker compose up -d --build     (see docs/self-hosting.md)
 # The first build downloads about 660 MB of voices into a build cache; later builds reuse it.
 
-# ---- stage 1: build the static site
-FROM node:26.12.1-bookworm-slim AS build
+# ---- stage 1: build the static site. Always on the build machine ($BUILDPLATFORM): the output is plain
+# files, identical for every CPU, so an arm64 image does not run Node under QEMU.
+FROM --platform=$BUILDPLATFORM node:26.12.1-bookworm-slim AS build
 WORKDIR /app
 ENV npm_config_update_notifier=false npm_config_fund=false
 
@@ -23,7 +24,7 @@ RUN --mount=type=cache,target=/app/public/voices,id=fanfare-voices \
  && npm run build \
  && npm run check:dist
 
-# ---- stage 2: serve it (no Node here)
+# ---- stage 2: serve it (no Node here); one per target platform (linux/amd64, linux/arm64)
 FROM caddy:2.11.7-alpine
 ARG SOURCE_URL=""
 LABEL org.opencontainers.image.source="${SOURCE_URL}" \

@@ -1,0 +1,22 @@
+# OPT-IN, HAS RISKS: HTTPS on the LAN with a certificate from the name-constrained local CA.
+# Make the certificate with Fanfare's own tool (never Traefik's, mkcert's or Caddy's CA):
+#   python3 scripts/fanfare-local.py --issue-certs ./certs --name fanfare.local --ip 192.168.1.20
+# It asks you to type yes after printing the risks (see "HTTPS without a public domain" in
+# docs/self-hosting.md). Enable: mount ./certs as /certs and this file into /etc/traefik/dynamic/
+# (the commented lines in compose.yaml), and publish port 443. Remove it again: fanfare-local.py --forget-ca.
+tls:
+  certificates:
+    - certFile: /certs/server.crt
+      keyFile: /certs/server.key
+  options:
+    default:
+      minVersion: VersionTLS12
+
+http:
+  routers:
+    fanfare-tls:
+      rule: "Host(`fanfare.local`)"
+      entryPoints: [websecure]
+      service: fanfare
+      middlewares: [fanfare-headers]
+      tls: {}

@@ -1,0 +1,20 @@
+# Added by compose.https.yaml (opt-in, has risks). The certificate comes from the name-constrained
+# local CA made by install.sh --https, which runs
+#   python3 scripts/fanfare-local.py --issue-certs /var/lib/fanfare/certs --name fanfare.local --ip <address>
+# (never Traefik's own, mkcert's or Caddy's CA). Plain HTTP on port 80 keeps working.
+tls:
+  certificates:
+    - certFile: /certs/server.crt
+      keyFile: /certs/server.key
+  options:
+    default:
+      minVersion: VersionTLS12
+
+http:
+  routers:
+    fanfare-tls:
+      rule: "PathPrefix(`/`)"
+      entryPoints: [websecure]
+      service: fanfare
+      middlewares: [fanfare-headers]
+      tls: {}

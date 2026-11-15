@@ -1,0 +1,19 @@
+# OPT-IN, HAS RISKS: HTTPS on the LAN with a certificate from the name-constrained local CA made by
+#   python3 scripts/fanfare-local.py --issue-certs /etc/caddy/certs --name fanfare.local --ip 192.168.1.20
+# Read "HTTPS without a public domain" in docs/self-hosting.md first (the five risks, how to remove it).
+# Caddy does not create a certificate authority of its own here: it only loads these files.
+# Copy docker/fanfare.caddy next to this file first (see Caddyfile).
+{
+	admin off
+	log {
+		level WARN
+		exclude http.log.error
+	}
+}
+
+import fanfare.caddy
+
+fanfare.local {
+	tls /etc/caddy/certs/server.crt /etc/caddy/certs/server.key
+	import fanfare
+}

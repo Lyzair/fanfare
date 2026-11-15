@@ -1,0 +1,38 @@
+# Fanfare club-house appliance: Traefik on port 80 in front of the Fanfare container. Plain HTTP;
+# HTTPS is opt-in (compose.https.yaml, risks, see README). Traefik reads static files only: it never
+# touches the Docker socket. No access logs anywhere. Started by install.sh; by hand:
+#   docker compose -p fanfare -f compose.yaml up -d --build
+# Works with docker compose (v2), docker-compose (v1, Debian bookworm) and podman-compose. Log size is limited by
+# the Docker daemon setting that install.sh writes (log-driver local, small max-size).
+services:
+  traefik:
+    image: docker.io/library/traefik:v3.6.25
+    restart: unless-stopped
+    ports:
+      - "${FANFARE_HTTP_PORT:-80}:80"
+    volumes:
+      - ./traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./dynamic.yml:/etc/traefik/dynamic/dynamic.yml:ro
+    read_only: true
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    security_opt:
+      - no-new-privileges:true
+    depends_on: [fanfare]
+
+  fanfare:
+    build:
+      context: ../..
+    image: ${FANFARE_IMAGE:-fanfare:local}
+    volumes:
+      - caddy-data:/data
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+volumes:
+  caddy-data:

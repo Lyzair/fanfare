@@ -1,0 +1,21 @@
+# A real domain with a public certificate from Let's Encrypt. Opt-in: Caddy then contacts Let's Encrypt
+# (the one outgoing connection; the app itself contacts nobody). Ports 80 and 443 must reach this
+# machine and the domain must point at it. Run with FANFARE_HOST=club.example.org
+# Copy docker/fanfare.caddy next to this file first (see Caddyfile).
+{
+	admin off
+	log {
+		level WARN
+		exclude http.log.error
+	}
+}
+
+import fanfare.caddy
+
+{$FANFARE_HOST} {
+	tls {
+		# Pinned: only Let's Encrypt, no fallback issuer.
+		ca https://acme-v02.api.letsencrypt.org/directory
+	}
+	import fanfare
+}

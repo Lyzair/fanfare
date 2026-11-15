@@ -1,0 +1,27 @@
+# Dynamic configuration (file provider): routers, service, headers. This is the only site on the Pi, so every name and address (fanfare.local, the LAN IP) reaches it.
+# The Fanfare container already sends the right MIME types, cache rules and security headers; the
+# middleware below sets the same security headers again so they are guaranteed at the edge too
+# (set, not added: no duplicates). Traefik passes Content-Type and Cache-Control through unchanged.
+http:
+  routers:
+    fanfare:
+      rule: "PathPrefix(`/`)"
+      entryPoints: [web]
+      service: fanfare
+      middlewares: [fanfare-headers]
+
+  services:
+    fanfare:
+      loadBalancer:
+        servers:
+          - url: "http://fanfare:8080"
+
+  middlewares:
+    fanfare-headers:
+      headers:
+        contentSecurityPolicy: "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self' http://localhost:* http://127.0.0.1:*; media-src 'self' blob:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'"
+        contentTypeNosniff: true
+        referrerPolicy: "no-referrer"
+        frameDeny: true
+        customResponseHeaders:
+          Permissions-Policy: "camera=(), geolocation=(), microphone=(self)"

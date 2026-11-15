@@ -1,0 +1,41 @@
+# EXAMPLE ONLY: Traefik configured with Docker labels. Read this before you use it.
+# This needs the Docker socket inside the proxy. Whoever controls the Traefik container (or finds a
+# bug in it) controls Docker, which means root on the host; ":ro" does not change that. If you want
+# this style anyway, put a socket proxy in between (read-only, containers endpoint only). The safer
+# way is the FILE PROVIDER in compose.yaml + dynamic.yml next to this file, which needs no socket.
+# No accessLog option anywhere: no access logs (GDPR).
+services:
+  traefik:
+    image: docker.io/library/traefik:v3.6.25
+    restart: unless-stopped
+    command:
+      - --global.checknewversion=false
+      - --global.sendanonymoususage=false
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --log.level=WARN
+    ports:
+      - "80:80"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro   # <- gives the proxy root on the host, see above
+
+  fanfare:
+    build:
+      context: ../..
+    image: ${FANFARE_IMAGE:-fanfare:local}
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.fanfare.rule=Host(`fanfare.local`)
+      - traefik.http.routers.fanfare.entrypoints=web
+      - traefik.http.services.fanfare.loadbalancer.server.port=8080
+      - traefik.http.routers.fanfare.middlewares=fanfare-headers
+      - traefik.http.middlewares.fanfare-headers.headers.contentsecuritypolicy=default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self' http://localhost:* http://127.0.0.1:*; media-src 'self' blob:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'
+      - traefik.http.middlewares.fanfare-headers.headers.contenttypenosniff=true
+      - traefik.http.middlewares.fanfare-headers.headers.referrerpolicy=no-referrer
+      # Real domain with Let's Encrypt (add --entrypoints.websecure.address=:443 and a certificatesresolvers
+      # entry to the command above, then): traefik.http.routers.fanfare.tls.certresolver=letsencrypt
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    restart: unless-stopped

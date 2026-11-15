@@ -1,0 +1,42 @@
+# Traefik in front of the Fanfare container, configured with static files (no Docker socket).
+#   docker compose up -d --build        then open http://fanfare.local/ (change Host() in dynamic.yml)
+# Try it on one computer without port 80:   FANFARE_HTTP_PORT=8088 docker compose up -d --build
+# and open http://127.0.0.1:8088/ (the Host rule must match, so use a name for fanfare.local in /etc/hosts).
+# Plain HTTP is the default. HTTPS: a real domain (see docs/self-hosting.md) or, opt-in with risks,
+# dynamic-tls.yml (uncomment the two lines below).
+services:
+  traefik:
+    image: docker.io/library/traefik:v3.6.25
+    restart: unless-stopped
+    ports:
+      - "${FANFARE_HTTP_PORT:-80}:80"
+      # - "443:443"
+    volumes:
+      - ./traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./dynamic.yml:/etc/traefik/dynamic/dynamic.yml:ro
+      # - ./dynamic-tls.yml:/etc/traefik/dynamic/dynamic-tls.yml:ro
+      # - ./certs:/certs:ro
+    read_only: true
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    security_opt:
+      - no-new-privileges:true
+    depends_on: [fanfare]
+
+  fanfare:
+    build:
+      context: ../..
+    image: ${FANFARE_IMAGE:-fanfare:local}
+    # Not published: only Traefik reaches it, over the compose network.
+    volumes:
+      - caddy-data:/data
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+volumes:
+  caddy-data:

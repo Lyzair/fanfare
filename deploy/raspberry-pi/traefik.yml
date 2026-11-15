@@ -1,0 +1,21 @@
+# Traefik static configuration for the Fanfare appliance (same as deploy/traefik/traefik.yml).
+# talks to the Docker socket (mounting that socket would give the proxy root on the host).
+global:
+  checkNewVersion: false      # no call home
+  sendAnonymousUsage: false   # no call home
+
+entryPoints:
+  web:
+    address: ":80"
+  websecure:
+    address: ":443"
+
+providers:
+  file:
+    directory: /etc/traefik/dynamic
+    watch: true
+
+# Warnings and errors only. There is NO accessLog section on purpose: Traefik writes no access log
+# when it is absent, so no visitor address, path or User-Agent is stored (GDPR).
+log:
+  level: WARN

@@ -10,7 +10,7 @@
 # podman-compose (the first whose engine answers without sudo).
 set -uo pipefail
 
-cd "$(dirname "$0")/../.."
+cd "$(dirname "$0")/../.." || exit 2
 PROJECT=fanfare-smoke
 export FANFARE_IMAGE="${FANFARE_IMAGE:-fanfare:smoke}"
 unset FANFARE_HOST FANFARE_ACME
@@ -174,7 +174,7 @@ if command -v python3 >/dev/null && { command -v openssl >/dev/null || python3 -
   export FANFARE_CERTS_DIR="$TMP/certs" FANFARE_HTTPS_BIND=127.0.0.1 FANFARE_HTTPS_PORT="$HPORT" FANFARE_HOST=fanfare.local
   chmod 755 "$TMP" "$TMP/certs"
   # rootful Docker: the container must run as the key's owner (rootless Podman: container root is us)
-  if [ "$ENGINE" = docker ]; then export FANFARE_UID="$(id -u)" FANFARE_GID="$(id -g)"; fi
+  if [ "$ENGINE" = docker ]; then FANFARE_UID=$(id -u); FANFARE_GID=$(id -g); export FANFARE_UID FANFARE_GID; fi
 
   # 1. without the risk acknowledgement only HTTP is served
   dch up -d >/dev/null 2>&1

@@ -1,0 +1,9 @@
+# OPT-IN, HAS RISKS (a local certificate authority; read README). Added by install.sh --https:
+# publishes port 443 and loads the certificate made by fanfare-local.py --issue-certs.
+services:
+  traefik:
+    ports:
+      - "${FANFARE_HTTPS_PORT:-443}:443"
+    volumes:
+      - ./dynamic-tls.yml:/etc/traefik/dynamic/dynamic-tls.yml:ro
+      - "${FANFARE_CERTS_DIR:-/var/lib/fanfare/certs}:/certs:ro"

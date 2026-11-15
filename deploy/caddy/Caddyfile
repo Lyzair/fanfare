@@ -1,0 +1,20 @@
+# Fanfare behind Caddy on your own server: plain HTTP, no certificate, no certificate authority.
+# 1. Build the site (npm ci && npm run build) or unpack a release, and copy dist/ to /srv/fanfare.
+# 2. Copy docker/fanfare.caddy next to this file and change its "root * /srv" line to "root * /srv/fanfare".
+# 3. caddy run --config Caddyfile --adapter caddyfile     (or: caddy validate --config Caddyfile)
+# For HTTPS see Caddyfile.domain (a real domain, Let's Encrypt) or Caddyfile.local-ca (opt-in, with risks).
+{
+	admin off
+	auto_https off
+	log {
+		level WARN
+		# Error log lines carry the client address and User-Agent: never keep them (GDPR).
+		exclude http.log.error
+	}
+}
+
+import fanfare.caddy
+
+:8080 {
+	import fanfare
+}

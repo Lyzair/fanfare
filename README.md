@@ -73,6 +73,10 @@ on your LAN is optional and **has risks** (the same name-constrained local certi
 `fanfare-local --https`; certificates come from `fanfare-local.py --issue-certs`). Optional Fanfare Studio, updating and
 removal: [docs/self-hosting.md](docs/self-hosting.md). The phone remote needs `fanfare-local`.
 
+Behind your own reverse proxy (Caddy, Traefik, Nginx Proxy Manager: examples in `deploy/`) or as a **Raspberry Pi club-house
+appliance** that serves `http://fanfare.local` and updates itself (`deploy/raspberry-pi/README.md`): see the same document. Images
+can be built for amd64, arm64 and arm/v7.
+
 ## Third-party licences
 
 - **Project code:** MIT, provided as is, without warranty (see `LICENSE`).

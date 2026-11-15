@@ -58,6 +58,41 @@ jobs:
       - name: Smoke test (build image, start with compose, check headers/MIME/no logs)
         run: tests/docker/smoke.sh
 
+  # The image for the CPUs of a Raspberry Pi (arm64 = 64-bit OS, arm/v7 = older 32-bit OS) and PCs.
+  # Built through QEMU, nothing is pushed: publishing images is a manual decision of the maintainers.
+  docker-multiarch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - name: Build for amd64, arm64 and arm/v7 (no push)
+        run: docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 .
+
+  # Hosting manual: shellcheck, the reverse-proxy examples (Caddy, Traefik, nginx for Nginx Proxy Manager)
+  # and the Raspberry Pi installer (--dry-run in Debian bookworm) with its Traefik + Fanfare compose file.
+  hosting:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: shellcheck
+        run: shellcheck -S warning deploy/raspberry-pi/install.sh docker/entrypoint.sh tests/docker/smoke.sh tests/hosting/*.sh tests/raspberry-pi/*.sh
+      - run: python -m unittest tests.python.test_hosting
+      - name: Build the image once for both test scripts
+        run: docker build -t fanfare:smoke .
+      - name: Reverse-proxy examples (caddy validate, Traefik, nginx -t, headers, MIME, no logs)
+        run: tests/hosting/validate.sh
+      - name: Raspberry Pi installer (--dry-run) and appliance compose file (HTTP and opt-in HTTPS)
+        run: tests/raspberry-pi/dry-run.sh
+
   deploy:
     needs: build
     runs-on: ubuntu-latest
