@@ -185,6 +185,52 @@ describe('archive hardening', () => {
     await expect(importArchive(file)).resolves.toBeTruthy();
   });
 
+  /** A zip whose `n` stored `speech/N.wav` entries all point at one shared data region and declare an original size of 0. */
+  function sharedStoredZip(json: unknown, n: number, region: Uint8Array): Blob {
+    const enc = (x: string) => strToU8(x);
+    const local = (name: Uint8Array, data: Uint8Array) => {
+      const h = new Uint8Array(30 + name.length + data.length);
+      const v = new DataView(h.buffer);
+      v.setUint32(0, 0x04034b50, true); v.setUint16(4, 20, true);
+      v.setUint32(18, data.length, true); v.setUint32(22, data.length, true); v.setUint16(26, name.length, true);
+      h.set(name, 30); h.set(data, 30 + name.length);
+      return h;
+    };
+    const central = (name: Uint8Array, size: number, originalSize: number, offset: number) => {
+      const h = new Uint8Array(46 + name.length);
+      const v = new DataView(h.buffer);
+      v.setUint32(0, 0x02014b50, true); v.setUint16(4, 20, true); v.setUint16(6, 20, true);
+      v.setUint32(20, size, true); v.setUint32(24, originalSize, true); v.setUint16(28, name.length, true);
+      v.setUint32(42, offset, true);
+      h.set(name, 46);
+      return h;
+    };
+    const jsonData = enc(JSON.stringify(json));
+    const l1 = local(enc('fanfare.json'), jsonData);
+    const l2 = local(enc('speech/0.wav'), region);
+    const dir = [central(enc('fanfare.json'), jsonData.length, jsonData.length, 0)];
+    for (let i = 0; i < n; i++) dir.push(central(enc(`speech/${i}.wav`), region.length, 0, l1.length));
+    const dirSize = dir.reduce((a, d) => a + d.length, 0);
+    const end = new Uint8Array(22);
+    const v = new DataView(end.buffer);
+    v.setUint32(0, 0x06054b50, true); v.setUint16(8, dir.length, true); v.setUint16(10, dir.length, true);
+    v.setUint32(12, dirSize, true); v.setUint32(16, l1.length + l2.length, true);
+    return new Blob([l1, l2, ...dir, end] as BlobPart[]);
+  }
+
+  test('stored entries that share one data region and declare size 0 count with the bytes they copy', async () => {
+    const region = new Uint8Array(100 * 1024).fill(7);
+    const speechIndex = Object.fromEntries(Array.from({ length: 200 }, (_, i) => [String(i), `v|${i}`]));
+    const file = sharedStoredZip({ ...withPlayers([]), speechIndex }, 200, region);
+    expect(file.size).toBeLessThan(150 * 1024);
+    // 200 x 100 KB = 20 MB would be copied
+    await expect(importArchive(file, { bytes: 1024 * 1024, entries: 1000 })).rejects.toMatchObject({ code: 'too-large' });
+    // the shape itself is readable: three such entries stay under the cap and import
+    const small = await importArchive(sharedStoredZip({ ...withPlayers([]), speechIndex }, 3, region), { bytes: 1024 * 1024, entries: 1000 });
+    expect(small.speech.size).toBe(3);
+    expect((await bytes(small.speech.get('v|2')!)).length).toBe(region.length);
+  });
+
   test('too many entries are rejected as too large', async () => {
     const extra: Record<string, Uint8Array> = {};
     for (let i = 0; i < 10; i++) extra[`speech/${i}.wav`] = new Uint8Array(1);

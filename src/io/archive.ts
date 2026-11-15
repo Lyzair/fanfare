@@ -55,13 +55,16 @@ function zipAsync(files: Record<string, Uint8Array>): Promise<Uint8Array> {
   });
 }
 
-/** Inflates the allow-listed entries; fflate never writes more than an entry's declared size. */
+/**
+ * Inflates the allow-listed entries. fflate writes at most `originalSize` bytes for a deflated entry
+ * and copies `size` bytes for a stored one, whatever original size it declares: the larger one counts.
+ */
 function unzipAsync(data: Uint8Array, limits: ImportLimits): Promise<Unzipped> {
   return new Promise((resolve, reject) => {
     let bytes = 0, entries = 0, tooLarge = false;
-    const filter = (f: { name: string; originalSize: number }) => {
+    const filter = (f: { name: string; size: number; originalSize: number }) => {
       if (tooLarge || !ENTRY_NAME.test(f.name)) return false;
-      bytes += f.originalSize;
+      bytes += Math.max(f.size, f.originalSize);
       entries++;
       tooLarge = bytes > limits.bytes || entries > limits.entries;
       return !tooLarge;
