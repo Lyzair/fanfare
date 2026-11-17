@@ -55,7 +55,7 @@ No internet at all? Fanfare also runs from a laptop with a tiny local server (Py
 ```sh
 npm run build && npm run serve:local        # http://localhost:8080 (8081..8099 if busy)
 npm run serve:local -- --lan                # phones on the same Wi-Fi, over plain http (add --https for HTTPS: optional, see below)
-npm run package:local                       # release/fanfare-local-<version>.zip for people without Node
+npm run package:local -- --voices every     # release/fanfare-<version>-{all,none,<lang>}.zip/.tar.gz for people without Node
 ```
 
 The zip contains the built site, `fanfare-local.py`, `start-fanfare.sh` / `.command` / `.bat` and a `README-local.txt` (English and German). Unzip, double-click the start file, done.

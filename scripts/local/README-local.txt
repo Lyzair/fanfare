@@ -1,7 +1,7 @@
 FANFARE - run it on your own computer (no internet needed)
 ==========================================================
 
-1. Unzip this folder anywhere.
+1. Unpack the download (.zip or .tar.gz) anywhere. You get a folder named "fanfare".
 2. Start it:
    - Windows:        double-click start-fanfare.bat
    - macOS:          double-click start-fanfare.command
@@ -49,6 +49,18 @@ Privacy: the server only answers requests from this computer / your Wi-Fi, never
 contacts the internet and logs nothing except "GET /path 200". Names and sounds stay in
 your browser. The certificate files are kept in your user folder (not in this folder).
 
+Which download? fanfare-<version>-all has every voice. fanfare-<version>-<language>
+(e.g. -de) has only that language's voice and is much smaller. fanfare-<version>-none has
+no voices: it is for updating.
+
+Updating: download fanfare-<new version>-none and unpack it into the same place, over
+your existing "fanfare" folder (replace files when asked). Your voices stay. Names, sounds
+and prepared voices are kept by your browser, not in this folder.
+
+Adding a voice: Fanfare says when the voice of a language is not in your download.
+Download the package for that language (or the "all" package), and copy its folder
+voices/<language> (e.g. voices/fr) into the voices folder of your "fanfare" folder.
+
 Licences: Fanfare is MIT-licensed (file LICENSE). The voices and the bundled software have
 their own licences, among them eSpeak NG under the GPL-3.0-or-later: see voices/LICENSES.md,
 licenses/THIRD-PARTY-NOTICES.txt and licenses/GPL-3.0.txt in this folder.
@@ -64,7 +76,7 @@ Options: --port N   use another port (default 8080; 8443 with --https)
 FANFARE - auf dem eigenen Rechner starten (kein Internet nötig)
 ===============================================================
 
-1. Diesen Ordner irgendwo entpacken.
+1. Den Download (.zip oder .tar.gz) irgendwo entpacken. Du erhältst einen Ordner "fanfare".
 2. Starten:
    - Windows:        start-fanfare.bat doppelklicken
    - macOS:          start-fanfare.command doppelklicken
@@ -112,6 +124,18 @@ Datenschutz: Der Server antwortet nur Anfragen von diesem Rechner / deinem WLAN,
 verbindet sich nie mit dem Internet und protokolliert nur "GET /pfad 200". Namen und
 Sounds bleiben in deinem Browser. Die Zertifikatsdateien liegen in deinem
 Benutzerordner (nicht in diesem Ordner).
+
+Welcher Download? fanfare-<version>-all enthält alle Stimmen. fanfare-<version>-<sprache>
+(z. B. -de) enthält nur die Stimme dieser Sprache und ist viel kleiner.
+fanfare-<version>-none enthält keine Stimmen: Er ist zum Aktualisieren.
+
+Aktualisieren: fanfare-<neue Version>-none herunterladen und an dieselbe Stelle entpacken,
+über deinen vorhandenen Ordner "fanfare" (Dateien ersetzen, wenn gefragt). Deine Stimmen
+bleiben. Namen, Sounds und vorbereitete Stimmen speichert dein Browser, nicht dieser Ordner.
+
+Stimme hinzufügen: Fanfare sagt dir, wenn die Stimme einer Sprache nicht in deinem Download
+ist. Lade das Paket dieser Sprache (oder das Paket "all") herunter und kopiere dessen Ordner
+voices/<sprache> (z. B. voices/fr) in den Ordner voices deines Ordners "fanfare".
 
 Lizenzen: Fanfare steht unter der MIT-Lizenz (Datei LICENSE). Die Stimmen und die
 mitgelieferte Software haben eigene Lizenzen, darunter eSpeak NG unter GPL-3.0-or-later:

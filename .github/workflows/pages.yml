@@ -34,11 +34,11 @@ jobs:
       - run: python -m unittest discover -s tests/python
       - run: npm run build
       - run: npm run check:dist
-      - run: npm run package:local
+      - run: npm run package:local -- --voices all --format zip
       - uses: actions/upload-artifact@v7
         with:
           name: fanfare-local
-          path: release/fanfare-local-*.zip
+          path: release/fanfare-*-all.zip
           if-no-files-found: error
           compression-level: 0
       - uses: actions/upload-pages-artifact@v5
