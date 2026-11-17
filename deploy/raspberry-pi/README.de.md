@@ -38,13 +38,13 @@ Von deinem Computer aus (ersetze `deinbenutzer`):
 ```sh
 ssh deinbenutzer@fanfare.local
 sudo apt-get update && sudo apt-get install -y git
-git clone <Adresse dieses Repositorys> fanfare
+git clone https://github.com/Lyzair/fanfare.git fanfare
 cd fanfare
 sudo ./deploy/raspberry-pi/install.sh --dry-run     # zeigt alle Schritte, ändert nichts (optional)
 sudo ./deploy/raspberry-pi/install.sh
 ```
 
-(Kein git? Lade den Release-Ordner auf deinen Computer und kopiere ihn: `scp -r fanfare deinbenutzer@fanfare.local:`.)
+(Kein git? Auf GitHub „Code“ → „Download ZIP“, entpacken, den Ordner in `fanfare` umbenennen und kopieren: `scp -r fanfare deinbenutzer@fanfare.local:`.)
 
 Der Installer kann gefahrlos mehrfach laufen. Er
 

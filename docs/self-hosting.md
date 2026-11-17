@@ -7,7 +7,7 @@
 | Setup | Who it is for | Needs |
 | --- | --- | --- |
 | **Demo online** | Trying it, or a phone with internet | Nothing. |
-| **Laptop with `fanfare-local`** | The coach on match day: no internet, speakers on the laptop, phone remote | Python 3.9+, the `fanfare-local` package. The only setup with the phone remote. |
+| **Laptop with `fanfare-local`** | The coach on match day: no internet, speakers on the laptop, phone remote | Python 3.9+, a package from the [releases](https://github.com/Lyzair/fanfare/releases/latest) ([below](#laptop-with-fanfare-local)). The only setup with the phone remote. |
 | **Docker** (below) | One IT-savvy member who wants Fanfare on a PC or home server | Docker or Podman |
 | **Raspberry Pi appliance** ([deploy/raspberry-pi/README.md](../deploy/raspberry-pi/README.md)) | A club house: a Pi next to the router serves `http://fanfare.local` to every phone on the club Wi-Fi and updates itself | Raspberry Pi 4 or 5 (2 GB is enough), SD card, Ethernet |
 | **Behind your existing proxy** (sections Caddy, Traefik, Nginx Proxy Manager below) | A club that already runs a server with a reverse proxy and a domain | A proxy you know |
@@ -34,6 +34,24 @@ Only when you serve `dist/` yourself (no Fanfare container) do these rules becom
 
 `tests/hosting/validate.sh` checks all of this against the Traefik and nginx examples; `tests/docker/smoke.sh` against the image.
 
+## Laptop with fanfare-local
+
+No internet at all? Fanfare also runs from a laptop with a tiny local server (Python 3.9 or newer, nothing else to
+install). Download a package from the [latest release](https://github.com/Lyzair/fanfare/releases/latest), unpack it
+and double-click the start file (`start-fanfare.sh` / `.command` / `.bat`); `README-local.txt` in the folder explains
+the rest in English and German. From the source: `npm run build && npm run serve:local` ([development.md](development.md)).
+
+- Default is `127.0.0.1:8080`. If the port is busy the next free one (up to 8099) is used and printed; an explicit `--port N` never falls back.
+- `--lan` binds all interfaces and serves plain **http** (phones on the same Wi-Fi can use Fanfare, but cannot use offline mode or the microphone, which need https).
+- `--lan --https` is **optional and has risks**. The first time it prints the risks and asks you to type `yes` (without a terminal it needs `--accept-ca-risk`, otherwise it falls back to http). It then creates a private local certificate authority (CA) and a server certificate in `~/.config/fanfare-local/` (`%APPDATA%\fanfare-local\` on Windows, `~/Library/Application Support/fanfare-local/` on macOS), never in the served folder or the zip, using the `openssl` command or the Python `cryptography` package (default port 8443, then 8444..8463). The CA is name-constrained (10/8, 172.16/12, 192.168/16, 100.64/10, 127/8, `localhost` and `*.local` only) and the server certificate is valid 825 days (Apple's limit).
+  - Phones that trust the certificate trust everything signed with this laptop's key: limited to local network addresses, but that includes routers, NAS drives and smart-home devices on that Wi-Fi.
+  - The key is stored unencrypted on the computer. Anyone with access to it or the user account could create fake certificates for local devices. Only use this on a computer you trust.
+  - Remove it when no longer needed: `python3 scripts/fanfare-local.py --forget-ca` (or `start-fanfare --forget-ca`; `--yes` skips the question) and remove the certificate on each phone (Android: Settings > Security > Encryption & credentials > User credentials; iPhone: Settings > General > VPN & Device Management > profile > Remove).
+  - Simpler alternatives: the online demo on the phone, or Fanfare directly on the laptop with its speakers.
+- Phones open `https://<laptop-ip>:8443/trust.html` once to install the CA (Android and iOS steps, the risks, removal steps and the SHA-256 fingerprint to compare with the terminal). Only `/fanfare-ca.crt` (certificate, never a key) and `/trust.html` are served for this, and only over HTTPS.
+- **Phone as remote ("soundboard mode").** With `--lan`, step 3 of the app on the laptop has **Use a phone as remote**: press **Activate speaker**, scan the QR code with a phone on the same Wi-Fi (or open the address shown), enter the 6-digit code, and the phone becomes a soundboard (goal, scorer, lineup, stop, intro sound). The laptop plays everything; the phone never plays audio. It only works with `fanfare-local.py` (there is no cloud relay, ever); on other hosts the panel just says so. Over plain http the connection is not encrypted, so others on the Wi-Fi could read player names and replay commands they intercept; the app warns about it, and `--https` fixes it (see the risks above). The relay lives in memory only: pairing codes are single-use and expire after 10 minutes (5 wrong tries lock the session), tokens are random and die with the session (End remote, or a new session), at most 3 phones per session, 5 commands per second per phone, only an allowlist of commands is forwarded, and the phone is only sent the names of the players on the field, never numbers, positions or texts. Only the laptop itself can start or end a session: the connection must come from the loopback address and address the server as `localhost`, `127.0.0.1` or `[::1]` on its own port (a name that merely resolves to the laptop, as in DNS rebinding, is refused); there is no secret to leak. A pairing lock after 5 wrong codes is lifted by **New code**, and each phone token may hold at most 2 event streams.
+- Apart from that relay (`/remote/...`), the server answers GET and HEAD only, never lists folders, rejects path traversal, sends the same Content-Security-Policy as the page, contacts no other host, and logs only `METHOD /path STATUS` (never tokens, codes or query strings).
+
 ## Docker
 
 Fanfare is a static website. This repository ships a `Dockerfile` (builds the site, serves it with
@@ -46,7 +64,7 @@ The Docker setup serves the app only. The **phone remote** ("soundboard mode") i
 ## Quick start
 
 ```sh
-git clone <this repository> fanfare && cd fanfare
+git clone https://github.com/Lyzair/fanfare.git fanfare && cd fanfare
 docker compose up -d --build
 # open http://localhost:8080
 ```

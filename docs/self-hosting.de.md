@@ -10,7 +10,7 @@ Fanfare ist eine statische Website. Nichts verlässt den Browser, und der Server
 | Variante | Für wen | Braucht |
 | --- | --- | --- |
 | **Online-Demo** | Ausprobieren, Handy mit Internet | Nichts. |
-| **Laptop mit `fanfare-local`** | Trainer am Spieltag: kein Internet, Lautsprecher am Laptop, Handy-Fernbedienung | Python 3.9+, das Paket `fanfare-local`. Als Einziges mit Handy-Fernbedienung. |
+| **Laptop mit `fanfare-local`** | Trainer am Spieltag: kein Internet, Lautsprecher am Laptop, Handy-Fernbedienung | Python 3.9+, ein Paket von den [Releases](https://github.com/Lyzair/fanfare/releases/latest) (Details, Optionen und Sicherheitsregeln: [self-hosting.md, „Laptop with fanfare-local“](self-hosting.md#laptop-with-fanfare-local)). Als Einziges mit Handy-Fernbedienung. |
 | **Docker** | Ein IT-erfahrenes Mitglied, das Fanfare auf einem PC oder Heimserver betreiben will | Docker oder Podman |
 | **Raspberry-Pi-Gerät** (`deploy/raspberry-pi/README.de.md`) | Vereinsheim: Ein Pi neben dem Router liefert `http://fanfare.local` an alle Handys im Vereins-WLAN und hält sich selbst aktuell | Raspberry Pi 4 oder 5 (2 GB genügen), SD-Karte, Netzwerkkabel |
 | **Hinter deinem vorhandenen Proxy** (Caddy, Traefik, Nginx Proxy Manager unten) | Verein mit eigenem Server, Reverse-Proxy und Domain | Ein Proxy, den du kennst |
@@ -34,7 +34,7 @@ Fanfare ist ein Ordner statischer Dateien (`dist/`). Das Docker-Image erfüllt a
 ## Docker
 
 ```sh
-git clone <Adresse dieses Repositorys> fanfare && cd fanfare
+git clone https://github.com/Lyzair/fanfare.git fanfare && cd fanfare
 docker compose up -d --build
 # http://localhost:8080 öffnen
 ```
