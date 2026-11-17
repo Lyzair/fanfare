@@ -246,9 +246,7 @@ docker compose -f compose.yaml -f compose.studio.yaml up -d --build
 ```
 
 This also builds and runs Fanfare Studio (CPU, ONNX 4-bit; the first start downloads about 3 GB of
-models into a volume) from the folder in `FANFARE_STUDIO_DIR` (default `../fanfare-studio`). Until that
-repository is renamed it still lives in `../sports-caller-voice-server`:
-`FANFARE_STUDIO_DIR=../sports-caller-voice-server docker compose -f compose.yaml -f compose.studio.yaml up -d --build`.
+models into a volume) from the folder in `FANFARE_STUDIO_DIR` (default `../fanfare-studio`).
 
 - Studio is published on `127.0.0.1:5123` only, and the page may use it from `http://localhost:<FANFARE_PORT>`.
   With HTTPS add `FANFARE_STUDIO_EXTRA_ORIGINS=,https://fanfare.local:8443`.

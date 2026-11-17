@@ -1,8 +1,7 @@
 # Optional: also run Fanfare Studio (the local voice server) next to Fanfare.
 #   docker compose -f compose.yaml -f compose.studio.yaml up -d --build
 # Fanfare Studio is a separate project with its own Dockerfile. FANFARE_STUDIO_DIR is where its
-# source lives, relative to this file (default ../fanfare-studio; until that folder is renamed the
-# repository is called ../sports-caller-voice-server:  FANFARE_STUDIO_DIR=../sports-caller-voice-server).
+# source lives, relative to this file (default ../fanfare-studio).
 # It is published on THIS computer's 127.0.0.1:5123 only, never on the network. Open Fanfare
 # in a browser on the same computer, step 4 > Local voice server > Connect (http://127.0.0.1:5123).
 # CPU (ONNX 4-bit) by default. The first start downloads about 3 GB of models into a volume.
