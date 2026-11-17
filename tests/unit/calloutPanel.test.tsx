@@ -469,6 +469,7 @@ describe('a voice that is not in this download', () => {
     render(<Harness services={services} init={setup} />);
     expect(await screen.findByText(/doesn't include this voice/)).toBeInTheDocument();
     expect(screen.getByText(/voices\/en/)).toBeInTheDocument();
+    expect(screen.getByText(/voices folder of your Fanfare folder.*reload/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Prepare voices/ })).toBeNull();
     expect(speech.prepare).not.toHaveBeenCalled();
   });

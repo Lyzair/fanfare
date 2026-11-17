@@ -53,9 +53,11 @@ Which download? fanfare-<version>-all has every voice. fanfare-<version>-<langua
 (e.g. -de) has only that language's voice and is much smaller. fanfare-<version>-none has
 no voices: it is for updating.
 
-Updating: download fanfare-<new version>-none and unpack it into the same place, over
-your existing "fanfare" folder (replace files when asked). Your voices stay. Names, sounds
-and prepared voices are kept by your browser, not in this folder.
+Updating: download fanfare-<new version>-none and unpack it. You get a new "fanfare" folder
+(macOS may call it "fanfare 2"). Move the language folders inside voices of your old folder
+(e.g. voices/de) into voices of the new folder, start the new one, then delete the old
+folder. Names, sounds and prepared voices are kept by your browser, not in this folder.
+(With the command line you can also unpack it over the old folder: unzip -o or tar -xzf.)
 
 Adding a voice: Fanfare says when the voice of a language is not in your download.
 Download the package for that language (or the "all" package), and copy its folder
@@ -129,9 +131,12 @@ Welcher Download? fanfare-<version>-all enthält alle Stimmen. fanfare-<version>
 (z. B. -de) enthält nur die Stimme dieser Sprache und ist viel kleiner.
 fanfare-<version>-none enthält keine Stimmen: Er ist zum Aktualisieren.
 
-Aktualisieren: fanfare-<neue Version>-none herunterladen und an dieselbe Stelle entpacken,
-über deinen vorhandenen Ordner "fanfare" (Dateien ersetzen, wenn gefragt). Deine Stimmen
-bleiben. Namen, Sounds und vorbereitete Stimmen speichert dein Browser, nicht dieser Ordner.
+Aktualisieren: fanfare-<neue Version>-none herunterladen und entpacken. Du erhältst einen
+neuen Ordner "fanfare" (macOS nennt ihn evtl. "fanfare 2"). Verschiebe die Sprachordner aus
+voices deines alten Ordners (z. B. voices/de) nach voices im neuen Ordner, starte den neuen
+und lösche dann den alten. Namen, Sounds und vorbereitete Stimmen speichert dein Browser,
+nicht dieser Ordner. (Auf der Kommandozeile geht auch Entpacken über den alten Ordner:
+unzip -o oder tar -xzf.)
 
 Stimme hinzufügen: Fanfare sagt dir, wenn die Stimme einer Sprache nicht in deinem Download
 ist. Lade das Paket dieser Sprache (oder das Paket "all") herunter und kopiere dessen Ordner

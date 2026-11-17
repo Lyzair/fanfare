@@ -160,7 +160,7 @@ export const it = {
     scorerLabel: "Chi ha segnato? (facoltativo)",
     voiceLabel: "Voce",
     voiceNotIncluded: "non inclusa in questo download",
-    voiceMissingHint: "Questo download non include questa voce. Scarica il pacchetto per questa lingua, oppure il pacchetto «all», e copia la sua cartella voices/{lang} nella tua cartella di Fanfare.",
+    voiceMissingHint: "Questo download non include questa voce. Scarica il pacchetto per questa lingua, oppure il pacchetto «all», e copia la sua cartella voices/{lang} nella cartella voices della tua cartella di Fanfare (diventa fanfare/voices/{lang}). Poi ricarica questa pagina.",
     localServerTitle: "Server vocale locale (avanzato)",
     localServerHint: "Genera voci di alta qualità sul tuo computer, poi «Prepara le voci» ed «Esporta»: il telefono le riproduce senza il server.",
     localServerUrl: "Indirizzo del server",

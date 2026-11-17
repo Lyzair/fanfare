@@ -96,3 +96,23 @@ describe.skipIf(process.platform === 'win32')('tar.gz', () => {
     expect(existsSync(join(into, 'fanfare/index.html'))).toBe(true);
   });
 });
+
+test('without dist/ the packager builds first instead of failing on the missing folder', () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'fresh-clone-'));
+  mkdirSync(join(cwd, 'src/tts'), { recursive: true });
+  writeFileSync(join(cwd, 'src/tts/voices.json'), readFileSync('src/tts/voices.json'));
+  writeFileSync(join(cwd, 'package.json'), JSON.stringify({ name: 'x', version: '1.0.0', scripts: { build: 'exit 3' } }));
+  const r = spawnSync(process.execPath, [join(process.cwd(), 'scripts/package-local.mjs'), '--voices', 'de'], { cwd, encoding: 'utf8' });
+  expect(r.stdout + r.stderr).toContain('dist/ not found: building first');
+  expect(r.stderr).not.toContain('ENOENT');
+});
+
+test('an unknown selection is refused before anything is built', () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'fresh-clone-'));
+  mkdirSync(join(cwd, 'src/tts'), { recursive: true });
+  writeFileSync(join(cwd, 'src/tts/voices.json'), readFileSync('src/tts/voices.json'));
+  const r = spawnSync(process.execPath, [join(process.cwd(), 'scripts/package-local.mjs'), '--voices', 'xx'], { cwd, encoding: 'utf8' });
+  expect(r.status).toBe(1);
+  expect(r.stderr).toContain('Unknown voice selection "xx"');
+  expect(r.stdout).not.toContain('building first');
+});

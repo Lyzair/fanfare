@@ -12,7 +12,7 @@ Run Fanfare on your own computer, without internet: get a package from the [late
 
 - `fanfare-<version>-all`: every voice (about 700 MB).
 - `fanfare-<version>-<language>`, e.g. `-de`: only that language's voice (about 100–150 MB).
-- `fanfare-<version>-none`: no voices, for updating: unpack it over your `fanfare` folder and your voices stay.
+- `fanfare-<version>-none`: no voices, for updating: unpack it and move the language folders from your old `fanfare/voices/` into the new one (details in `README-local.txt`).
 
 Each comes as `.zip` and `.tar.gz`; the manual is inside (`manual/`). Docker: `docker run -d -p 127.0.0.1:8080:8080 ghcr.io/lyzair/fanfare:1`.
 

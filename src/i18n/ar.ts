@@ -160,7 +160,7 @@ export const ar = {
     scorerLabel: "من سجّل؟ (اختياري)",
     voiceLabel: "الصوت",
     voiceNotIncluded: "غير مضمَّن في هذا التنزيل",
-    voiceMissingHint: "هذا التنزيل لا يتضمن هذا الصوت. نزِّل حزمة هذه اللغة أو الحزمة \"all\"، ثم انسخ مجلد voices/{lang} منها إلى مجلد Fanfare لديك.",
+    voiceMissingHint: "هذا التنزيل لا يتضمن هذا الصوت. نزِّل حزمة هذه اللغة أو الحزمة \"all\"، ثم انسخ مجلد voices/{lang} منها إلى مجلد voices داخل مجلد Fanfare لديك (فيصبح fanfare/voices/{lang}). ثم أعد تحميل هذه الصفحة.",
     localServerTitle: "خادم الأصوات المحلي (متقدّم)",
     localServerHint: "أنشئ أصواتًا عالية الجودة على حاسوبك الخاص، ثم «تجهيز الأصوات» و«تصدير» — يشغّلها هاتفك دون الخادم.",
     localServerUrl: "عنوان الخادم",

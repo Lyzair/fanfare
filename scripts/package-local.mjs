@@ -20,8 +20,12 @@ const LANGS = JSON.parse(readFileSync('src/tts/voices.json', 'utf8')).map((v) =>
  * @param {string} version package version (the archive's file name carries it, the folder does not)
  * @param {string} [distRoot]
  */
-export function fileList(variant, version, distRoot = 'dist') {
+function checkVariant(variant) {
   if (variant !== 'all' && variant !== 'none' && !LANGS.includes(variant)) throw new Error(`Unknown voice selection "${variant}"`);
+}
+
+export function fileList(variant, version, distRoot = 'dist') {
+  checkVariant(variant);
   void version;
   const top = 'fanfare';
   const keepVoice = (rel) => {
@@ -84,7 +88,7 @@ async function main(argv) {
   const format = opt('--format', 'both');
   if (!['zip', 'tar.gz', 'both'].includes(format)) throw new Error(`Unknown format "${format}" (zip, tar.gz or both)`);
   const variants = voices === 'every' ? ['all', 'none', ...LANGS] : [voices];
-  for (const v of variants) fileList(v, ''); // refuse an unknown selection before building
+  variants.forEach(checkVariant); // refuse an unknown selection before building
 
   const { version } = JSON.parse(readFileSync('package.json', 'utf8'));
   if (!existsSync('dist/index.html')) {

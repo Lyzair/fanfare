@@ -75,7 +75,7 @@ jobs:
           |---|---|
           | Every voice | \`fanfare-${VERSION}-all.zip\` (or \`.tar.gz\`) |
           | Only your language's voice (much smaller) | \`fanfare-${VERSION}-<language>.zip\`, e.g. \`-de\`, \`-en\`, \`-fr\` |
-          | Update an existing Fanfare folder (no voices) | \`fanfare-${VERSION}-none.zip\`, unpacked over your \`fanfare\` folder |
+          | Update an existing Fanfare folder (no voices) | \`fanfare-${VERSION}-none.zip\`, then move your old \`voices/<language>\` folders into the new folder |
 
           Unpack it and double-click \`start-fanfare\` (Python 3.9+ needed). Details: \`README-local.txt\` in the folder.
           \`SHA256SUMS\` lists the checksums.

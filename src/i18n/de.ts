@@ -159,7 +159,7 @@ export const de = {
     scorerLabel: "Wer hat getroffen? (optional)",
     voiceLabel: "Stimme",
     voiceNotIncluded: "nicht in diesem Download enthalten",
-    voiceMissingHint: "Dieser Download enthält diese Stimme nicht. Lade das Paket für diese Sprache oder das Paket „all“ herunter und kopiere dessen Ordner voices/{lang} in deinen Fanfare-Ordner.",
+    voiceMissingHint: "Dieser Download enthält diese Stimme nicht. Lade das Paket für diese Sprache oder das Paket „all“ herunter und kopiere dessen Ordner voices/{lang} in den Ordner voices deines Fanfare-Ordners (danach gibt es fanfare/voices/{lang}). Lade dann diese Seite neu.",
     localServerTitle: "Lokaler Stimmen-Server (für Fortgeschrittene)",
     localServerHint: "Erzeuge hochwertige Stimmen auf deinem eigenen Computer, dann „Stimmen vorbereiten“ und „Exportieren“ – dein Handy spielt sie ohne Server ab.",
     localServerUrl: "Serveradresse",
