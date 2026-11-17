@@ -1,6 +1,6 @@
 # Fanfare — Design Spec
 
-> **Name:** the project is now called **Fanfare**; the companion local voice server is **Fanfare Studio** (decided 2026-11-13). File paths of this plan/spec keep the old `sports-caller` slug.
+> **Name:** the project is now called **Fanfare**; the companion local voice server is **Fanfare Studio** (decided 2026-11-13). It was first called `sports-caller`; the folders were renamed to `fanfare` and `fanfare-studio` on 2026-11-17.
 
 ## Purpose
 
