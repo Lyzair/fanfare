@@ -44,7 +44,7 @@ sudo ./deploy/raspberry-pi/install.sh --dry-run     # shows every step and chang
 sudo ./deploy/raspberry-pi/install.sh
 ```
 
-(No git? On GitHub use "Code" → "Download ZIP", unpack it, rename the folder to `fanfare` and copy it: `scp -r fanfare youruser@fanfare.local:`.)
+(No git? On GitHub use "Code" → "Download ZIP", unpack it, rename the folder to `fanfare` and copy it. Without git the weekly update cannot fetch new versions of Fanfare (system updates still run), so prefer git if you can: `scp -r fanfare youruser@fanfare.local:`.)
 
 The installer is safe to run again. It
 

@@ -65,7 +65,8 @@ button, input, textarea { min-height: 44px; font: inherit; }
   main > .welcome { grid-column: 1 / -1; }
   main[data-layout="game-side"] { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); align-items: start; }
   main[data-layout="game-side"] .layout-col-game {
-    position: sticky; top: 76px; max-height: calc(100vh - 92px); overflow-y: auto; padding: 2px;
+    position: sticky; top: calc(var(--header-h, 62px) + 14px); max-height: calc(100vh - var(--header-h, 62px) - 30px);
+    overflow-y: auto; padding: 2px;
   }
   main[data-layout="columns"] { display: block; column-count: 2; column-gap: 16px; }
   main[data-layout="columns"] .layout-col { display: contents; }

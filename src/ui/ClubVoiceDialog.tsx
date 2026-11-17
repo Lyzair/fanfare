@@ -1,3 +1,4 @@
+import { createPortal } from 'preact/compat';
 import { useContext, useEffect, useRef, useState } from 'preact/hooks';
 import type { Lang } from '../domain/model';
 import { getPack, t } from '../i18n';
@@ -147,7 +148,7 @@ export function ClubVoiceDialog({ lang, serverUrl, onSaved, onClose }: {
     return <LocalError lang={lang} error={error} prefix={detail => fill(tr('clubRejected'), { detail })} />;
   };
 
-  return (
+  return createPortal((
     <div class="club-dialog-backdrop">
       <div class="club-dialog" role="dialog" aria-modal="true" aria-labelledby="club-dialog-title" tabIndex={-1} ref={root}
         onKeyDown={e => { if (e.key === 'Escape') { e.stopPropagation(); close(); } else trapTab(e); }}>
@@ -188,5 +189,5 @@ export function ClubVoiceDialog({ lang, serverUrl, onSaved, onClose }: {
         </div>
       </div>
     </div>
-  );
+  ), document.body);
 }

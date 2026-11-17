@@ -54,3 +54,12 @@ test('phone (390×844): one column and no layout switch', async ({ page }) => {
   expect(new Set(xs).size).toBe(1);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 });
+
+test('a two-line header (French at 920 px) never covers the game column', async ({ page }) => {
+  await open(page, 920, 800);
+  await page.getByLabel('Language').selectOption('fr');
+  await page.evaluate(() => window.scrollTo(0, 1500));
+  const header = (await page.locator('header.topbar').boundingBox())!;
+  const column = (await page.locator('.layout-col-game').boundingBox())!;
+  expect(column.y).toBeGreaterThanOrEqual(header.y + header.height);
+});
