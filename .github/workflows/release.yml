@@ -83,8 +83,14 @@ jobs:
           **Docker:** \`docker run -d -p 127.0.0.1:8080:8080 ${IMAGE}:${VERSION}\` (PCs, Raspberry Pi 64-bit and 32-bit).
 
           EOF
-          gh release create "$TAG" release/* --repo "$GITHUB_REPOSITORY" --title "Fanfare $VERSION" \
-            --notes-file notes.md --generate-notes --verify-tag
+          # a release for this tag may already exist (made on github.com, or a re-run): add to it instead
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$TAG" release/* --repo "$GITHUB_REPOSITORY" --clobber
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --title "Fanfare $VERSION" --notes-file notes.md
+          else
+            gh release create "$TAG" release/* --repo "$GITHUB_REPOSITORY" --title "Fanfare $VERSION" \
+              --notes-file notes.md --generate-notes --verify-tag
+          fi
 
   image:
     needs: packages
