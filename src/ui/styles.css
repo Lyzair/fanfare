@@ -49,6 +49,32 @@ button, input, textarea { min-height: 44px; font: inherit; }
   .lang-wrap { flex: 1; }
 }
 
+/* Wide screens (900 px and wider): the user picks a layout in the header (src/ui/layout.ts).
+   "game-side": preparation (steps 1-2) on the left; match day (steps 3-5) on the right, kept in view
+   and scrolling by itself when taller than the screen. "columns": all cards flow into 2 (from 1400 px: 3)
+   columns in step order. Below 900 px both are one column. */
+.layout-col { display: grid; gap: 16px; align-content: start; min-width: 0; }
+.layout-switch { display: none; }
+@media (min-width: 900px) {
+  .layout-switch { display: inline-flex; border: 1px solid rgba(255, 255, 255, 0.7); border-radius: 8px; overflow: hidden; }
+  .layout-switch button {
+    min-height: 44px; padding-inline: 12px; border: 0; background: transparent; color: #fff; cursor: pointer;
+  }
+  .layout-switch button[aria-pressed="true"] { background: #fff; color: var(--accent); font-weight: 700; }
+  main { max-width: 1600px; }
+  main > .welcome { grid-column: 1 / -1; }
+  main[data-layout="game-side"] { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); align-items: start; }
+  main[data-layout="game-side"] .layout-col-game {
+    position: sticky; top: 76px; max-height: calc(100vh - 92px); overflow-y: auto; padding: 2px;
+  }
+  main[data-layout="columns"] { display: block; column-count: 2; column-gap: 16px; }
+  main[data-layout="columns"] .layout-col { display: contents; }
+  main[data-layout="columns"] > .welcome, main[data-layout="columns"] .card { break-inside: avoid; margin-block-end: 16px; }
+}
+@media (min-width: 1400px) {
+  main[data-layout="columns"] { column-count: 3; }
+}
+
 /* Roster panel */
 .roster-panel { display: grid; gap: 12px; }
 .roster-panel input:not([type="checkbox"]), .roster-panel textarea {

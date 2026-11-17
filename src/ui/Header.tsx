@@ -2,8 +2,10 @@ import type { Lang, SportId } from '../domain/model';
 import { SPORTS, SPORT_IDS } from '../domain/sports';
 import { LANGS, getPack, t } from '../i18n';
 import type { PanelProps } from './types';
+import { LayoutSwitch } from './LayoutSwitch';
+import type { Layout } from './layout';
 
-export function Header({ state, dispatch, onHelp }: PanelProps & { onHelp: () => void }) {
+export function Header({ state, dispatch, onHelp, layout, onLayout }: PanelProps & { onHelp: () => void; layout: Layout; onLayout: (l: Layout) => void }) {
   const lang = state.lang;
   return (
     <header class="topbar">
@@ -29,6 +31,7 @@ export function Header({ state, dispatch, onHelp }: PanelProps & { onHelp: () =>
             </select>
           </span>
         </label>
+        <LayoutSwitch lang={lang} layout={layout} onChange={onLayout} />
         <button type="button" class="help-button" aria-label={t(lang, 'helpButton')} onClick={onHelp}>?</button>
         <a class="manual-link" href={`./manual/${lang}.html`}>📖 {t(lang, 'manualLink')}</a>
       </div>

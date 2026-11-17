@@ -12,6 +12,7 @@ import { SpeechCache } from '../tts/speechCache';
 import { ACCENT_CSS } from './accent';
 import { Header } from './Header';
 import { WelcomeCard } from './WelcomeCard';
+import { useLayout } from './layout';
 import { ShowMe } from './ShowMe';
 import DataPanel from './DataPanel';
 import CalloutPanel from './CalloutPanel';
@@ -48,6 +49,7 @@ export function App() {
   const pwa = usePwaState();
   const [updateWait, setUpdateWait] = useState(false);
   const [showWelcome, setShowWelcome] = useState(() => !welcomeDismissedBefore());
+  const [layout, setLayout] = useLayout();
   const services = useRef<Services | null>(null);
   // the engine reads the current local server through a ref, so the cache is never rebuilt
   const stateRef = useRef(state);
@@ -118,7 +120,7 @@ export function App() {
     <ServicesContext.Provider value={value}>
       <style>{ACCENT_CSS}</style>
       <div class="app" data-sport={state.sport}>
-        <Header state={state} dispatch={dispatch} onHelp={showHelp} />
+        <Header state={state} dispatch={dispatch} onHelp={showHelp} layout={layout} onLayout={setLayout} />
         {storageFailed && <p class="notice" role="status">{t(state.lang, 'saveUnavailable')}</p>}
         {pwa.updateReady && (
           <p class="notice update-notice" role="status">
@@ -129,19 +131,25 @@ export function App() {
             }}>{t(state.lang, 'updateReload')}</button>
           </p>
         )}
-        <main>
+        <main data-layout={layout}>
           {showWelcome && <WelcomeCard lang={state.lang} onDismiss={dismissWelcome} />}
-          {PANELS.map((Panel, i) => {
-            const n = (i + 1) as 1 | 2 | 3 | 4 | 5;
-            return (
-              <section class="card" key={n} aria-labelledby={`step${n}-title`}>
-                <h2 id={`step${n}-title`} tabIndex={-1}>{n} {t(state.lang, `step${n}Title`)}</h2>
-                <p class="hint">{t(state.lang, `step${n}Hint`)}</p>
-                <ShowMe lang={state.lang} step={n} />
-                <div class="panel-body"><Panel key={n === 1 ? rosterVersion : undefined} state={state} dispatch={dispatch} /></div>
-              </section>
-            );
-          })}
+          {/* Preparation (steps 1-2) and match day (steps 3-5). The wrappers are always there, so changing
+              the layout never rebuilds a panel; CSS places them (see "Wide screens" in styles.css). */}
+          {[[0, 2, 'layout-col layout-col-prep'], [2, 5, 'layout-col layout-col-game']].map(([from, to, cls]) => (
+            <div class={cls as string} key={cls as string}>
+              {PANELS.slice(from as number, to as number).map((Panel, j) => {
+                const n = ((from as number) + j + 1) as 1 | 2 | 3 | 4 | 5;
+                return (
+                  <section class="card" key={n} data-step={n} aria-labelledby={`step${n}-title`}>
+                    <h2 id={`step${n}-title`} tabIndex={-1}>{n} {t(state.lang, `step${n}Title`)}</h2>
+                    <p class="hint">{t(state.lang, `step${n}Hint`)}</p>
+                    <ShowMe lang={state.lang} step={n} />
+                    <div class="panel-body"><Panel key={n === 1 ? rosterVersion : undefined} state={state} dispatch={dispatch} /></div>
+                  </section>
+                );
+              })}
+            </div>
+          ))}
         </main>
       </div>
     </ServicesContext.Provider>
