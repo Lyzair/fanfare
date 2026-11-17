@@ -13,3 +13,9 @@ export const VOICES: VoiceDef[] = voiceData as VoiceDef[];
 export function defaultVoiceFor(lang: Lang): string {
   return (VOICES.find(v => v.lang === lang) ?? VOICES[0]).id;
 }
+
+/** Path of a voice's model under voices/, in the piper-voices layout scripts/fetch-assets.mjs uses. */
+export function voicePath(id: string): string {
+  const [locale, name, quality] = id.split('-');
+  return `${locale.split('_')[0]}/${locale}/${name}/${quality}/${id}.onnx`;
+}

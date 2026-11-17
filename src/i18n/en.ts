@@ -157,6 +157,8 @@ export const en = {
     guestScorerLabel: "Who scored for the guests? (optional)",
     scorerLabel: "Who scored? (optional)",
     voiceLabel: "Voice",
+    voiceNotIncluded: "not included in this download",
+    voiceMissingHint: "This download doesn't include this voice. Download the package for this language, or the \"all\" package, and copy its voices/{lang} folder into your Fanfare folder.",
     localServerTitle: "Local voice server (advanced)",
     localServerHint: "Generate high-quality voices on your own computer, then Prepare voices and Export — your phone plays them without the server.",
     localServerUrl: "Server address",

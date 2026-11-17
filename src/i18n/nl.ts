@@ -159,6 +159,8 @@ export const nl = {
     guestScorerLabel: "Wie scoorde voor de gasten? (optioneel)",
     scorerLabel: "Wie scoorde? (optioneel)",
     voiceLabel: "Stem",
+    voiceNotIncluded: "niet in deze download",
+    voiceMissingHint: "Deze download bevat deze stem niet. Download het pakket voor deze taal, of het pakket ‘all’, en kopieer de map voices/{lang} daaruit naar je Fanfare-map.",
     localServerTitle: "Lokale stemserver (geavanceerd)",
     localServerHint: "Maak stemmen van hoge kwaliteit op je eigen computer, kies dan ‘Stemmen voorbereiden’ en ‘Exporteren’ — je telefoon speelt ze af zonder de server.",
     localServerUrl: "Serveradres",

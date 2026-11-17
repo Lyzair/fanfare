@@ -159,6 +159,8 @@ export const ar = {
     guestScorerLabel: "من سجّل للضيوف؟ (اختياري)",
     scorerLabel: "من سجّل؟ (اختياري)",
     voiceLabel: "الصوت",
+    voiceNotIncluded: "غير مضمَّن في هذا التنزيل",
+    voiceMissingHint: "هذا التنزيل لا يتضمن هذا الصوت. نزِّل حزمة هذه اللغة أو الحزمة \"all\"، ثم انسخ مجلد voices/{lang} منها إلى مجلد Fanfare لديك.",
     localServerTitle: "خادم الأصوات المحلي (متقدّم)",
     localServerHint: "أنشئ أصواتًا عالية الجودة على حاسوبك الخاص، ثم «تجهيز الأصوات» و«تصدير» — يشغّلها هاتفك دون الخادم.",
     localServerUrl: "عنوان الخادم",

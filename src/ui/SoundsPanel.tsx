@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks';
+import { fill } from './fill';
 import { SOUND_SLOTS } from '../domain/model';
 import type { SoundSlot } from '../domain/model';
 import { t } from '../i18n';
@@ -6,7 +7,8 @@ import type { UiStrings } from '../i18n';
 import { saveSoundBlob } from '../state/persist';
 import type { RemoteVoice } from '../tts/httpEngine';
 import { LOCAL_PREFIX } from '../tts/routingEngine';
-import { VOICES } from '../tts/voices';
+import { VOICES, voicePath } from '../tts/voices';
+import { useVoicePresent } from '../tts/voicePresence';
 import { playSound } from './actions';
 import { LocalVoiceSection } from './LocalVoiceSection';
 import { rememberSound } from './soundMemory';
@@ -25,6 +27,8 @@ export default function SoundsPanel({ state, dispatch }: PanelProps) {
   const [error, setError] = useState<keyof UiStrings | null>(null);
   const [remote, setRemote] = useState<RemoteVoice[]>([]);
   const playback = usePlayback(state);
+  const voices = VOICES.filter(v => v.lang === lang);
+  const builtInPresent = useVoicePresent(voices[0]?.id ?? '');
   if (!playback) return null;
 
   const preview = (slot: SoundSlot) => playSound(playback.env, slot);
@@ -49,7 +53,6 @@ export default function SoundsPanel({ state, dispatch }: PanelProps) {
     dispatch({ type: 'setCustomSound', slot, sound: null });
   };
 
-  const voices = VOICES.filter(v => v.lang === lang);
   const localVoices = remote.filter(v => v.lang === lang);
   const selectedLocal = state.voiceId.startsWith(LOCAL_PREFIX) ? state.voiceId.slice(LOCAL_PREFIX.length) : null;
   // a local voice chosen earlier stays selectable (its clips may be cached) even while not connected
@@ -58,7 +61,7 @@ export default function SoundsPanel({ state, dispatch }: PanelProps) {
     <div class="sounds-panel">
       <label class="stack">{tr('voiceLabel')}
         <select value={state.voiceId} onChange={e => dispatch({ type: 'setVoice', voiceId: e.currentTarget.value })}>
-          {voices.map(v => <option key={v.id} value={v.id}>{v.label}</option>)}
+          {voices.map(v => <option key={v.id} value={v.id}>{builtInPresent === false ? `${v.label} (${tr('voiceNotIncluded')})` : v.label}</option>)}
           {(localVoices.length > 0 || orphan !== null) && (
             <optgroup label={tr('localVoicesGroup')}>
               {localVoices.map(v => <option key={v.id} value={LOCAL_PREFIX + v.id}>{v.label}</option>)}
@@ -67,6 +70,7 @@ export default function SoundsPanel({ state, dispatch }: PanelProps) {
           )}
         </select>
       </label>
+      {builtInPresent === false && voices[0] && state.voiceId === voices[0].id && <p class="hint">{fill(tr('voiceMissingHint'), { lang: voicePath(voices[0].id).split('/')[0] })}</p>}
       <label class="check">
         <input type="checkbox" checked={state.soundsEnabled}
           onChange={e => dispatch({ type: 'setSoundsEnabled', on: e.currentTarget.checked })} />

@@ -25,7 +25,8 @@ test('synthesizes German speech from same-origin assets only', async ({ page, ba
   const models = requests.filter((u) => /\.onnx(\?|$)/.test(u));
   expect(models).toHaveLength(1);
   expect(models[0]).toContain('/voices/de/de_DE/thorsten/medium/de_DE-thorsten-medium.onnx');
-  expect(requests.some((u) => u.includes('/voices/') && !u.includes('de_DE-thorsten-medium'))).toBe(false);
+  // other voices' small model cards may be checked ("is this voice in the download?"), never their models
+  expect(requests.some((u) => u.includes('/voices/') && !u.endsWith('.onnx.json') && !u.includes('de_DE-thorsten-medium'))).toBe(false);
   expect(consoleErrors.filter((e) => /Content Security Policy/i.test(e))).toEqual([]);
 });
 

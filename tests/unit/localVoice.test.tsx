@@ -60,7 +60,9 @@ class FakeRecorder {
 beforeEach(() => {
   vi.clearAllMocks();
   fetchMock = vi.fn();
-  vi.stubGlobal('fetch', fetchMock);
+  // the page's own "is this voice in the download?" check is not the local server: answer it apart
+  vi.stubGlobal('fetch', (url: string, init?: RequestInit) =>
+    (String(url).startsWith('./voices/') ? Promise.resolve(new Response(null, { status: 200 })) : (fetchMock as unknown as typeof fetch)(url, init)));
   tracks = [new FakeTrack()];
   Object.defineProperty(navigator, 'mediaDevices', { value: { getUserMedia: vi.fn(async () => ({ getTracks: () => tracks })) }, configurable: true });
   vi.stubGlobal('MediaRecorder', FakeRecorder);

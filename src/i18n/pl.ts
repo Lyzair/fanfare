@@ -159,6 +159,8 @@ export const pl = {
     guestScorerLabel: "Kto strzelił dla gości? (opcjonalnie)",
     scorerLabel: "Kto strzelił? (opcjonalnie)",
     voiceLabel: "Głos",
+    voiceNotIncluded: "brak w tym pobraniu",
+    voiceMissingHint: "To pobranie nie zawiera tego głosu. Pobierz pakiet dla tego języka albo pakiet „all” i skopiuj z niego folder voices/{lang} do swojego folderu Fanfare.",
     localServerTitle: "Lokalny serwer głosów (zaawansowane)",
     localServerHint: "Wygeneruj głosy wysokiej jakości na własnym komputerze, potem „Przygotuj głosy” i „Eksportuj” – telefon odtworzy je bez serwera.",
     localServerUrl: "Adres serwera",

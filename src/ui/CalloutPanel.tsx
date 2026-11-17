@@ -13,6 +13,8 @@ import type { PanelProps } from './types';
 import { PlaybackError } from './PlaybackError';
 import { usePlayback } from './usePlayback';
 import { usePrepare } from './usePrepare';
+import { useVoicePresent } from '../tts/voicePresence';
+import { voicePath } from '../tts/voices';
 
 export default function CalloutPanel({ state, dispatch }: PanelProps) {
   const lang = state.lang;
@@ -26,6 +28,7 @@ export default function CalloutPanel({ state, dispatch }: PanelProps) {
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const prepareTexts = lineupTexts(state);
   const prepare = usePrepare(playback?.speech, state.voiceId, prepareTexts, e => playback?.setError(e ?? true));
+  const voicePresent = useVoicePresent(state.voiceId);
 
   if (!playback) return null;
   const { playing, error, setError, speech } = playback;
@@ -119,7 +122,9 @@ export default function CalloutPanel({ state, dispatch }: PanelProps) {
           <button type="button" onClick={() => announce('home')}>{tr('announceHomeOnly')}</button>
         </div>
       )}
-      <button type="button" disabled={prepare.preparing} onClick={() => { setError(null); prepare.start(); }}>{tr('prepareVoices')}</button>
+      {voicePresent === false
+        ? <p class="hint">{fill(tr('voiceMissingHint'), { lang: voicePath(state.voiceId).split('/')[0] })}</p>
+        : <button type="button" disabled={prepare.preparing} onClick={() => { setError(null); prepare.start(); }}>{tr('prepareVoices')}</button>}
       {prepare.preparing && prepare.progress && <p role="status" class="progress">{fill(tr('prepareProgress'), prepare.progress)}</p>}
       {prepare.done && <p role="status" class="progress">{tr('prepareDone')}</p>}
       <PlaybackError lang={lang} error={error} />

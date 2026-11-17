@@ -158,6 +158,8 @@ export const de = {
     guestScorerLabel: "Wer hat für die Gäste getroffen? (optional)",
     scorerLabel: "Wer hat getroffen? (optional)",
     voiceLabel: "Stimme",
+    voiceNotIncluded: "nicht in diesem Download enthalten",
+    voiceMissingHint: "Dieser Download enthält diese Stimme nicht. Lade das Paket für diese Sprache oder das Paket „all“ herunter und kopiere dessen Ordner voices/{lang} in deinen Fanfare-Ordner.",
     localServerTitle: "Lokaler Stimmen-Server (für Fortgeschrittene)",
     localServerHint: "Erzeuge hochwertige Stimmen auf deinem eigenen Computer, dann „Stimmen vorbereiten“ und „Exportieren“ – dein Handy spielt sie ohne Server ab.",
     localServerUrl: "Serveradresse",

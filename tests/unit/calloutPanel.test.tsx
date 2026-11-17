@@ -11,6 +11,7 @@ import { TtsUnavailableError } from '../../src/tts/engine';
 import { LocalAccessError } from '../../src/tts/httpEngine';
 import type { AppState } from '../../src/domain/model';
 import type { QueueItem } from '../../src/audio/queue';
+import { resetVoicePresence } from '../../src/tts/voicePresence';
 import { queueEvents } from './queueEvents';
 
 let latest: AppState;
@@ -456,4 +457,29 @@ test('playText and playVoiceText do nothing for blank text', async () => {
   expect(speech.get).not.toHaveBeenCalled();
   playVoiceText(env, 'v', 'Tso-eh');
   await waitFor(() => expect(speech.get).toHaveBeenCalledWith('v', 'Tso-eh'));
+});
+
+describe('a voice that is not in this download', () => {
+  beforeEach(() => resetVoicePresence());
+  afterEach(() => { vi.unstubAllGlobals(); resetVoicePresence(); });
+
+  test('replaces "Prepare voices" with a hint on how to add the voice', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 404 })));
+    const { services, speech } = makeServices();
+    render(<Harness services={services} init={setup} />);
+    expect(await screen.findByText(/doesn't include this voice/)).toBeInTheDocument();
+    expect(screen.getByText(/voices\/en/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Prepare voices/ })).toBeNull();
+    expect(speech.prepare).not.toHaveBeenCalled();
+  });
+
+  test('keeps "Prepare voices" when the voice is there', async () => {
+    const f = vi.fn(async () => ({ ok: true, status: 200 }));
+    vi.stubGlobal('fetch', f);
+    const { services } = makeServices();
+    render(<Harness services={services} init={setup} />);
+    await waitFor(() => expect(f).toHaveBeenCalled());
+    expect(screen.getByRole('button', { name: /Prepare voices/ })).toBeInTheDocument();
+    expect(screen.queryByText(/doesn't include this voice/)).toBeNull();
+  });
 });

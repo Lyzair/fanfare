@@ -159,6 +159,8 @@ export const tr = {
     guestScorerLabel: "Konuklar için kim attı? (isteğe bağlı)",
     scorerLabel: "Kim attı? (isteğe bağlı)",
     voiceLabel: "Ses",
+    voiceNotIncluded: "bu indirmede yok",
+    voiceMissingHint: "Bu indirme bu sesi içermiyor. Bu dilin paketini veya \"all\" paketini indirip içindeki voices/{lang} klasörünü Fanfare klasörüne kopyala.",
     localServerTitle: "Yerel ses sunucusu (ileri düzey)",
     localServerHint: "Yüksek kaliteli sesleri kendi bilgisayarında üret, sonra “Sesleri hazırla” ve “Dışa aktar” — telefonun bunları sunucu olmadan çalar.",
     localServerUrl: "Sunucu adresi",
