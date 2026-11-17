@@ -61,6 +61,24 @@ and takes several minutes. The port is published on `127.0.0.1` only: this compu
   delete that one option in the `Dockerfile`. The image then downloads the voices on every build.
 - Check: `docker compose ps` shows `healthy`.
 
+### Ready-made image (no build)
+
+Each release publishes the image `ghcr.io/lyzair/fanfare` for `linux/amd64`, `linux/arm64` and `linux/arm/v7`
+(tags: the exact version such as `1.0.0`, `1.0`, `1` and `latest`). With the compose file of this repository:
+
+```sh
+FANFARE_IMAGE=ghcr.io/lyzair/fanfare:1 docker compose up -d --no-build
+# update later: FANFARE_IMAGE=ghcr.io/lyzair/fanfare:1 docker compose pull && FANFARE_IMAGE=ghcr.io/lyzair/fanfare:1 docker compose up -d --no-build
+```
+
+Or without the repository, with the same protections as `compose.yaml`:
+
+```sh
+docker run -d --name fanfare -p 127.0.0.1:8080:8080 --read-only --tmpfs /tmp --cap-drop ALL \
+  --security-opt no-new-privileges:true --restart unless-stopped ghcr.io/lyzair/fanfare:1
+```
+
+
 ## HTTPS without a public domain: risks and steps ("HTTPS on the LAN", optional)
 
 **If you have a real domain, Let's Encrypt (Caddy, Traefik or Nginx Proxy Manager) is the cleaner option: no local CA, nothing to install on phones.**
@@ -269,9 +287,8 @@ docker buildx build --platform linux/arm64 --load -t fanfare:local .      # an a
 docker save fanfare:local -o fanfare-arm64.tar                            # copy to the Pi: install.sh --image-tar fanfare-arm64.tar
 ```
 
-Continuous integration builds all three platforms without pushing. The Caddy base image is pinned in the `Dockerfile`, so
-security fixes of the base image arrive with a new version of this repository (the Pi's weekly update picks it up), not by themselves. Publishing images to a registry is a manual
-decision of the maintainers and is not automated.
+Continuous integration builds all three platforms without pushing; the release workflow (`.github/workflows/release.yml`, started by a version tag) publishes them to `ghcr.io/lyzair/fanfare`. The Caddy base image is pinned in the `Dockerfile`, so
+security fixes of the base image arrive with a new version of this repository (the Pi's weekly update picks it up), not by themselves.
 
 ## Updating, backups, uninstalling
 

@@ -6,6 +6,16 @@ Fanfare is a single static web page where a sports club enters its players and a
 
 **Live demo:** https://lyzair.github.io/fanfare/
 
+## Download
+
+Run Fanfare on your own computer, without internet: get a package from the [latest release](https://github.com/Lyzair/fanfare/releases/latest), unpack it and double-click `start-fanfare` (Python 3.9+ needed).
+
+- `fanfare-<version>-all`: every voice (about 700 MB).
+- `fanfare-<version>-<language>`, e.g. `-de`: only that language's voice (about 100–150 MB).
+- `fanfare-<version>-none`: no voices, for updating: unpack it over your `fanfare` folder and your voices stay.
+
+Each comes as `.zip` and `.tar.gz`; the manual is inside (`manual/`). Docker: `docker run -d -p 127.0.0.1:8080:8080 ghcr.io/lyzair/fanfare:1`.
+
 ## Usage
 
 1. Open the page and enter your team and the opponent.
@@ -76,6 +86,7 @@ The zip contains the built site, `fanfare-local.py`, `start-fanfare.sh` / `.comm
 
 ```sh
 docker compose up -d --build     # then open http://localhost:8080 (FANFARE_PORT=8090 if 8080 is taken)
+FANFARE_IMAGE=ghcr.io/lyzair/fanfare:1 docker compose up -d --no-build   # or the ready-made image, no build
 ```
 
 Builds the site and serves it with Caddy: plain HTTP on this computer, no access logs. HTTPS for phones
@@ -85,7 +96,7 @@ removal: [docs/self-hosting.md](docs/self-hosting.md). The phone remote needs `f
 
 Behind your own reverse proxy (Caddy, Traefik, Nginx Proxy Manager: examples in `deploy/`) or as a **Raspberry Pi club-house
 appliance** that serves `http://fanfare.local` and updates itself (`deploy/raspberry-pi/README.md`): see the same document. Images
-can be built for amd64, arm64 and arm/v7.
+for amd64, arm64 and arm/v7 are published with every release (`ghcr.io/lyzair/fanfare`) and can be built yourself.
 
 ## Third-party licences
 

@@ -42,9 +42,18 @@ docker compose up -d --build
 Der erste Bau lädt etwa 660 MB Stimmen (in einem Build-Cache, spätere Builds sind schnell) und dauert einige Minuten. Der Port ist nur auf `127.0.0.1` veröffentlicht.
 Port 8080 belegt: `FANFARE_PORT=8090 docker compose up -d`. Podman: `podman compose up -d --build`. Prüfen: `docker compose ps` zeigt `healthy`.
 
+**Fertiges Image (ohne Bauen):** Jede Version veröffentlicht `ghcr.io/lyzair/fanfare` für `linux/amd64`, `linux/arm64` und `linux/arm/v7` (Tags: genaue Version wie `1.0.0`, `1.0`, `1`, `latest`).
+Mit der Compose-Datei dieses Repositorys: `FANFARE_IMAGE=ghcr.io/lyzair/fanfare:1 docker compose up -d --no-build` (aktualisieren: vorher `… docker compose pull`). Ohne Repository, mit denselben Schutzoptionen wie `compose.yaml`:
+
+```sh
+docker run -d --name fanfare -p 127.0.0.1:8080:8080 --read-only --tmpfs /tmp --cap-drop ALL \
+  --security-opt no-new-privileges:true --restart unless-stopped ghcr.io/lyzair/fanfare:1
+```
+
+
 Images für andere Prozessoren (`linux/amd64`, `linux/arm64` für Raspberry Pi 4/5 mit 64-Bit-System, `linux/arm/v7` für ältere Pis; Letzteres ungetestet auf echter Hardware):
 `docker buildx build --platform linux/arm64 --load -t fanfare:local .` und `docker save fanfare:local -o fanfare-arm64.tar`.
-Die CI baut alle drei Plattformen, ohne etwas zu veröffentlichen. Das Caddy-Basisimage ist im `Dockerfile` festgelegt: Sicherheitskorrekturen daran kommen mit einer neuen Version dieses Repositorys (das wöchentliche Pi-Update holt sie), nicht von selbst. Das Veröffentlichen von Images ist eine manuelle Entscheidung der Maintainer.
+Die CI baut alle drei Plattformen, ohne etwas zu veröffentlichen; der Release-Workflow (`.github/workflows/release.yml`, gestartet durch ein Versions-Tag) veröffentlicht sie unter `ghcr.io/lyzair/fanfare`. Das Caddy-Basisimage ist im `Dockerfile` festgelegt: Sicherheitskorrekturen daran kommen mit einer neuen Version dieses Repositorys (das wöchentliche Pi-Update holt sie), nicht von selbst.
 
 ## HTTPS ohne öffentliche Domain: Risiken und Schritte (optional)
 

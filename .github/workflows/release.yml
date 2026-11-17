@@ -1,0 +1,121 @@
+name: Release
+
+# Push a tag v<version> (the version in package.json) to publish:
+#  - a GitHub release with the local packages (all voices, no voices, one per language), .zip and .tar.gz
+#  - the image ghcr.io/<owner>/fanfare for PCs and Raspberry Pi (amd64, arm64, arm/v7)
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  packages:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          cache: npm
+      - name: Tag matches package.json
+        run: node scripts/check-tag.mjs "$GITHUB_REF"
+      - name: Cache Piper voices
+        uses: actions/cache@v6
+        with:
+          path: public/voices
+          key: voices-${{ hashFiles('src/tts/voices.json', 'scripts/fetch-assets.mjs') }}
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.x'
+      - run: npm ci
+      - run: npm test
+      - run: python -m unittest discover -s tests/python
+      - run: npm run build
+      - run: npm run check:dist
+      - name: Packages (all, none, one per language; zip and tar.gz)
+        run: npm run package:local -- --voices every
+      - name: Checksums
+        run: cd release && sha256sum -- *.zip *.tar.gz > SHA256SUMS
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release
+          path: release/
+          if-no-files-found: error
+          compression-level: 0
+
+  publish:
+    needs: packages
+    runs-on: ubuntu-latest
+    # only this job writes to the repository (creates the release)
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: release
+          path: release
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          IMAGE: ghcr.io/${{ github.repository_owner }}/fanfare
+        run: |
+          VERSION="${TAG#v}"
+          IMAGE="${IMAGE,,}"
+          cat > notes.md <<EOF
+          ## Which download?
+
+          | You want | Download |
+          |---|---|
+          | Every voice | \`fanfare-${VERSION}-all.zip\` (or \`.tar.gz\`) |
+          | Only your language's voice (much smaller) | \`fanfare-${VERSION}-<language>.zip\`, e.g. \`-de\`, \`-en\`, \`-fr\` |
+          | Update an existing Fanfare folder (no voices) | \`fanfare-${VERSION}-none.zip\`, unpacked over your \`fanfare\` folder |
+
+          Unpack it and double-click \`start-fanfare\` (Python 3.9+ needed). Details: \`README-local.txt\` in the folder.
+          \`SHA256SUMS\` lists the checksums.
+
+          **Docker:** \`docker run -d -p 127.0.0.1:8080:8080 ${IMAGE}:${VERSION}\` (PCs, Raspberry Pi 64-bit and 32-bit).
+
+          EOF
+          gh release create "$TAG" release/* --repo "$GITHUB_REPOSITORY" --title "Fanfare $VERSION" \
+            --notes-file notes.md --generate-notes --verify-tag
+
+  image:
+    needs: packages
+    runs-on: ubuntu-latest
+    # only this job publishes the container image
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-qemu-action@v4
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/fanfare
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=raw,value=latest
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: SOURCE_URL=https://github.com/${{ github.repository }}
